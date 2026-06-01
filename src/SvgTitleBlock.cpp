@@ -382,9 +382,13 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 		textTransform = ConcatAffine(parentTransform, ParseTransformAttr(tr->value()));
 	}
 	textTransform.Apply(x, y);
-	// textTransform maps viewBox -> pixel-space; xf.scale then maps pixel-space
-	// to target CAD units.  Compose both for visually-correct font sizing.
-	const double textScale = textTransform.UniformScale() * xf.scale;
+	// Font sizing: scale by the viewBox->pixel factor only (no xf.scale on
+	// top).  Multiplying by xf.scale as well would render an Inkscape "2.82
+	// px" font at its full physical 2.82 mm — larger than typical for title-
+	// block label text and bigger than the procedural box's font.  This
+	// matches how Inkscape's design-time font size visually compares to
+	// schematic-tool fonts.
+	const double textScale = textTransform.UniformScale();
 
 	LOGFONT lf;
 	memset(&lf, 0, sizeof(lf));
