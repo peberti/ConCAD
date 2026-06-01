@@ -152,6 +152,10 @@ Section "MainSection" SEC01
   File "..\examples\circuits\CurrSens.dsn"
   File "..\examples\circuits\nanocomp6802.dsn"
   File "..\examples\circuits\WaterSensor.dsn"
+
+  ; SVG title-block templates, picked from File -> Design Details -> Title Block.
+  SetOutPath "$INSTDIR\templates\title-blocks"
+  File "..\templates\title-blocks\Simple-A4.svg"
   
   ; A file purely for the purpose of setting a timestamp of when TinyCAD was installed
   FileOpen $0 "$INSTDIR\installed.txt" w

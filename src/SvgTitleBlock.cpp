@@ -3,6 +3,9 @@
 #include "Context.h"
 #include "Details.h"
 #include "DPoint.h"
+#include "TinyCad.h"
+#include <shlobj.h>
+#include <algorithm>
 
 #define NANOSVG_IMPLEMENTATION
 #include "nanosvg/nanosvg.h"
@@ -632,3 +635,85 @@ void CSvgTitleBlock::Paint(CContext& dc, CDPoint tl, CDPoint br,
 		// Shape pass already happened; ignore text-pass parse error.
 	}
 }
+
+//=========================================================================
+// CTitleBlockTemplateStore
+
+namespace {
+
+void AddTemplatesFromFolder(const CString& folder, bool isUserFolder,
+                            std::vector<STitleBlockTemplate>& out)
+{
+	if (folder.IsEmpty()) return;
+
+	CFileFind finder;
+	const CString pattern = folder + _T("\\*.svg");
+	BOOL working = finder.FindFile(pattern);
+	while (working)
+	{
+		working = finder.FindNextFile();
+		if (finder.IsDots() || finder.IsDirectory()) continue;
+
+		STitleBlockTemplate t;
+		t.fullPath = finder.GetFilePath();
+
+		CString fname = finder.GetFileName();
+		const int dotIdx = fname.ReverseFind(_T('.'));
+		t.displayName = (dotIdx > 0) ? fname.Left(dotIdx) : fname;
+		if (isUserFolder) t.displayName += _T(" (user)");
+
+		out.push_back(t);
+	}
+	finder.Close();
+}
+
+} // namespace
+
+std::vector<STitleBlockTemplate> CTitleBlockTemplateStore::Enumerate()
+{
+	std::vector<STitleBlockTemplate> result;
+
+	// Bundled, next to the executable
+	const CString mainDir = CTinyCadApp::GetMainDir();
+	AddTemplatesFromFolder(mainDir + _T("templates\\title-blocks"), false, result);
+
+	// Dev-build fallback: one level up from exe (Debug/.. -> repo root)
+	AddTemplatesFromFolder(mainDir + _T("..\\templates\\title-blocks"), false, result);
+
+	// User additions in %APPDATA%\TinyCAD\templates\title-blocks
+	TCHAR appData[MAX_PATH] = { 0 };
+	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appData)))
+	{
+		AddTemplatesFromFolder(
+			CString(appData) + _T("\\TinyCAD\\templates\\title-blocks"),
+			true, result);
+	}
+
+	// Sort by display name for stable, user-friendly ordering.
+	std::sort(result.begin(), result.end(),
+		[](const STitleBlockTemplate& a, const STitleBlockTemplate& b) {
+			return a.displayName.CompareNoCase(b.displayName) < 0;
+		});
+
+	return result;
+}
+
+bool CTitleBlockTemplateStore::ReadFile(const CString& path, CString& outSvg)
+{
+	outSvg.Empty();
+
+	CFile file;
+	if (!file.Open(path, CFile::modeRead | CFile::shareDenyWrite)) return false;
+
+	const ULONGLONG len = file.GetLength();
+	if (len == 0 || len > 5 * 1024 * 1024) return false;
+
+	std::vector<char> buf((size_t)len + 1, 0);
+	file.Read(buf.data(), (UINT)len);
+	buf[(size_t)len] = '\0';
+
+	CA2T converted(buf.data(), CP_UTF8);
+	outSvg = (LPCTSTR)converted;
+	return !outSvg.IsEmpty();
+}
+

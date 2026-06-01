@@ -1618,10 +1618,11 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Title Block"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    LTEXT           "Choose an SVG file to use as this design's title block.  Use the built-in box to revert.",IDC_TBSVG_HELP,7,7,236,16
-    LTEXT           "Current: built-in title block",IDC_TBSVG_STATE,7,30,236,16
-    PUSHBUTTON      "&Browse SVG...",IDC_TBSVG_BROWSE,7,56,80,14
-    PUSHBUTTON      "&Use built-in",IDC_TBSVG_USE_BUILTIN,95,56,80,14
+    LTEXT           "Pick a bundled or user template, or browse for an SVG file.",IDC_TBSVG_HELP,7,7,236,8
+    LISTBOX         IDC_TBSVG_LIST,7,20,150,110,LBS_NOTIFY | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Browse SVG...",IDC_TBSVG_BROWSE,163,20,80,14
+    PUSHBUTTON      "&Use built-in",IDC_TBSVG_USE_BUILTIN,163,38,80,14
+    LTEXT           "Current: built-in title block",IDC_TBSVG_STATE,7,134,236,8
 END
 
 IDD_EDIT_TOKEN DIALOGEX 0, 0, 220, 80

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="100mm" height="30mm"
+     viewBox="0 0 100 30">
+
+  <!-- Outer box and dividers -->
+  <rect x="0" y="0" width="100" height="30"
+        fill="none" stroke="black" stroke-width="0.3"/>
+  <line x1="0"  y1="10" x2="100" y2="10" stroke="black" stroke-width="0.2"/>
+  <line x1="0"  y1="20" x2="100" y2="20" stroke="black" stroke-width="0.2"/>
+  <line x1="60" y1="10" x2="60"  y2="30" stroke="black" stroke-width="0.2"/>
+  <line x1="80" y1="10" x2="80"  y2="30" stroke="black" stroke-width="0.2"/>
+  <line x1="30" y1="20" x2="30"  y2="30" stroke="black" stroke-width="0.2"/>
+
+  <!-- Title row -->
+  <text x="2" y="3.2" font-family="Arial" font-size="2.4" fill="#666">Title</text>
+  <text x="2" y="8.5" font-family="Arial" font-size="5"   fill="black">{Title}</text>
+
+  <!-- Middle row: Author / Document / Sheets -->
+  <text x="2"  y="13.2" font-family="Arial" font-size="2.4" fill="#666">Author</text>
+  <text x="2"  y="18.0" font-family="Arial" font-size="3"   fill="black">{Author}</text>
+  <text x="62" y="13.2" font-family="Arial" font-size="2.4" fill="#666">Document</text>
+  <text x="62" y="18.0" font-family="Arial" font-size="3"   fill="black">{DocNo}</text>
+  <text x="82" y="13.2" font-family="Arial" font-size="2.4" fill="#666">Sheet</text>
+  <text x="82" y="18.0" font-family="Arial" font-size="3"   fill="black">{Sheets}</text>
+
+  <!-- Bottom row: Revision / Date / Organisation -->
+  <text x="2"  y="23.2" font-family="Arial" font-size="2.4" fill="#666">Revision</text>
+  <text x="2"  y="28.0" font-family="Arial" font-size="3"   fill="black">{Revision}</text>
+  <text x="32" y="23.2" font-family="Arial" font-size="2.4" fill="#666">Date</text>
+  <text x="32" y="28.0" font-family="Arial" font-size="3"   fill="black">{Date}</text>
+  <text x="62" y="23.2" font-family="Arial" font-size="2.4" fill="#666">Organisation</text>
+  <text x="62" y="28.0" font-family="Arial" font-size="3"   fill="black">{Org}</text>
+</svg>

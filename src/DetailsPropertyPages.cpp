@@ -544,18 +544,48 @@ CDetailsPropertyPage4::~CDetailsPropertyPage4()
 void CDetailsPropertyPage4::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_TBSVG_LIST, m_wndList);
 }
 
 BEGIN_MESSAGE_MAP(CDetailsPropertyPage4, CPropertyPage)
 	ON_BN_CLICKED(IDC_TBSVG_BROWSE,      OnBrowse)
 	ON_BN_CLICKED(IDC_TBSVG_USE_BUILTIN, OnUseBuiltin)
+	ON_LBN_SELCHANGE(IDC_TBSVG_LIST,     OnListSelChange)
 END_MESSAGE_MAP()
 
 BOOL CDetailsPropertyPage4::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
+	PopulateList();
 	UpdateStateLabel();
 	return TRUE;
+}
+
+void CDetailsPropertyPage4::PopulateList()
+{
+	m_templates = CTitleBlockTemplateStore::Enumerate();
+	m_wndList.ResetContent();
+	for (size_t i = 0; i < m_templates.size(); ++i)
+	{
+		m_wndList.AddString(m_templates[i].displayName);
+	}
+}
+
+void CDetailsPropertyPage4::OnListSelChange()
+{
+	const int sel = m_wndList.GetCurSel();
+	if (sel < 0 || sel >= (int)m_templates.size()) return;
+
+	CString svg;
+	if (!CTitleBlockTemplateStore::ReadFile(m_templates[sel].fullPath, svg))
+	{
+		AfxMessageBox(_T("Could not read template SVG file."));
+		return;
+	}
+	m_sSvg    = svg;
+	m_bDirty  = true;
+	UpdateStateLabel();
+	SetModified(TRUE);
 }
 
 void CDetailsPropertyPage4::UpdateStateLabel()
@@ -580,33 +610,16 @@ void CDetailsPropertyPage4::OnBrowse()
 		_T("SVG files (*.svg)|*.svg|All files (*.*)|*.*||"), this);
 	if (dlg.DoModal() != IDOK) return;
 
-	CFile file;
-	if (!file.Open(dlg.GetPathName(), CFile::modeRead | CFile::shareDenyWrite))
+	CString svg;
+	if (!CTitleBlockTemplateStore::ReadFile(dlg.GetPathName(), svg))
 	{
-		AfxMessageBox(_T("Could not open SVG file."));
-		return;
-	}
-	ULONGLONG len = file.GetLength();
-	if (len == 0)
-	{
-		AfxMessageBox(_T("That SVG file is empty."));
-		return;
-	}
-	if (len > 5 * 1024 * 1024)
-	{
-		AfxMessageBox(_T("SVG file is larger than 5 MB; refusing to embed."));
+		AfxMessageBox(_T("Could not read SVG file (missing, empty, or larger than 5 MB)."));
 		return;
 	}
 
-	std::vector<char> buf((size_t)len + 1, 0);
-	file.Read(buf.data(), (UINT)len);
-	buf[(size_t)len] = '\0';
-
-	// Treat the file as UTF-8 and convert to the CString native (UTF-16) format.
-	CA2T converted(buf.data(), CP_UTF8);
-	m_sSvg = (LPCTSTR)converted;
-
+	m_sSvg   = svg;
 	m_bDirty = true;
+	m_wndList.SetCurSel(-1);   // no template selected — this is a custom file
 	UpdateStateLabel();
 	SetModified(TRUE);
 }
@@ -617,6 +630,7 @@ void CDetailsPropertyPage4::OnUseBuiltin()
 	{
 		m_sSvg.Empty();
 		m_bDirty = true;
+		m_wndList.SetCurSel(-1);
 		UpdateStateLabel();
 		SetModified(TRUE);
 	}

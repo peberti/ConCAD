@@ -516,6 +516,7 @@
 #define IDC_TBSVG_STATE                 40014
 #define IDC_TBSVG_BROWSE                40015
 #define IDC_TBSVG_USE_BUILTIN           40016
+#define IDC_TBSVG_LIST                  40017
 #define ID_CONTEXT_COPY_TO              65535
 
 // Next default values for new objects
@@ -525,7 +526,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        178
 #define _APS_NEXT_COMMAND_VALUE         32909
-#define _APS_NEXT_CONTROL_VALUE         40017
+#define _APS_NEXT_CONTROL_VALUE         40018
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

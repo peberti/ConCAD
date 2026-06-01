@@ -164,6 +164,8 @@ protected:
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage4 - SVG title-block picker
 
+#include "SvgTitleBlock.h"
+
 class CDetailsPropertyPage4: public CPropertyPage
 {
 	DECLARE_DYNCREATE(CDetailsPropertyPage4)
@@ -173,7 +175,11 @@ private:
 	CString         m_sSvg;       // pending value to apply
 	bool            m_bDirty;
 
+	CListBox                            m_wndList;
+	std::vector<STitleBlockTemplate>    m_templates;
+
 	void UpdateStateLabel();
+	void PopulateList();
 
 public:
 	CDetailsPropertyPage4(CMultiSheetDoc* pDesign = NULL);
@@ -189,6 +195,7 @@ protected:
 
 	afx_msg void OnBrowse();
 	afx_msg void OnUseBuiltin();
+	afx_msg void OnListSelChange();
 	DECLARE_MESSAGE_MAP()
 };
 

@@ -1,10 +1,31 @@
 #pragma once
 
 #include "DPoint.h"
+#include <vector>
 
 class CContext;
 class CDetails;
 struct NSVGimage;
+
+// One enumerated title-block template (an .svg file on disk).
+struct STitleBlockTemplate
+{
+	CString displayName;   // filename stem, plus "(user)" for the per-user folder
+	CString fullPath;
+};
+
+// Enumerates SVG title-block templates from:
+//   1. <exe-dir>/templates/title-blocks/         (installer-bundled)
+//   2. <exe-dir>/../templates/title-blocks/      (dev build fallback)
+//   3. %APPDATA%/TinyCAD/templates/title-blocks/ (user additions)
+class CTitleBlockTemplateStore
+{
+public:
+	static std::vector<STitleBlockTemplate> Enumerate();
+	// Read an .svg file from disk into a CString as UTF-8 text.
+	// Returns false on failure (missing/empty/too-large).
+	static bool ReadFile(const CString& path, CString& outSvg);
+};
 
 // SVG-based title-block renderer.  Parses SVG via NanoSVG (paths only); text
 // elements are picked up by a second walk over the raw XML so CDetails::Resolve
