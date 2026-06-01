@@ -25,7 +25,6 @@
 
 #include "resource.h"
 #include "LibraryStore.h"
-#include "UpdateCheck.h"
 
 //
 //This is a minor command line parser support class
@@ -126,12 +125,6 @@ private:
 	//=====================================================================
 	virtual BOOL InitInstance();
 
-	// Check for updates to TinyCAD
-	CUpdateCheck m_UpdateCheck;
-
-	// There is an update available
-	BOOL		m_UpdateAvailable;
-
 public:
 	CTinyCadApp();
 	virtual ~CTinyCadApp();
@@ -178,9 +171,6 @@ public:
 
 	//{{AFX_MSG(CTinyCadApp)
 	afx_msg void OnAppAbout();
-	afx_msg void OnAppUpdateCheck();
-	afx_msg void OnAppUpdateChecked();
-	afx_msg void OnUpdateUpdateIndicator(CCmdUI* pCmdUI);
 	afx_msg void OnLibLib();
 	afx_msg void OnHelpOpenTinyCADUserManual();
 	afx_msg void OnHelpGototinycadwebsite();

@@ -301,7 +301,6 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="DlgUpdateCheck.cpp" />
     <ClCompile Include="DrawNoteText.cpp" />
     <ClCompile Include="DrawOrigin.cpp" />
     <ClCompile Include="EditDlgNoteText.cpp" />
@@ -1422,7 +1421,6 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="UpdateCheck.cpp" />
     <ClCompile Include="UserColor.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -1505,7 +1503,6 @@
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="colour.h" />
     <ClInclude Include="Context.h" />
-    <ClInclude Include="DlgUpdateCheck.h" />
     <ClInclude Include="EditDlgNoteText.h" />
     <ClInclude Include="DbAttributeSet.h" />
     <ClInclude Include="DbLibNameSet.h" />
@@ -1603,7 +1600,6 @@
     <ClInclude Include="TinyCadRegistry.h" />
     <ClInclude Include="TinyCadSymbolDoc.h" />
     <ClInclude Include="TinyCadView.h" />
-    <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="UserColor.h" />
     <ClInclude Include="WinMgr.h" />
     <ClInclude Include="xml_parse_tag.h" />
