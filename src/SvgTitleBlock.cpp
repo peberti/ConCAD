@@ -469,25 +469,29 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 		}
 	}
 
-	// Collect text content: direct text nodes + nested <tspan> text.
-	CStringA bodyA;
-	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
-	{
-		if (c->type() == rapidxml::node_data)
+	// Collect text content recursively: Inkscape nests text inside
+	// <text><tspan><tspan>Title</tspan></tspan></text>, so a single-level
+	// walk would miss the actual string.
+	struct Collect {
+		static void Walk(rapidxml::xml_node<>* n, CStringA& out)
 		{
-			bodyA += c->value();
-		}
-		else if (c->type() == rapidxml::node_element)
-		{
-			const char* cn = c->name();
-			if (cn && strcmp(cn, "tspan") == 0)
+			if (!n) return;
+			for (rapidxml::xml_node<>* c = n->first_node(); c; c = c->next_sibling())
 			{
-				for (rapidxml::xml_node<>* d = c->first_node(); d; d = d->next_sibling())
-					if (d->type() == rapidxml::node_data && d->value())
-						bodyA += d->value();
+				if (c->type() == rapidxml::node_data)
+				{
+					if (c->value()) out += c->value();
+				}
+				else if (c->type() == rapidxml::node_element)
+				{
+					const char* cn = c->name();
+					if (cn && strcmp(cn, "tspan") == 0) Walk(c, out);
+				}
 			}
 		}
-	}
+	};
+	CStringA bodyA;
+	Collect::Walk(node, bodyA);
 	if (bodyA.IsEmpty())
 	{
 		const char* v = node->value();
