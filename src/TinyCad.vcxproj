@@ -1328,6 +1328,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="StreamMemory.cpp" />
+    <ClCompile Include="SvgTitleBlock.cpp" />
     <ClCompile Include="Symbol.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -1589,6 +1590,8 @@
     <ClInclude Include="StreamClipboard.h" />
     <ClInclude Include="StreamDb.h" />
     <ClInclude Include="StreamMemory.h" />
+    <ClInclude Include="SvgTitleBlock.h" />
+    <ClInclude Include="nanosvg\nanosvg.h" />
     <ClInclude Include="Symbol.h" />
     <ClInclude Include="TextEditDoc.h" />
     <ClInclude Include="TextEditView.h" />
