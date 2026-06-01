@@ -10,6 +10,7 @@
 #include "details.h"
 #include "tinycadregistry.h"
 #include "colour.h"
+#include "SvgTitleBlock.h"
 
 const int CDetails::M_NBOXWIDTH = 400;
 const int CDetails::M_NLINEHEIGHT = 18;
@@ -498,22 +499,32 @@ void CDetails::DisplayBox(CContext& dc, COption& oOption, CString sPathName) con
 	// Do we display the details?
 	if (m_bIsVisible)
 	{
-		// Select the correct pen
-		dc.SelectPen(PS_SOLID, 1, cBLACK);
-
-		// Select the correct font
-		dc.SelectFont(*oOption.GetFont(fTEXT), 3);
-
-		// Draw the box to house it all
+		// Compute the bottom-right title-block rectangle.
 		CDPoint tl = CDPoint(m_szPage.cx - M_NBOXWIDTH - 2, m_szPage.cy - M_NLINEHEIGHT * 9 - 2);
 		CDPoint br = CDPoint(m_szPage.cx - 2, m_szPage.cy - 2);
-
-		// Move if necessary
 		if (m_bHasRulers)
 		{
 			tl -= CDPoint(M_NRULERHEIGHT, M_NRULERHEIGHT);
 			br -= CDPoint(M_NRULERHEIGHT, M_NRULERHEIGHT);
 		}
+
+		// If a user SVG title block is set, render it instead of the built-in
+		// box.  Falls through to the procedural drawing on parse failure.
+		if (!m_sTitleBlockSvg.IsEmpty())
+		{
+			CSvgTitleBlock svg;
+			if (svg.Load(m_sTitleBlockSvg))
+			{
+				svg.Paint(dc, tl, br, *this);
+				return;
+			}
+		}
+
+		// Select the correct pen
+		dc.SelectPen(PS_SOLID, 1, cBLACK);
+
+		// Select the correct font
+		dc.SelectFont(*oOption.GetFont(fTEXT), 3);
 
 		int LineHeight = M_NLINEHEIGHT;
 		int TextSpace = LineHeight / 2;
