@@ -161,28 +161,6 @@ void CXMLWriter::internal_addAttribute(const TCHAR *name, const TCHAR *value)
 //////////////////////////////////////////////////////////////////////
 
 
-// Entity-escape XML special characters in text content so payloads
-// containing '<', '>', or '&' survive a round-trip through the XML
-// reader (which does not implement CDATA sections).
-static CString EscapeXmlText(const TCHAR* data)
-{
-	CString out;
-	if (!data) return out;
-	for (const TCHAR* p = data; *p; ++p)
-	{
-		switch (*p)
-		{
-		case _T('&'):  out += _T("&amp;");  break;
-		case _T('<'):  out += _T("&lt;");   break;
-		case _T('>'):  out += _T("&gt;");   break;
-		case _T('"'):  out += _T("&quot;"); break;
-		case _T('\''): out += _T("&apos;"); break;
-		default:       out += *p;           break;
-		}
-	}
-	return out;
-}
-
 void CXMLWriter::internal_addChildData(const TCHAR *data)
 {
 	// Is there an open tag?
@@ -196,7 +174,11 @@ void CXMLWriter::internal_addChildData(const TCHAR *data)
 		closeOpenTag();
 	}
 	m_child_data = true;
-	SendString(EscapeXmlText(data));
+	// NOTE: callers reach this via the public addChildData<T> template, which
+	// runs the value through makeString() — and makeString() already entity-
+	// escapes '<', '>', '&', '"', and '\''.  Escaping a second time here
+	// would double-encode everything (e.g. '<' -> "&amp;lt;").
+	SendString(data);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@
 #include <vector>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 CSvgTitleBlock::CSvgTitleBlock()
 	: m_image(nullptr)
@@ -177,8 +178,111 @@ void RenderShape(CContext& cdc, const NSVGshape* shape,
 }
 
 //=========================================================================
-// <text> rendering via rapidxml.  We ignore transform inheritance — author
-// title-block <text> with absolute x/y in the viewBox.
+// <text> rendering via rapidxml.
+
+// 2D affine transform.  Column-vector convention: [a c e; b d f; 0 0 1].
+struct Affine
+{
+	double a, b, c, d, e, f;
+	Affine() : a(1), b(0), c(0), d(1), e(0), f(0) {}
+	void Apply(double& x, double& y) const
+	{
+		const double X = a * x + c * y + e;
+		const double Y = b * x + d * y + f;
+		x = X; y = Y;
+	}
+	// Approximate uniform scale for sizing things like fonts/strokes.
+	double UniformScale() const
+	{
+		const double det = a * d - b * c;
+		return sqrt(det >= 0.0 ? det : -det);
+	}
+};
+
+Affine ConcatAffine(const Affine& A, const Affine& B)
+{
+	Affine r;
+	r.a = A.a * B.a + A.c * B.b;
+	r.b = A.b * B.a + A.d * B.b;
+	r.c = A.a * B.c + A.c * B.d;
+	r.d = A.b * B.c + A.d * B.d;
+	r.e = A.a * B.e + A.c * B.f + A.e;
+	r.f = A.b * B.e + A.d * B.f + A.f;
+	return r;
+}
+
+// Parse an SVG transform="..." attribute value.  Supports translate / scale
+// / matrix / rotate, possibly chained.
+Affine ParseTransformAttr(const char* s)
+{
+	Affine result;
+	if (!s) return result;
+	const char* p = s;
+	while (*p)
+	{
+		while (*p == ' ' || *p == ',' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+		if (!*p) break;
+
+		const char* nameStart = p;
+		while ((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') || *p == '_') ++p;
+		if (p == nameStart || *p != '(') break;
+		const size_t nameLen = (size_t)(p - nameStart);
+		++p; // skip '('
+
+		double nums[6] = { 0, 0, 0, 0, 0, 0 };
+		int n = 0;
+		while (*p && *p != ')' && n < 6)
+		{
+			while (*p == ' ' || *p == ',' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+			if (!*p || *p == ')') break;
+			char* eend = nullptr;
+			const double v = strtod(p, &eend);
+			if (eend == p) break;
+			nums[n++] = v;
+			p = eend;
+		}
+		while (*p && *p != ')') ++p;
+		if (*p == ')') ++p;
+
+		char name[16] = { 0 };
+		if (nameLen < sizeof(name)) memcpy(name, nameStart, nameLen);
+
+		Affine t;
+		if (strcmp(name, "translate") == 0)
+		{
+			t.e = nums[0];
+			t.f = (n >= 2) ? nums[1] : 0.0;
+		}
+		else if (strcmp(name, "scale") == 0)
+		{
+			t.a = nums[0];
+			t.d = (n >= 2) ? nums[1] : nums[0];
+		}
+		else if (strcmp(name, "matrix") == 0 && n >= 6)
+		{
+			t.a = nums[0]; t.b = nums[1]; t.c = nums[2];
+			t.d = nums[3]; t.e = nums[4]; t.f = nums[5];
+		}
+		else if (strcmp(name, "rotate") == 0)
+		{
+			const double pi = 3.14159265358979323846;
+			const double rad = nums[0] * pi / 180.0;
+			const double cs = cos(rad), sn = sin(rad);
+			t.a = cs; t.b = sn; t.c = -sn; t.d = cs;
+			if (n >= 3)
+			{
+				const double cx = nums[1], cy = nums[2];
+				Affine tr1; tr1.e = -cx; tr1.f = -cy;
+				Affine tr2; tr2.e =  cx; tr2.f =  cy;
+				t = ConcatAffine(tr2, ConcatAffine(t, tr1));
+			}
+		}
+		// unknown transform name: identity, harmless.
+
+		result = ConcatAffine(result, t);
+	}
+	return result;
+}
 
 COLORREF ParseHexColor(const char* v, COLORREF fallback)
 {
@@ -207,7 +311,8 @@ COLORREF ParseHexColor(const char* v, COLORREF fallback)
 }
 
 void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
-                   const ViewBoxXform& xf, const CDetails& details)
+                   const ViewBoxXform& xf, const CDetails& details,
+                   const Affine& parentTransform)
 {
 	if (!node) return;
 
@@ -262,9 +367,18 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 	CA2T body(bodyA, CP_UTF8);
 	CString text = details.Resolve(CString((LPCTSTR)body));
 
+	// Accumulate this element's own transform, then apply to (x, y) and font.
+	Affine textTransform = parentTransform;
+	if (rapidxml::xml_attribute<>* tr = node->first_attribute("transform"))
+	{
+		textTransform = ConcatAffine(parentTransform, ParseTransformAttr(tr->value()));
+	}
+	textTransform.Apply(x, y);
+	const double textScale = textTransform.UniformScale();
+
 	LOGFONT lf;
 	memset(&lf, 0, sizeof(lf));
-	lf.lfHeight = -(LONG)(fontSize + 0.5);   // negative = "em-height"; CContext applies its own scaling
+	lf.lfHeight = -(LONG)(fontSize * (textScale > 0.0 ? textScale : 1.0) + 0.5);   // negative = "em-height"; CContext applies its own scaling
 	lf.lfWeight = FW_NORMAL;
 	lf.lfCharSet = DEFAULT_CHARSET;
 	lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
@@ -287,17 +401,26 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 }
 
 void RenderTextsRecursive(rapidxml::xml_node<>* node, CContext& dc,
-                          const ViewBoxXform& xf, const CDetails& details)
+                          const ViewBoxXform& xf, const CDetails& details,
+                          const Affine& parentTransform)
 {
 	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
 	{
 		if (c->type() != rapidxml::node_element) continue;
 		const char* n = c->name();
 		if (!n) continue;
+
+		// Compose the child's effective transform (parent * own).
+		Affine childTransform = parentTransform;
+		if (rapidxml::xml_attribute<>* tr = c->first_attribute("transform"))
+		{
+			childTransform = ConcatAffine(parentTransform, ParseTransformAttr(tr->value()));
+		}
+
 		if (strcmp(n, "text") == 0)
-			RenderOneText(c, dc, xf, details);
+			RenderOneText(c, dc, xf, details, parentTransform);
 		else
-			RenderTextsRecursive(c, dc, xf, details);
+			RenderTextsRecursive(c, dc, xf, details, childTransform);
 	}
 }
 
@@ -326,7 +449,7 @@ void CSvgTitleBlock::Paint(CContext& dc, CDPoint tl, CDPoint br,
 		rapidxml::xml_document<> doc;
 		doc.parse<rapidxml::parse_default>(buf.data());
 		rapidxml::xml_node<>* root = doc.first_node("svg");
-		if (root) RenderTextsRecursive(root, dc, xf, details);
+		if (root) RenderTextsRecursive(root, dc, xf, details, Affine());
 	}
 	catch (const rapidxml::parse_error&)
 	{
