@@ -34,6 +34,14 @@ void CSvgTitleBlock::Clear()
 	m_svgUtf8.Empty();
 }
 
+bool CSvgTitleBlock::GetNaturalSizePixels(double& width_px, double& height_px) const
+{
+	if (!m_image) { width_px = height_px = 0.0; return false; }
+	width_px  = (double)m_image->width;
+	height_px = (double)m_image->height;
+	return (width_px > 0.0 && height_px > 0.0);
+}
+
 bool CSvgTitleBlock::Load(const CString& svgText)
 {
 	Clear();
@@ -374,7 +382,9 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 		textTransform = ConcatAffine(parentTransform, ParseTransformAttr(tr->value()));
 	}
 	textTransform.Apply(x, y);
-	const double textScale = textTransform.UniformScale();
+	// textTransform maps viewBox -> pixel-space; xf.scale then maps pixel-space
+	// to target CAD units.  Compose both for visually-correct font sizing.
+	const double textScale = textTransform.UniformScale() * xf.scale;
 
 	LOGFONT lf;
 	memset(&lf, 0, sizeof(lf));
@@ -449,7 +459,42 @@ void CSvgTitleBlock::Paint(CContext& dc, CDPoint tl, CDPoint br,
 		rapidxml::xml_document<> doc;
 		doc.parse<rapidxml::parse_default>(buf.data());
 		rapidxml::xml_node<>* root = doc.first_node("svg");
-		if (root) RenderTextsRecursive(root, dc, xf, details, Affine());
+		if (root)
+		{
+			// NanoSVG bakes the viewBox->pixel transform into shape points,
+			// but <text> x/y attributes are in raw viewBox user units.  Build
+			// the same viewBox->pixel transform here and seed the text walk's
+			// parent transform with it so text positions match shape positions.
+			double vbX = 0.0, vbY = 0.0;
+			double vbW = (double)m_image->width;
+			double vbH = (double)m_image->height;
+			if (rapidxml::xml_attribute<>* a = root->first_attribute("viewBox"))
+			{
+				double values[4] = { 0, 0, 0, 0 };
+				const char* p = a->value();
+				int n = 0;
+				while (p && *p && n < 4)
+				{
+					while (*p == ' ' || *p == ',' || *p == '\t') ++p;
+					char* eend = nullptr;
+					double v = strtod(p, &eend);
+					if (eend == p) break;
+					values[n++] = v;
+					p = eend;
+				}
+				if (n == 4 && values[2] > 0.0 && values[3] > 0.0)
+				{
+					vbX = values[0]; vbY = values[1];
+					vbW = values[2]; vbH = values[3];
+				}
+			}
+			Affine viewBoxToPixel;
+			viewBoxToPixel.a = (vbW > 0.0) ? (double)m_image->width  / vbW : 1.0;
+			viewBoxToPixel.d = (vbH > 0.0) ? (double)m_image->height / vbH : 1.0;
+			viewBoxToPixel.e = -vbX * viewBoxToPixel.a;
+			viewBoxToPixel.f = -vbY * viewBoxToPixel.d;
+			RenderTextsRecursive(root, dc, xf, details, viewBoxToPixel);
+		}
 	}
 	catch (const rapidxml::parse_error&)
 	{

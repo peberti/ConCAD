@@ -20,6 +20,10 @@ public:
 
 	bool IsLoaded() const { return m_image != nullptr; }
 
+	// Natural SVG dimensions in pixels (96 dpi).  False if not loaded or
+	// the SVG declared zero-area.  Callers convert to internal CAD units.
+	bool GetNaturalSizePixels(double& width_px, double& height_px) const;
+
 	void Clear();
 
 	// Render the parsed SVG into the rectangle (tl..br), preserving the

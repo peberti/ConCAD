@@ -515,7 +515,28 @@ void CDetails::DisplayBox(CContext& dc, COption& oOption, CString sPathName) con
 			CSvgTitleBlock svg;
 			if (svg.Load(m_sTitleBlockSvg))
 			{
-				svg.Paint(dc, tl, br, *this);
+				double w_px = 0.0, h_px = 0.0;
+				CDPoint svgTl = tl, svgBr = br;
+				if (svg.GetNaturalSizePixels(w_px, h_px))
+				{
+					// NanoSVG returns dimensions at 96 dpi; convert to the
+					// document's internal CAD units (which run at
+					// M_NPIXELSPERMM pixels per millimetre).
+					const double kPxToCad = (double)M_NPIXELSPERMM * 25.4 / 96.0;
+					const double svgW = w_px * h_px > 0.0 ? w_px * kPxToCad : (br.x - tl.x);
+					const double svgH = w_px * h_px > 0.0 ? h_px * kPxToCad : (br.y - tl.y);
+					// Anchor to the bottom-right corner of the page (where a
+					// title block traditionally lives), with the same 2-unit
+					// margin and ruler offset used by the procedural rect.
+					svgBr = CDPoint(m_szPage.cx - 2, m_szPage.cy - 2);
+					svgTl = CDPoint(svgBr.x - svgW, svgBr.y - svgH);
+					if (m_bHasRulers)
+					{
+						svgTl -= CDPoint(M_NRULERHEIGHT, M_NRULERHEIGHT);
+						svgBr -= CDPoint(M_NRULERHEIGHT, M_NRULERHEIGHT);
+					}
+				}
+				svg.Paint(dc, svgTl, svgBr, *this);
 				return;
 			}
 		}
