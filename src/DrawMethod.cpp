@@ -47,6 +47,8 @@ CDrawMethod::CDrawMethod(CTinyCadDoc *pDesign, hSYMBOL symbol, int new_rotation)
 	can_scale = FALSE;
 	show_power = FALSE;
 	rotate = (BYTE) new_rotation;
+	m_use_connector_color = FALSE;
+	m_connector_color = RGB(0, 0, 0);
 
 	m_Symbol = symbol;
 
@@ -332,6 +334,8 @@ CDrawMethod::CDrawMethod(CTinyCadDoc *pDesign) :
 {
 	m_Symbol = 0;
 	rotate = 0;
+	m_use_connector_color = FALSE;
+	m_connector_color = RGB(0, 0, 0);
 
 	m_point_a = m_point_b = CDPoint(0, 0);
 
@@ -401,6 +405,12 @@ BOOL CDrawMethod::IsNoSymbol()
 CDesignFileSymbol *CDrawMethod::GetSymbolData()
 {
 	return m_pDesign->GetOptions()->GetSymbol(m_Symbol);
+}
+
+bool CDrawMethod::IsConnector()
+{
+	CDesignFileSymbol *sym = GetSymbolData();
+	return sym != NULL && sym->is_connector != FALSE;
 }
 
 // Get the reference value
@@ -743,6 +753,12 @@ void CDrawMethod::SaveXML(CXMLWriter &xml)
 	xml.addAttribute(_T("scale_x"), scaling_x);
 	xml.addAttribute(_T("scale_y"), scaling_y);
 
+	if (m_use_connector_color)
+	{
+		xml.addAttribute(_T("use_color"), (int)1);
+		xml.addAttribute(_T("color"), (int)m_connector_color);
+	}
+
 	// Now write out the fields
 	for (unsigned int i = 0; i < m_fields.size(); i++)
 	{
@@ -781,6 +797,19 @@ void CDrawMethod::LoadXML(CXMLReader &xml)
 	xml.getAttribute(_T("show_power"), show_power);
 	xml.getAttribute(_T("scale_x"), scaling_x);
 	xml.getAttribute(_T("scale_y"), scaling_y);
+
+	int useColor = 0;
+	if (xml.getAttribute(_T("use_color"), useColor) && useColor != 0)
+	{
+		m_use_connector_color = TRUE;
+		int color = 0;
+		xml.getAttribute(_T("color"), color);
+		m_connector_color = (COLORREF)color;
+	}
+	else
+	{
+		m_use_connector_color = FALSE;
+	}
 
 	xml.intoTag();
 	int i = 0;
@@ -1372,6 +1401,17 @@ void CDrawMethod::Paint(CContext &dc, paint_options options)
 	// (that'll have to do until I think of a better method)
 	CDPoint oldpos = dc.SetTRM(m_point_a, tr, rotate);
 
+	// Apply a per-instance color override for connector symbols.
+	// We honor the override regardless of the connector flag so that
+	// previously coloured instances keep their color even if the
+	// library flag is later toggled.
+	BOOL was_forced = dc.GetForceColor();
+	COLORREF prev_forced = dc.GetForcedColor();
+	if (m_use_connector_color && options == draw_normal)
+	{
+		dc.SetForcedColor(TRUE, m_connector_color);
+	}
+
 	drawingIterator it = method.begin();
 	drawingIterator itEnd = method.end();
 	while (it != itEnd)
@@ -1379,6 +1419,8 @@ void CDrawMethod::Paint(CContext &dc, paint_options options)
 		(*it)->Paint(dc, options);
 		++it;
 	}
+
+	dc.SetForcedColor(was_forced, prev_forced);
 
 	dc.SetScaling(rotate, old_scaling_x, old_scaling_y);
 	dc.EndTRM(oldpos);

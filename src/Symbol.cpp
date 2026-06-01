@@ -98,6 +98,7 @@ CSymbolRecord::CSymbolRecord()
 	ref_type = default_show;
 	fields_loaded = FALSE;
 	NameID = (DWORD) -1;
+	is_connector = FALSE;
 }
 
 // Save this symbol into an XML file
@@ -114,6 +115,11 @@ void CSymbolRecord::SaveXML(CXMLWriter &xml)
 	xml.closeTag();
 
 	xml.addTag(_T("DESCRIPTION"), description);
+
+	if (is_connector)
+	{
+		xml.addTag(_T("CONNECTOR"), (int)1);
+	}
 
 	for (unsigned int i = 0; i < fields.size(); i++)
 	{
@@ -144,6 +150,12 @@ void CSymbolRecord::LoadXML(CXMLReader &xml)
 		else if (tag_name == _T("DESCRIPTION"))
 		{
 			xml.getChildData(description);
+		}
+		else if (tag_name == _T("CONNECTOR"))
+		{
+			int v = 0;
+			xml.getChildData(v);
+			is_connector = (v != 0);
 		}
 		else if (tag_name == _T("FIELD"))
 		{

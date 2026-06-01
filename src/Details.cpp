@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -35,6 +35,8 @@ void CDetails::Init()
 	m_bHasRulers = CTinyCadRegistry::GetBool("ShowDesignRulers", false);
 	m_iHorizRulerSize = CTinyCadRegistry::GetInt("HorizRulerSize", 7);
 	m_iVertRulerSize = CTinyCadRegistry::GetInt("VertRulerSize", 5);
+	m_iSheetNum = 0;
+	m_iSheetTotal = 0;
 
 	Reset();
 }
@@ -48,6 +50,8 @@ void CDetails::Reset()
 	m_sDocNo = "";
 	m_sOrg = "";
 	m_sSheets = "1 of 1";
+	m_oUserTokens.clear();
+	m_sTitleBlockSvg = "";
 	m_szPage = CTinyCadRegistry::GetPageSize();
 }
 //-------------------------------------------------------------------------
@@ -176,6 +180,121 @@ void CDetails::SetSheets(CString sSheets)
 	m_sSheets = sSheets;
 }
 //-------------------------------------------------------------------------
+const CDetailsTokenMap& CDetails::GetUserTokens() const
+{
+	return m_oUserTokens;
+}
+//-------------------------------------------------------------------------
+void CDetails::SetUserTokens(const CDetailsTokenMap& tokens)
+{
+	m_oUserTokens = tokens;
+}
+//-------------------------------------------------------------------------
+void CDetails::SetSheetContext(int num, int total)
+{
+	m_iSheetNum = num;
+	m_iSheetTotal = total;
+	if (num > 0 && total > 0)
+	{
+		m_sSheets.Format(_T("%d of %d"), num, total);
+	}
+}
+//-------------------------------------------------------------------------
+CString CDetails::GetSheetsDisplay() const
+{
+	if (m_iSheetNum > 0 && m_iSheetTotal > 0)
+	{
+		CString s;
+		s.Format(_T("%d of %d"), m_iSheetNum, m_iSheetTotal);
+		return s;
+	}
+	return m_sSheets;
+}
+//-------------------------------------------------------------------------
+void CDetails::CopyDesignFields(const CDetails& src)
+{
+	m_sTitle           = src.m_sTitle;
+	m_sAuthor          = src.m_sAuthor;
+	m_sRevision        = src.m_sRevision;
+	m_sDocNo           = src.m_sDocNo;
+	m_sOrg             = src.m_sOrg;
+	m_szLastChange     = src.m_szLastChange;
+	m_oUserTokens      = src.m_oUserTokens;
+	m_sTitleBlockSvg   = src.m_sTitleBlockSvg;
+}
+//-------------------------------------------------------------------------
+// Resolve {token} occurrences in sInput.  User-defined tokens override
+// built-ins (Title, Author, Revision, DocNo, Organisation, Sheets, Date).
+// Substitutions are re-applied so a token value can reference other tokens,
+// up to a fixed expansion depth which protects against cycles.
+CString CDetails::Resolve(const CString& sInput) const
+{
+	CString sResult = sInput;
+	const int kMaxPasses = 8;
+
+	for (int pass = 0; pass < kMaxPasses; ++pass)
+	{
+		bool bChanged = false;
+		CString sNext;
+		int i = 0;
+		const int len = sResult.GetLength();
+
+		while (i < len)
+		{
+			TCHAR c = sResult[i];
+			if (c == _T('{'))
+			{
+				int j = i + 1;
+				while (j < len && sResult[j] != _T('}'))
+				{
+					++j;
+				}
+				if (j < len)
+				{
+					CString sName = sResult.Mid(i + 1, j - i - 1);
+					sName.Trim();
+					CString sValue;
+					bool bResolved = false;
+
+					CDetailsTokenMap::const_iterator it = m_oUserTokens.find(sName);
+					if (it != m_oUserTokens.end())
+					{
+						sValue = it->second;
+						bResolved = true;
+					}
+					else if (sName.CompareNoCase(_T("Title")) == 0)        { sValue = m_sTitle;        bResolved = true; }
+					else if (sName.CompareNoCase(_T("Author")) == 0)       { sValue = m_sAuthor;       bResolved = true; }
+					else if (sName.CompareNoCase(_T("Revision")) == 0)     { sValue = m_sRevision;     bResolved = true; }
+					else if (sName.CompareNoCase(_T("DocNo")) == 0 ||
+					         sName.CompareNoCase(_T("Document")) == 0)     { sValue = m_sDocNo;        bResolved = true; }
+					else if (sName.CompareNoCase(_T("Organisation")) == 0 ||
+					         sName.CompareNoCase(_T("Org")) == 0)          { sValue = m_sOrg;          bResolved = true; }
+					else if (sName.CompareNoCase(_T("Sheets")) == 0)       { sValue = GetSheetsDisplay(); bResolved = true; }
+					else if (sName.CompareNoCase(_T("Date")) == 0)         { sValue = m_szLastChange;  bResolved = true; }
+
+					if (bResolved)
+					{
+						sNext += sValue;
+						bChanged = true;
+						i = j + 1;
+						continue;
+					}
+				}
+			}
+			sNext += c;
+			++i;
+		}
+
+		sResult = sNext;
+		if (!bChanged)
+		{
+			break;
+		}
+	}
+
+	return sResult;
+}
+//-------------------------------------------------------------------------
 //-- Set the page boundries from a CPoint
 void CDetails::SetPageBounds(CPoint ptBounds)
 {
@@ -294,6 +413,22 @@ void CDetails::ReadXML(CXMLReader& xml, TransformSnap& oSnap)
 			xml.getChildData(sLastChange);
 			SetLastChange(sLastChange);
 		}
+		else if (sName == _T("USERTOKEN"))
+		{
+			CString sTokenName;
+			CString sTokenValue;
+			xml.getAttribute(_T("name"), sTokenName);
+			xml.getChildData(sTokenValue);
+			sTokenName.Trim();
+			if (!sTokenName.IsEmpty())
+			{
+				m_oUserTokens[sTokenName] = sTokenValue;
+			}
+		}
+		else if (sName == _T("TITLEBLOCK_SVG"))
+		{
+			xml.getChildData(m_sTitleBlockSvg);
+		}
 		else if (sName == _T("GRID"))
 		{
 			oSnap.LoadXML(xml);
@@ -333,6 +468,21 @@ void CDetails::WriteXML(CXMLWriter& xml) const
 	xml.addTag(_T("SHEETS"), m_sSheets);
 	xml.addTag(_T("SHOWS"), nShows);
 	xml.addTag(_T("DATE"), m_szLastChange);
+
+	for (CDetailsTokenMap::const_iterator it = m_oUserTokens.begin(); it != m_oUserTokens.end(); ++it)
+	{
+		xml.addTag(_T("USERTOKEN"));
+		xml.addAttribute(_T("name"), it->first);
+		xml.addChildData(it->second);
+		xml.closeTag();
+	}
+
+	if (!m_sTitleBlockSvg.IsEmpty())
+	{
+		xml.addTag(_T("TITLEBLOCK_SVG"));
+		xml.addChildData(m_sTitleBlockSvg);
+		xml.closeTag();
+	}
 }
 //-------------------------------------------------------------------------
 // Draw the details box
@@ -408,19 +558,19 @@ void CDetails::DisplayBox(CContext& dc, COption& oOption, CString sPathName) con
 		dc.TextOut(MiddleRow + TextSpace, tl.y + LineHeight * 8, _T("Revision"));
 
 		// Add the actual data!
-		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 2, m_sTitle);
-		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 4, m_sAuthor);
-		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 5, m_sOrg);
+		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 2, Resolve(m_sTitle));
+		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 4, Resolve(m_sAuthor));
+		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 5, Resolve(m_sOrg));
 
 
 		// Display the file path name
 		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 7, static_cast<int> (MiddleRow - tl.x - TextSpace * 4), sPathName);
 
 
-		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 9, m_sDocNo);
-		dc.TextOut(MiddleRow + TextSpace * 2, tl.y + LineHeight * 7, m_sSheets);
-		dc.TextOut(tl.x + BottomRow + TextSpace * 2, tl.y + LineHeight * 9, GetLastChange());
-		dc.TextOut(MiddleRow + TextSpace * 2, tl.y + LineHeight * 9, m_sRevision);
+		dc.TextOut(tl.x + TextSpace * 2, tl.y + LineHeight * 9, Resolve(m_sDocNo));
+		dc.TextOut(MiddleRow + TextSpace * 2, tl.y + LineHeight * 7, GetSheetsDisplay());
+		dc.TextOut(tl.x + BottomRow + TextSpace * 2, tl.y + LineHeight * 9, Resolve(GetLastChange()));
+		dc.TextOut(MiddleRow + TextSpace * 2, tl.y + LineHeight * 9, Resolve(m_sRevision));
 
 	}
 }

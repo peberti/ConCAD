@@ -143,6 +143,7 @@ void CDlgUpdateBox::InitFromRecord()
 	CSymbolRecord &r = getCurrentRecord();
 
 	SetDlgItemText(UPDATE_DESCRIPTION, r.description);
+	CheckDlgButton(IDC_IS_CONNECTOR, r.is_connector ? BST_CHECKED : BST_UNCHECKED);
 
 	m_list.DeleteAllItems();
 
@@ -243,6 +244,8 @@ void CDlgUpdateBox::UpdateToRecord()
 	f = GetSymbolField(1);
 	r.name = f.field_default;
 	r.name_type = f.field_type;
+
+	r.is_connector = (IsDlgButtonChecked(IDC_IS_CONNECTOR) == BST_CHECKED);
 
 	// Get the orientation
 	m_NewSymbol->orientation = m_Orientation.GetCurSel();

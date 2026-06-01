@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -89,6 +89,22 @@ void CTinyCadDoc::SaveXML(CXMLWriter &xml, drawingCollection &drawing, BOOL Deta
 			xml.addTag(_T("NAME"));
 			xml.addChildData(m_sheet_name);
 			xml.closeTag();
+
+			// Refresh the auto "Sheets N of M" value just before serializing.
+			if (m_pParent != NULL)
+			{
+				int total = m_pParent->GetNumberOfSheets();
+				int num = 0;
+				for (int i = 0; i < total; ++i)
+				{
+					if (m_pParent->GetSheet(i) == this)
+					{
+						num = i + 1;
+						break;
+					}
+				}
+				m_oDetails.SetSheetContext(num, total);
+			}
 
 			xml.addTag(_T("DETAILS"));
 			m_oDetails.WriteXML(xml);
@@ -556,6 +572,10 @@ BOOL CTinyCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &
 			else if (name == CDrawLine::GetXMLTag(xWire))
 			{
 				obj = new CDrawLine(this, xWire);
+			}
+			else if (name == CDrawLine::GetXMLTag(xCable))
+			{
+				obj = new CDrawLine(this, xCable);
 			}
 			else if (name == CDrawLine::GetXMLTag(xLineEx2))
 			{

@@ -297,7 +297,7 @@ void CDragUtils::AddWireToCollection(dragWire n)
 		 n.m_MoveB, n.m_Attached_LineB );
 		 */
 		// Now add any attached wires to this object...
-		if (n.m_Object->GetType() == xWire || n.m_Object->GetType() == xBus)
+		if (n.m_Object->GetType() == xWire || n.m_Object->GetType() == xBus || n.m_Object->GetType() == xCable)
 		{
 			AddAttachedObjects(n.m_Object, n.m_MoveA, n.m_MoveB);
 		}
@@ -340,8 +340,8 @@ void CDragUtils::AddWiresAtPoint(CDPoint hs)
 		// Only search unselected objects
 		if (!m_pDesign->IsSelected(pointer))
 		{
-			if ((pointer->GetType()==xWire || pointer->GetType()==xBus) 
-				&& (pointer->m_point_a == hs || pointer->m_point_b==hs)) 
+			if ((pointer->GetType()==xWire || pointer->GetType()==xBus || pointer->GetType()==xCable)
+				&& (pointer->m_point_a == hs || pointer->m_point_b==hs))
 			{
 				// Build the undo list
 				m_pDesign->MarkChangeForUndo(pointer);
@@ -375,6 +375,7 @@ void CDragUtils::AddAttachedObjects(CDrawingObject *wire, BOOL wire_move_a, BOOL
 		{
 			case xBus:
 			case xWire:
+			case xCable:
 				// Is this wire attached at either end to this
 				// wire?
 				double distance_along_a = 0;
@@ -520,7 +521,7 @@ void CDragUtils::Begin()
 		MoveB = FALSE;
 
 		// Is this a wire which needs to be draged?
-		if (obj->GetType() == xWire || obj->GetType() == xBus)
+		if (obj->GetType() == xWire || obj->GetType() == xBus || obj->GetType() == xCable)
 		{
 			if (   obj->m_point_a.x>=min(m_a.x,m_b.x) && obj->m_point_a.x<=max(m_a.x,m_b.x)
 			    && obj->m_point_a.y>=min(m_a.y,m_b.y) && obj->m_point_a.y<=max(m_a.y,m_b.y) )

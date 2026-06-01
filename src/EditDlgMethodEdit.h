@@ -95,6 +95,7 @@ protected:
 	afx_msg void OnDelete();
 	//}}AFX_MSG
 	afx_msg void OnKillfocusEdit();
+	afx_msg void OnPickColor();
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedShowpower();

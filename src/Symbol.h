@@ -104,6 +104,7 @@ public:
 	SymbolFieldType name_type; // Do we show the name by default?
 	SymbolFieldType ref_type; // Do we show the reference by default?
 	DWORD NameID; // The ID of this name when stored in a database
+	BOOL is_connector; // Symbol is a connector (placed instances get an editable color)
 
 	void SaveXML(CXMLWriter &xml); // Save this symbol into an archive
 	void LoadXML(CXMLReader &xml); // Load this symbol from an archive

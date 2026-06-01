@@ -28,6 +28,54 @@
 
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage1, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage2, CPropertyPage)
+IMPLEMENT_DYNCREATE(CDetailsPropertyPage3, CPropertyPage)
+
+// Reserved token names (built-ins exposed by CDetails::Resolve)
+static bool IsReservedTokenName(const CString& sName)
+{
+	static const TCHAR* const reserved[] = {
+		_T("Title"), _T("Author"), _T("Revision"),
+		_T("DocNo"), _T("Document"),
+		_T("Organisation"), _T("Org"),
+		_T("Sheets"), _T("Date"),
+	};
+	for (size_t i = 0; i < sizeof(reserved) / sizeof(reserved[0]); ++i)
+	{
+		if (sName.CompareNoCase(reserved[i]) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool IsValidTokenName(const CString& sName)
+{
+	const int len = sName.GetLength();
+	if (len == 0)
+	{
+		return false;
+	}
+	for (int i = 0; i < len; ++i)
+	{
+		TCHAR c = sName[i];
+		bool ok = (c >= _T('A') && c <= _T('Z'))
+		       || (c >= _T('a') && c <= _T('z'))
+		       || (c >= _T('0') && c <= _T('9'))
+		       || c == _T('_');
+		if (!ok)
+		{
+			return false;
+		}
+	}
+	// First char cannot be a digit
+	TCHAR first = sName[0];
+	if (first >= _T('0') && first <= _T('9'))
+	{
+		return false;
+	}
+	return true;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage1 property page
@@ -114,14 +162,28 @@ BOOL CDetailsPropertyPage1::OnApply()
 {
 	UpdateData(TRUE);
 
-	m_pDesign->GetCurrentSheet()->GetDetails().SetVisible(m_bIsVisible == TRUE);
-	m_pDesign->GetCurrentSheet()->GetDetails().SetTitle(m_sTitle);
-	m_pDesign->GetCurrentSheet()->GetDetails().SetAuthor(m_sAuthor);
-	m_pDesign->GetCurrentSheet()->GetDetails().SetRevision(m_sRevision);
-	m_pDesign->GetCurrentSheet()->GetDetails().SetDocumentNumber(m_sDoc);
-	m_pDesign->GetCurrentSheet()->GetDetails().SetOrganisation(m_sOrg);
-	m_pDesign->GetCurrentSheet()->GetDetails().SetSheets(m_sSheets);
-	m_pDesign->GetCurrentSheet()->GetDetails().SetLastChange(m_sDate);
+	CDetails& current = m_pDesign->GetCurrentSheet()->GetDetails();
+	current.SetVisible(m_bIsVisible == TRUE);
+	current.SetTitle(m_sTitle);
+	current.SetAuthor(m_sAuthor);
+	current.SetRevision(m_sRevision);
+	current.SetDocumentNumber(m_sDoc);
+	current.SetOrganisation(m_sOrg);
+	current.SetLastChange(m_sDate);
+	// Note: m_sSheets is NOT written back — the title block's "N of M" is
+	// computed automatically from the multi-doc sheet count.
+
+	// Propagate the design-level fields to every other sheet so all sheets
+	// share the same title-block content.
+	int total = m_pDesign->GetNumberOfSheets();
+	for (int i = 0; i < total; ++i)
+	{
+		CTinyCadDoc* pSheet = m_pDesign->GetSheet(i);
+		if (pSheet != NULL && pSheet != m_pDesign->GetCurrentSheet())
+		{
+			pSheet->GetDetails().CopyDesignFields(current);
+		}
+	}
 
 	// Force the modified flag on ::CDocument
 	m_pDesign->GetCurrentSheet()->GetParent()->SetModifiedFlag();
@@ -141,9 +203,35 @@ BOOL CDetailsPropertyPage1::OnInitDialog()
 	m_sRevision = m_pDesign->GetCurrentSheet()->GetDetails().GetRevision();
 	m_sDoc = m_pDesign->GetCurrentSheet()->GetDetails().GetDocumentNumber();
 	m_sOrg = m_pDesign->GetCurrentSheet()->GetDetails().GetOrganisation();
-	m_sSheets = m_pDesign->GetCurrentSheet()->GetDetails().GetSheets();
+
+	// Sheets field is auto-computed "N of M" from the multi-doc sheet count.
+	int total = m_pDesign->GetNumberOfSheets();
+	int num = 0;
+	for (int i = 0; i < total; ++i)
+	{
+		if (m_pDesign->GetSheet(i) == m_pDesign->GetCurrentSheet())
+		{
+			num = i + 1;
+			break;
+		}
+	}
+	if (num > 0 && total > 0)
+	{
+		m_sSheets.Format(_T("%d of %d"), num, total);
+	}
+	else
+	{
+		m_sSheets = m_pDesign->GetCurrentSheet()->GetDetails().GetSheets();
+	}
 
 	UpdateData(FALSE);
+
+	// Sheets field is read-only — it's derived from the sheet count.
+	CWnd* pSheetsCtrl = GetDlgItem(DESIGNBOX_SHEET);
+	if (pSheetsCtrl != NULL)
+	{
+		pSheetsCtrl->EnableWindow(FALSE);
+	}
 
 	return TRUE; // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -184,4 +272,252 @@ void CDetailsPropertyPage2::OnShowRulers()
 	UpdateData(TRUE);
 	m_horiz_enable.EnableWindow(m_bHasRulers);
 	m_vert_enable.EnableWindow(m_bHasRulers);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CDetailsPropertyPage3 - Variables
+
+CDetailsPropertyPage3::CDetailsPropertyPage3(CMultiSheetDoc* pDesign) :
+	CPropertyPage(CDetailsPropertyPage3::IDD)
+{
+	m_pDesign = pDesign;
+	m_bDirty = false;
+	if (m_pDesign != NULL)
+	{
+		m_oTokens = m_pDesign->GetCurrentSheet()->GetDetails().GetUserTokens();
+	}
+}
+
+CDetailsPropertyPage3::~CDetailsPropertyPage3()
+{
+}
+
+void CDetailsPropertyPage3::DoDataExchange(CDataExchange* pDX)
+{
+	CPropertyPage::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_TOKENS_LIST, m_wndList);
+}
+
+BEGIN_MESSAGE_MAP(CDetailsPropertyPage3, CPropertyPage)
+	ON_BN_CLICKED(IDC_TOKEN_ADD, OnAdd)
+	ON_BN_CLICKED(IDC_TOKEN_EDIT, OnEdit)
+	ON_BN_CLICKED(IDC_TOKEN_REMOVE, OnRemove)
+	ON_NOTIFY(NM_DBLCLK, IDC_TOKENS_LIST, OnDoubleClickList)
+END_MESSAGE_MAP()
+
+BOOL CDetailsPropertyPage3::OnInitDialog()
+{
+	CPropertyPage::OnInitDialog();
+
+	m_wndList.SetExtendedStyle(m_wndList.GetExtendedStyle()
+		| LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+	CRect rcList;
+	m_wndList.GetClientRect(&rcList);
+	int nameCol = max(80, rcList.Width() / 3);
+	m_wndList.InsertColumn(0, _T("Name"), LVCFMT_LEFT, nameCol);
+	m_wndList.InsertColumn(1, _T("Value"), LVCFMT_LEFT, rcList.Width() - nameCol - 4);
+
+	RebuildList();
+
+	return TRUE;
+}
+
+void CDetailsPropertyPage3::RebuildList(int selectIndex)
+{
+	m_wndList.DeleteAllItems();
+
+	int row = 0;
+	for (CDetailsTokenMap::const_iterator it = m_oTokens.begin(); it != m_oTokens.end(); ++it, ++row)
+	{
+		m_wndList.InsertItem(row, it->first);
+		m_wndList.SetItemText(row, 1, it->second);
+	}
+
+	if (selectIndex >= 0 && selectIndex < m_wndList.GetItemCount())
+	{
+		m_wndList.SetItemState(selectIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		m_wndList.EnsureVisible(selectIndex, FALSE);
+	}
+}
+
+bool CDetailsPropertyPage3::GetSelectedToken(CString& sName) const
+{
+	POSITION pos = m_wndList.GetFirstSelectedItemPosition();
+	if (pos == NULL)
+	{
+		return false;
+	}
+	int idx = m_wndList.GetNextSelectedItem(pos);
+	sName = m_wndList.GetItemText(idx, 0);
+	return !sName.IsEmpty();
+}
+
+void CDetailsPropertyPage3::OnAdd()
+{
+	CEditTokenDlg dlg(this);
+	dlg.m_pExistingTokens = &m_oTokens;
+	if (dlg.DoModal() == IDOK)
+	{
+		m_oTokens[dlg.m_sName] = dlg.m_sValue;
+		int target = -1, row = 0;
+		for (CDetailsTokenMap::const_iterator it = m_oTokens.begin(); it != m_oTokens.end(); ++it, ++row)
+		{
+			if (it->first.CompareNoCase(dlg.m_sName) == 0)
+			{
+				target = row;
+				break;
+			}
+		}
+		RebuildList(target);
+		m_bDirty = true;
+		SetModified(TRUE);
+	}
+}
+
+void CDetailsPropertyPage3::OnEdit()
+{
+	CString sName;
+	if (!GetSelectedToken(sName))
+	{
+		return;
+	}
+
+	CDetailsTokenMap::iterator it = m_oTokens.find(sName);
+	if (it == m_oTokens.end())
+	{
+		return;
+	}
+
+	CEditTokenDlg dlg(this);
+	dlg.m_sName = it->first;
+	dlg.m_sValue = it->second;
+	dlg.m_sOriginalName = it->first;
+	dlg.m_pExistingTokens = &m_oTokens;
+
+	if (dlg.DoModal() == IDOK)
+	{
+		// If renamed, drop the old key first.
+		if (dlg.m_sName.CompareNoCase(dlg.m_sOriginalName) != 0)
+		{
+			m_oTokens.erase(it);
+		}
+		m_oTokens[dlg.m_sName] = dlg.m_sValue;
+
+		int target = -1, row = 0;
+		for (CDetailsTokenMap::const_iterator it2 = m_oTokens.begin(); it2 != m_oTokens.end(); ++it2, ++row)
+		{
+			if (it2->first.CompareNoCase(dlg.m_sName) == 0)
+			{
+				target = row;
+				break;
+			}
+		}
+		RebuildList(target);
+		m_bDirty = true;
+		SetModified(TRUE);
+	}
+}
+
+void CDetailsPropertyPage3::OnRemove()
+{
+	CString sName;
+	if (!GetSelectedToken(sName))
+	{
+		return;
+	}
+
+	CDetailsTokenMap::iterator it = m_oTokens.find(sName);
+	if (it != m_oTokens.end())
+	{
+		int prior = -1, row = 0;
+		for (CDetailsTokenMap::const_iterator it2 = m_oTokens.begin(); it2 != it; ++it2, ++row)
+		{
+			prior = row;
+		}
+		m_oTokens.erase(it);
+		int sel = prior >= 0 ? prior : (m_oTokens.empty() ? -1 : 0);
+		RebuildList(sel);
+		m_bDirty = true;
+		SetModified(TRUE);
+	}
+}
+
+void CDetailsPropertyPage3::OnDoubleClickList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+{
+	OnEdit();
+	*pResult = 0;
+}
+
+BOOL CDetailsPropertyPage3::OnApply()
+{
+	if (m_bDirty)
+	{
+		// Apply tokens to every sheet so all sheets share the same set.
+		int total = m_pDesign->GetNumberOfSheets();
+		for (int i = 0; i < total; ++i)
+		{
+			CTinyCadDoc* pSheet = m_pDesign->GetSheet(i);
+			if (pSheet != NULL)
+			{
+				pSheet->GetDetails().SetUserTokens(m_oTokens);
+			}
+		}
+		m_pDesign->GetCurrentSheet()->GetParent()->SetModifiedFlag();
+	}
+	return CPropertyPage::OnApply();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CEditTokenDlg
+
+CEditTokenDlg::CEditTokenDlg(CWnd* pParent) :
+	CDialog(CEditTokenDlg::IDD, pParent),
+	m_pExistingTokens(NULL)
+{
+}
+
+void CEditTokenDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_TOKEN_NAME, m_sName);
+	DDX_Text(pDX, IDC_TOKEN_VALUE, m_sValue);
+}
+
+BEGIN_MESSAGE_MAP(CEditTokenDlg, CDialog)
+END_MESSAGE_MAP()
+
+void CEditTokenDlg::OnOK()
+{
+	if (!UpdateData(TRUE))
+	{
+		return;
+	}
+
+	m_sName.Trim();
+
+	if (!IsValidTokenName(m_sName))
+	{
+		AfxMessageBox(_T("Variable name must start with a letter or underscore and contain only letters, digits and underscores."));
+		return;
+	}
+
+	if (IsReservedTokenName(m_sName))
+	{
+		AfxMessageBox(_T("That name is reserved for a built-in title-block field. Pick another name."));
+		return;
+	}
+
+	// Disallow duplicates (case-insensitive) except when editing the same key.
+	if (m_pExistingTokens != NULL)
+	{
+		CDetailsTokenMap::const_iterator it = m_pExistingTokens->find(m_sName);
+		if (it != m_pExistingTokens->end() && m_sName.CompareNoCase(m_sOriginalName) != 0)
+		{
+			AfxMessageBox(_T("A variable with that name already exists."));
+			return;
+		}
+	}
+
+	CDialog::OnOK();
 }

@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -1370,6 +1370,23 @@ void CTinyCadDoc::Display(CContext& dc)
 		}
 	}
 	
+	// Update transient sheet context (sheet N of M) before rendering so the
+	// title block always shows the current value.
+	if (m_pParent != NULL)
+	{
+		int total = m_pParent->GetNumberOfSheets();
+		int num = 0;
+		for (int i = 0; i < total; ++i)
+		{
+			if (m_pParent->GetSheet(i) == this)
+			{
+				num = i + 1;
+				break;
+			}
+		}
+		GetDetails().SetSheetContext(num, total);
+	}
+
 	// Prior to TinyCAD 2.90.00, the full path was displayed, but frequently there wasn't room and it overran its allocated drawing space
 	//	GetDetails().Display(dc, theOptions, m_pParent->GetPathName());
 	GetDetails().Display(dc, theOptions, preFix + fileName);
@@ -1540,6 +1557,7 @@ CDPoint CTinyCadDoc::GetStickyPoint(CDPoint no_snap_q, BOOL pins, BOOL wires, BO
 		switch (ObjPtr->GetType())
 		{
 			case xWire:
+			case xCable:
 #define theLine ((CDrawLine*)ObjPtr)
 				if (wires)
 				{

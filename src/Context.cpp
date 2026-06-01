@@ -48,6 +48,8 @@ CContext::CContext(CWnd *NewWindow, Transform NewTransform)
 
 	allBlack = FALSE;
 	allGrey = FALSE;
+	m_force_color = FALSE;
+	m_forced_color = RGB(0, 0, 0);
 
 	haveDrawingExtent = FALSE;
 }
@@ -68,6 +70,8 @@ CContext::CContext(CDC *NewDC, Transform NewTransform, CWnd *pWnd)
 
 	allBlack = FALSE;
 	allGrey = FALSE;
+	m_force_color = FALSE;
+	m_forced_color = RGB(0, 0, 0);
 
 	haveDrawingExtent = FALSE;
 }
@@ -223,6 +227,8 @@ BOOL CContext::SelectPen(int Style, int Width, LONG Colour, paint_options option
 
 	if (allGrey) Colour = RGB( GetRValue(Colour) >> 1, GetGValue(Colour) >> 1, GetBValue(Colour) >> 1);
 
+	if (m_force_color) Colour = m_forced_color;
+
 	if (Width > 1 || m_pDC->IsPrinting())
 	{
 		Width = static_cast<int> (m_Transform.doubleScale(Width));
@@ -349,7 +355,9 @@ BOOL CContext::SelectBrush(COLORREF Colour, int Index)
 	constexpr COLORREF cBlack = RGB(0, 0, 0);
 
 	// If painting all back and if any other colour than white override the colour
-	if (allBlack && Colour != cWhite) Colour = cBlack;	
+	if (allBlack && Colour != cWhite) Colour = cBlack;
+
+	if (m_force_color) Colour = m_forced_color;
 
 	// Does this brush already exist?
 	brush_map::iterator itb = m_brushes.find(sBrush(Colour, Index));

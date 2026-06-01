@@ -54,6 +54,18 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 			m_database.open(m_name + ".TCLib");
 		}
 
+		// Migrate older libraries to have the IsConnector column.
+		// SQLite will throw "duplicate column" if the column already exists;
+		// we swallow that and continue.
+		try
+		{
+			m_database.execDML(_T("ALTER TABLE [Name] ADD COLUMN [IsConnector] INTEGER DEFAULT 0"));
+		}
+		catch (CppSQLite3Exception&)
+		{
+			// Column already exists - that's fine.
+		}
+
 		CString sql("SELECT * FROM [Name] WHERE [Type]=0");
 		CppSQLite3Query q = m_database.execQuery(sql);
 
@@ -82,6 +94,7 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 			r.description = q.getStringField(_T("Description"));
 			r.name_type = static_cast<SymbolFieldType> (q.getIntField(_T("ShowName")));
 			r.ref_type = static_cast<SymbolFieldType> (q.getIntField(_T("ShowRef")));
+			r.is_connector = q.getIntField(_T("IsConnector"), 0) != 0;
 
 			if (is_new)
 			{
@@ -163,8 +176,8 @@ void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDo
 			CSymbolRecord &r = nwSymbol->GetRecord(i);
 
 			CppSQLite3Statement stmt = m_database.compileStatement(_T("INSERT INTO [Name]")
-			_T(" ([Name], [SymbolID], [Type], [Reference], [ppp], [Description], [ShowName], [ShowRef], [DefRotate])")
-			_T(" VALUES (?,?,?,?,?,?,?,?,?)"));
+			_T(" ([Name], [SymbolID], [Type], [Reference], [ppp], [Description], [ShowName], [ShowRef], [DefRotate], [IsConnector])")
+			_T(" VALUES (?,?,?,?,?,?,?,?,?,?)"));
 			stmt.bind(1, r.name);
 			stmt.bind(2, static_cast<int> (nwSymbol->FilePos));
 			stmt.bind(3, 0);
@@ -174,6 +187,7 @@ void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDo
 			stmt.bind(7, static_cast<int> (r.name_type));
 			stmt.bind(8, static_cast<int> (r.ref_type));
 			stmt.bind(9, nwSymbol->orientation);
+			stmt.bind(10, r.is_connector ? 1 : 0);
 			stmt.execDML();
 
 			// Recover the new name id
@@ -366,7 +380,8 @@ bool CLibrarySQLite::Create(const TCHAR *filename)
 				_T("[Description] TEXT,")
 				_T("[ShowName] INTEGER,")
 				_T("[ShowRef] INTEGER,")
-				_T("[DefRotate] INTEGER")
+				_T("[DefRotate] INTEGER,")
+				_T("[IsConnector] INTEGER DEFAULT 0")
 			_T(")"));
 
 		m_database.execDML(

@@ -1134,6 +1134,12 @@ protected:
 	double scaling_x; // The scaling of this symbol
 	double scaling_y;
 
+	// Per-instance color override (only meaningful when the library
+	// symbol has is_connector set). When m_use_connector_color is
+	// FALSE, the symbol renders with its own colors as usual.
+	BOOL m_use_connector_color;
+	COLORREF m_connector_color;
+
 	typedef std::vector<CDPoint> activePointsCollection;
 	activePointsCollection m_activePoints; //Cached Active Points list
 
@@ -1198,6 +1204,16 @@ public:
 	virtual BOOL IsNoSymbol();
 
 	void ReplaceSymbol(hSYMBOL old_symbol, hSYMBOL new_symbol, bool keep_old_fields);
+
+	// Is this placed instance backed by a library symbol marked as a connector?
+	bool IsConnector();
+	bool UsesConnectorColor() const { return m_use_connector_color != FALSE; }
+	COLORREF GetConnectorColor() const { return m_connector_color; }
+	void SetConnectorColor(BOOL use, COLORREF color)
+	{
+		m_use_connector_color = use;
+		m_connector_color = color;
+	}
 
 	virtual ObjType GetType(); // Get this object's type
 	virtual CString GetName() const;

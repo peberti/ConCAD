@@ -238,6 +238,8 @@ class CContext
 	BOOL deleteDC; // Delete the DC when destructor called
 	BOOL allBlack; // Make all colours Black
 	BOOL allGrey; // Make all colours lighter
+	BOOL m_force_color; // Force every pen/brush colour to m_forced_color
+	COLORREF m_forced_color;
 
 	CSize GetTextExtentI(CString);
 
@@ -395,13 +397,31 @@ public:
 	{
 		allBlack = NewBlack;
 	}
+	// When on, every subsequent SelectPen/SelectBrush/SetTextColor renders
+	// with the given colour.  Used by CDrawMethod to tint connector symbols.
+	void SetForcedColor(BOOL on, COLORREF color)
+	{
+		m_force_color = on;
+		m_forced_color = color;
+	}
+	BOOL GetForceColor() const
+	{
+		return m_force_color;
+	}
+	COLORREF GetForcedColor() const
+	{
+		return m_forced_color;
+	}
 	void SetROP2(int r)
 	{
 		m_pDC->SetROP2(r);
 	}
 	void SetTextColor(LONG Colour)
 	{
-		m_pDC->SetTextColor(allBlack ? RGB(0, 0, 0) : Colour);
+		COLORREF c = (COLORREF)Colour;
+		if (allBlack) c = RGB(0, 0, 0);
+		else if (m_force_color) c = m_forced_color;
+		m_pDC->SetTextColor(c);
 	}
 	void SetTextAlign(int a)
 	{

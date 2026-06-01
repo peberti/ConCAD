@@ -23,6 +23,8 @@
 #ifndef __DETAILSPROPERTYPAGES_H__
 #define __DETAILSPROPERTYPAGES_H__
 
+#include "Details.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage1 dialog
 
@@ -121,6 +123,62 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// CDetailsPropertyPage3 - user-defined variables (tokens)
+
+class CDetailsPropertyPage3: public CPropertyPage
+{
+	DECLARE_DYNCREATE(CDetailsPropertyPage3)
+
+private:
+	CMultiSheetDoc* m_pDesign;
+	CDetailsTokenMap m_oTokens;
+	bool m_bDirty;
+
+	void RebuildList(int selectIndex = -1);
+	bool GetSelectedToken(CString& sName) const;
+
+public:
+	CDetailsPropertyPage3(CMultiSheetDoc* pDesign = NULL);
+	~CDetailsPropertyPage3();
+
+	enum { IDD = IDD_DETAILS_PAGE3 };
+
+	CListCtrl m_wndList;
+
+	virtual BOOL OnApply();
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual BOOL OnInitDialog();
+
+	afx_msg void OnAdd();
+	afx_msg void OnEdit();
+	afx_msg void OnRemove();
+	afx_msg void OnDoubleClickList(NMHDR* pNMHDR, LRESULT* pResult);
+	DECLARE_MESSAGE_MAP()
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// CEditTokenDlg - modal dialog for adding/editing a single name/value pair
+
+class CEditTokenDlg: public CDialog
+{
+public:
+	CString m_sName;
+	CString m_sValue;
+	CString m_sOriginalName;  // empty when adding; set when editing
+	const CDetailsTokenMap* m_pExistingTokens;
+
+	CEditTokenDlg(CWnd* pParent = NULL);
+	enum { IDD = IDD_EDIT_TOKEN };
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual void OnOK();
+	DECLARE_MESSAGE_MAP()
 };
 
 #endif // __DETAILSPROPERTYPAGES_H__

@@ -283,6 +283,7 @@ protected:
 
    	// The Toolbar Menu
 	afx_msg void OnSelectWire() { GetCurrentDocument()->SelectObject(new CDrawLine(GetCurrentDocument(),xWire)); }
+	afx_msg void OnSelectCable() { GetCurrentDocument()->SelectObject(new CDrawLine(GetCurrentDocument(),xCable)); }
 	afx_msg void OnSelectBus() { GetCurrentDocument()->SelectObject(new CDrawLine(GetCurrentDocument(),xBus)); }
 	afx_msg void OnSelectBusSlash() { GetCurrentDocument()->SelectObject(new CDrawBusSlash(GetCurrentDocument(),0)); }
 	afx_msg void OnSelectBusBack() { GetCurrentDocument()->SelectObject(new CDrawBusSlash(GetCurrentDocument(),1)); }

@@ -59,6 +59,10 @@ CDrawLine::CDrawLine(CTinyCadDoc *pDesign, ObjType NewType) :
 			m_use_default_style = TRUE;
 			m_style = fLINE;
 			break;
+		case xCable:
+			m_use_default_style = TRUE;
+			m_style = fLINE;
+			break;
 		default:
 			m_use_default_style = FALSE;
 			m_style = fLINE;
@@ -81,6 +85,8 @@ const TCHAR* CDrawLine::GetXMLTag(ObjType t)
 			return _T("BUS");
 		case xWire:
 			return _T("WIRE");
+		case xCable:
+			return _T("CABLE");
 		default:
 			return _T("LINE");
 	}
@@ -95,6 +101,7 @@ void CDrawLine::SaveXML(CXMLWriter &xml)
 	{
 		case xBus:
 		case xWire:
+		case xCable:
 			if (!m_use_default_style)
 			{
 				xml.addAttribute(_T("style"), m_style);
@@ -116,6 +123,7 @@ void CDrawLine::LoadXML(CXMLReader &xml)
 	{
 		case xBus:
 		case xWire:
+		case xCable:
 			if (xml.getAttribute(_T("style"), m_style))
 			{
 				m_style = m_pDesign->GetOptions()->GetNewStyleNumber(m_style);
@@ -379,6 +387,8 @@ CString CDrawLine::GetName() const
 			return "Wire";
 		case xBus:
 			return "Bus";
+		case xCable:
+			return "Cable";
 		default:
 			return "Line";
 	}
@@ -392,6 +402,8 @@ UINT CDrawLine::getMenuID()
 			return IDM_TOOLWIRE;
 		case xBus:
 			return IDM_TOOLBUS;
+		case xCable:
+			return IDM_TOOLCABLE;
 		default:
 			return IDM_TOOLPOLYGON;
 	}
@@ -503,7 +515,7 @@ void CDrawLine::Move(CDPoint p, CDPoint no_snap_p)
 		BOOL new_is_junction = FALSE;
 
 		// Are we a line to be snapped to pins?
-		if (xtype == xWire)
+		if (xtype == xWire || xtype == xCable)
 		{
 			p = m_pDesign->GetStickyPoint(no_snap_p, TRUE, TRUE, new_is_stuck, new_is_junction);
 		}
@@ -532,7 +544,7 @@ void CDrawLine::Move(CDPoint p, CDPoint no_snap_p)
 CDPoint CDrawLine::GetStickyPoint(CDPoint no_snap_q)
 {
 	// Are we a line to be snapped to pins?
-	if (xtype != xWire)
+	if (xtype != xWire && xtype != xCable)
 	{
 		return m_pDesign->m_snap.Snap(no_snap_q);
 	}
@@ -713,6 +725,9 @@ void CDrawLine::Paint(CContext &dc, paint_options options)
 				break;
 			case xBus:
 				dc.SelectPen(PS_SOLID, 5, m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::BUS), options);
+				break;
+			case xCable:
+				dc.SelectPen(PS_SOLID, 3, m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::WIRE), options);
 				break;
 			default:
 				dc.SelectPen(m_pDesign->GetOptions()->GetStyle(m_style), options);

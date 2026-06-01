@@ -1300,6 +1300,7 @@ void CNetList::MakeNetForSheet(fileCollection &imports, int import_index, int sh
 				if (found == Powers.end()) Powers[powerLabel] = hold;
 			}
 				break;
+			case xCable:
 			case xWire:
 //			TRACE("Found xWire at (%g,%g) (%g,%g)\n",
 //				ObjPtr->m_point_a.x, ObjPtr->m_point_a.y,
@@ -1341,7 +1342,7 @@ void CNetList::MakeNetForSheet(fileCollection &imports, int import_index, int sh
 
 				/// Find the wires
 				/// If the wire has an end at this junction then it is already connected
-				if ( (search->GetType() == xWire) && (search->m_point_a != a) && (search->m_point_b != a))
+				if ( (search->GetType() == xWire || search->GetType() == xCable) && (search->m_point_a != a) && (search->m_point_b != a))
 				{
 					/// Is this point on this wire?
 					CLineUtils l(search->m_point_a, search->m_point_b);
@@ -1391,7 +1392,7 @@ void CNetList::MakeNetForSheet(fileCollection &imports, int import_index, int sh
 			while (search_it != itEnd)
 			{
 				CDrawingObject *search = *search_it;
-				if (search->GetType() == xWire && search->IsInside(a.x, a.x, a.y, a.y))
+				if ((search->GetType() == xWire || search->GetType() == xCable) && search->IsInside(a.x, a.x, a.y, a.y))
 				{
 					a = search->m_point_a; //Overwrite label point "a" with first point on newly found wire
 //				TRACE("  ==>Found a wire with coordinates (%g,%g : %g,%g) that connects to label=[%S].  Stopping search after first find!\n",

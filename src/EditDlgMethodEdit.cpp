@@ -75,6 +75,7 @@ BEGIN_MESSAGE_MAP( CEditDlgMethodEdit, CEditDlg )
 	ON_BN_CLICKED(IDC_DELETE, OnDelete)
 	ON_EN_KILLFOCUS(101, OnKillfocusEdit)
 	ON_BN_CLICKED(METHODBOX_SHOWPOWER, OnBnClickedShowpower)
+	ON_BN_CLICKED(METHODBOX_COLOR, OnPickColor)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -180,9 +181,34 @@ void CEditDlgMethodEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
 	SetDlgItemText(METHODBOX_REF, pMethod->m_fields[CDrawMethod::Ref].m_value);
 	SetDlgItemText(METHODBOX_PPP, Buffer);
 
+	// Enable the Color button only for symbols flagged as connectors.
+	CWnd* pColorBtn = GetDlgItem(METHODBOX_COLOR);
+	if (pColorBtn != NULL)
+	{
+		pColorBtn->EnableWindow(pMethod->IsConnector());
+	}
+
 	ReadFields();
 
 	stop = FALSE;
+}
+
+void CEditDlgMethodEdit::OnPickColor()
+{
+	CDrawMethod *pMethod = static_cast<CDrawMethod*> (getObject());
+	if (pMethod == NULL || !pMethod->IsConnector())
+	{
+		return;
+	}
+
+	COLORREF current = pMethod->UsesConnectorColor() ? pMethod->GetConnectorColor() : RGB(0, 0, 0);
+	CColorDialog dlg(current, CC_FULLOPEN | CC_RGBINIT, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		getObject()->Display();
+		pMethod->SetConnectorColor(TRUE, dlg.GetColor());
+		getObject()->Display();
+	}
 }
 
 // Update the method after a change in the dialog

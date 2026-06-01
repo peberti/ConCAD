@@ -78,6 +78,7 @@ void CJunctionUtils::CheckJunctionRequirement(CDPoint a, CDPoint b, bool perform
 				}
 				break;
 			case xWire:
+			case xCable:
 				if (l.DistanceFromPoint(ObjPtr->m_point_a, r) <= CLineUtils::pointOnLineDistance)
 				{
 					check.insert(ObjPtr->m_point_a);
@@ -157,6 +158,7 @@ void CJunctionUtils::CheckJunctionRequirement(CDPoint q, bool perform_split)
 		switch (ObjPtr->GetType())
 		{
 			case xWire:
+			case xCable:
 				// If this wire is on the discard pile, or is of zero length
 				// then treat it as if it doesn't exist...
 				if ((m_discards.size()==0 || m_discards.find(ObjPtr) == m_discards.end())
@@ -317,8 +319,8 @@ void CJunctionUtils::CheckJunctionRequirement(CDPoint q, bool perform_split)
 		// Yep, so let us split the line, after we have
 		// registered the changes
 
-		// Create a new line
-		CDrawLine *new_line = new CDrawLine(m_pDesign, xWire);
+		// Create a new line, preserving the existing line's type (wire/cable).
+		CDrawLine *new_line = new CDrawLine(m_pDesign, split_line->GetType());
 		*new_line = *static_cast<CDrawLine*> (split_line); // Copy over any options...
 		new_line->m_point_a = split_line->m_point_a;
 		new_line->m_point_b = q;
@@ -345,6 +347,7 @@ void CJunctionUtils::AddObjectToTodo(CDrawingObject *obj)
 	switch (obj->GetType())
 	{
 		case xWire:
+		case xCable:
 			m_todo.insert(todo_point(obj->m_point_a, obj->m_point_b));
 			break;
 		case xJunction:

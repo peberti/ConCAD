@@ -46,6 +46,7 @@ public:
 public:
 	CDetailsPropertyPage1 m_Page1;
 	CDetailsPropertyPage2 m_Page2;
+	CDetailsPropertyPage3 m_Page3;
 
 	// Operations
 public:

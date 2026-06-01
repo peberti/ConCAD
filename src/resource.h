@@ -18,6 +18,8 @@
 #define IDD_DETAILS_PAGE1               111
 #define IDD_DETAILS_PAGE2               112
 #define IDD_UPDATECHECK                 113
+#define IDD_DETAILS_PAGE3               175
+#define IDD_EDIT_TOKEN                  176
 #define IDM_VIEWGRID                    115
 #define IDM_VIEWSHOWPOS                 116
 #define IDR_MAINFRAME                   128
@@ -499,6 +501,16 @@
 #define IDS_NOCLEANUP                   40001
 #define POSITIONBOX_GRIDSIZE            40002
 #define POSITIONBOX_GRIDUNITS           40003
+#define IDC_TOKENS_LIST                 40004
+#define IDC_TOKEN_ADD                   40005
+#define IDC_TOKEN_EDIT                  40006
+#define IDC_TOKEN_REMOVE                40007
+#define IDC_TOKEN_NAME                  40008
+#define IDC_TOKEN_VALUE                 40009
+#define IDC_TOKEN_HELP                  40010
+#define IDM_TOOLCABLE                   32908
+#define IDC_IS_CONNECTOR                40011
+#define METHODBOX_COLOR                 40012
 #define ID_CONTEXT_COPY_TO              65535
 
 // Next default values for new objects
@@ -506,9 +518,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        175
-#define _APS_NEXT_COMMAND_VALUE         32908
-#define _APS_NEXT_CONTROL_VALUE         1587
+#define _APS_NEXT_RESOURCE_VALUE        177
+#define _APS_NEXT_COMMAND_VALUE         32909
+#define _APS_NEXT_CONTROL_VALUE         40013
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif
