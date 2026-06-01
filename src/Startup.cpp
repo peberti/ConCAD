@@ -21,6 +21,7 @@
 #include "tinycad.h"
 #include "startup.h"
 #include "revision.h"
+#include "BuildID.h"
 
 // The constructor (Which loads etc., the bitmap)
 CDlgStartUpWindow::CDlgStartUpWindow(CWnd *Parent)
@@ -62,40 +63,63 @@ BEGIN_MESSAGE_MAP( CDlgStartUpWindow, CWnd )
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-// The On Paint Handler (which draws the bitmap into the window)
+// The On Paint Handler — draws the ConCAD splash.  STARTUP.BMP is still
+// loaded by the constructor so the window inherits its dimensions, but its
+// pixels are overpainted entirely so the splash is recognisably ConCAD.
 void CDlgStartUpWindow::OnPaint()
 {
 	CPaintDC dc(this);
-	CBitmap *oldBitmap;
-
-	// Load the bitmap into a DC
-	CDC theBitmapDC;
-	theBitmapDC.CreateCompatibleDC(&dc);
-	oldBitmap = (CBitmap *) (theBitmapDC.SelectObject(&theBitmap));
-
-	// The region to be re-drawn
 	CRect rect;
 	GetClientRect(rect);
 
-	// Now copy the bitmap into our window
-	dc.BitBlt(rect.left, rect.top, rect.Width(), rect.Height(), &theBitmapDC, rect.left, rect.top, SRCCOPY);
+	// Background
+	CBrush bg(RGB(15, 32, 64));
+	dc.FillRect(rect, &bg);
 
-	theBitmapDC.SelectObject(oldBitmap);
+	// White rule border
+	CPen border(PS_SOLID, 2, RGB(255, 255, 255));
+	CPen* oldPen = dc.SelectObject(&border);
+	CBrush* oldBrush = (CBrush*) dc.SelectStockObject(NULL_BRUSH);
+	dc.Rectangle(rect.left + 1, rect.top + 1, rect.right - 1, rect.bottom - 1);
+	dc.SelectObject(oldBrush);
+	dc.SelectObject(oldPen);
 
-	// Now draw the version number text over the top...
-	CFont font;
-	font.CreateFont(-25, 0, 0, 0, 400, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS | CLIP_LH_ANGLES, DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, _T("Arial"));
-
-	CFont *old_font = dc.SelectObject(&font);
-	dc.SetTextAlign(TA_LEFT);
-	dc.SetTextColor(RGB(255,255,255));
 	dc.SetBkMode(TRANSPARENT);
-	CString text = "www.tinycad.net\r\n" +
-		CTinyCadApp::GetVersion() + "\r\n";
+	dc.SetTextColor(RGB(255, 255, 255));
 
-	dc.DrawText(text,CRect(0, 90, rect.right-14,rect.bottom) ,DT_RIGHT);
+	// Big centred "ConCAD"
+	CFont fontTitle;
+	fontTitle.CreateFont(-60, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, _T("Arial"));
+	CFont* oldFont = dc.SelectObject(&fontTitle);
+	dc.SetTextAlign(TA_CENTER | TA_TOP);
+	dc.TextOut(rect.Width() / 2, rect.Height() / 2 - 60, _T("ConCAD"));
+	dc.SelectObject(oldFont);
 
-	dc.SelectObject(old_font);
+	// Version line
+	CFont fontMed;
+	fontMed.CreateFont(-18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Segoe UI"));
+	dc.SelectObject(&fontMed);
+
+	CString version;
+	version.Format(_T("Version %s"), (LPCTSTR) CTinyCadApp::GetVersion());
+	dc.TextOut(rect.Width() / 2, rect.Height() / 2 + 10, version);
+
+	// Tagline / branch (small)
+	CFont fontSmall;
+	fontSmall.CreateFont(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Segoe UI"));
+	dc.SelectObject(&fontSmall);
+
+	CString tagline;
+	tagline.Format(_T("branch %hs  -  based on TinyCAD"), GIT_BRANCH);
+	dc.TextOut(rect.Width() / 2, rect.Height() - 28, tagline);
+
+	dc.SelectObject(oldFont);
 }
 
 // When this is called destroy the window

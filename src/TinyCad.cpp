@@ -575,29 +575,10 @@ bool CTinyCadApp::IsLibInUse(CLibraryStore* pLib)
 //-------------------------------------------------------------------------
 CString CTinyCadApp::GetVersion()
 {
+	// ConCAD versioning: major is always 0; the build number is the git
+	// commit count emitted into BuildId.h by gitbranch.bat at pre-build.
 	CString sReturn;
-	TCHAR szModulePath[MAX_PATH];
-	DWORD dwSize;
-	DWORD dwZero;
-	char* pBuffer;
-	VS_FIXEDFILEINFO* pFixedInfo;
-	UINT uVersionLen;
-
-	GetModuleFileName(nullptr, szModulePath, MAX_PATH - 1);
-
-	dwSize = GetFileVersionInfoSize(szModulePath, &dwZero);
-
-	if (dwSize > 0)
-	{
-		pBuffer = new char[dwSize];
-
-		GetFileVersionInfo(szModulePath, dwZero, dwSize, pBuffer);
-		VerQueryValue(pBuffer, _T("\\"), (void**) &pFixedInfo, (UINT*) &uVersionLen);
-
-		sReturn.Format(_T("%u.%02u.%02u"), HIWORD(pFixedInfo->dwProductVersionMS), LOWORD(pFixedInfo->dwProductVersionMS), HIWORD(pFixedInfo->dwProductVersionLS));
-		delete[] pBuffer;
-	}
-
+	sReturn.Format(_T("0.%d"), CONCAD_BUILD);
 	return sReturn;
 }
 //-------------------------------------------------------------------------
