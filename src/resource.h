@@ -20,6 +20,7 @@
 #define IDD_UPDATECHECK                 113
 #define IDD_DETAILS_PAGE3               175
 #define IDD_EDIT_TOKEN                  176
+#define IDD_DETAILS_PAGE4               177
 #define IDM_VIEWGRID                    115
 #define IDM_VIEWSHOWPOS                 116
 #define IDR_MAINFRAME                   128
@@ -511,6 +512,10 @@
 #define IDM_TOOLCABLE                   32908
 #define IDC_IS_CONNECTOR                40011
 #define METHODBOX_COLOR                 40012
+#define IDC_TBSVG_HELP                  40013
+#define IDC_TBSVG_STATE                 40014
+#define IDC_TBSVG_BROWSE                40015
+#define IDC_TBSVG_USE_BUILTIN           40016
 #define ID_CONTEXT_COPY_TO              65535
 
 // Next default values for new objects
@@ -518,9 +523,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        177
+#define _APS_NEXT_RESOURCE_VALUE        178
 #define _APS_NEXT_COMMAND_VALUE         32909
-#define _APS_NEXT_CONTROL_VALUE         40013
+#define _APS_NEXT_CONTROL_VALUE         40017
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

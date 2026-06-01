@@ -26,7 +26,8 @@
 IMPLEMENT_DYNAMIC(CDetailsPropertySheet, CPropertySheet)
 
 CDetailsPropertySheet::CDetailsPropertySheet(CMultiSheetDoc* pDesign, CWnd* pWndParent) :
-	CPropertySheet(IDS_PROPSHT_CAPTION1, pWndParent), m_pDesign(pDesign), m_Page1(pDesign), m_Page2(pDesign), m_Page3(pDesign)
+	CPropertySheet(IDS_PROPSHT_CAPTION1, pWndParent), m_pDesign(pDesign),
+	m_Page1(pDesign), m_Page2(pDesign), m_Page3(pDesign), m_Page4(pDesign)
 {
 	// Add all of the property pages here.  Note that
 	// the order that they appear in here will be
@@ -38,6 +39,7 @@ CDetailsPropertySheet::CDetailsPropertySheet(CMultiSheetDoc* pDesign, CWnd* pWnd
 	AddPage(&m_Page1);
 	AddPage(&m_Page2);
 	AddPage(&m_Page3);
+	AddPage(&m_Page4);
 }
 
 CDetailsPropertySheet::~CDetailsPropertySheet()

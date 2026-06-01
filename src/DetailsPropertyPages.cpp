@@ -29,6 +29,7 @@
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage1, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage2, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage3, CPropertyPage)
+IMPLEMENT_DYNCREATE(CDetailsPropertyPage4, CPropertyPage)
 
 // Reserved token names (built-ins exposed by CDetails::Resolve)
 static bool IsReservedTokenName(const CString& sName)
@@ -520,4 +521,127 @@ void CEditTokenDlg::OnOK()
 	}
 
 	CDialog::OnOK();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CDetailsPropertyPage4 - SVG title-block picker
+
+CDetailsPropertyPage4::CDetailsPropertyPage4(CMultiSheetDoc* pDesign)
+	: CPropertyPage(CDetailsPropertyPage4::IDD)
+{
+	m_pDesign = pDesign;
+	m_bDirty = false;
+	if (m_pDesign != NULL)
+	{
+		m_sSvg = m_pDesign->GetCurrentSheet()->GetDetails().m_sTitleBlockSvg;
+	}
+}
+
+CDetailsPropertyPage4::~CDetailsPropertyPage4()
+{
+}
+
+void CDetailsPropertyPage4::DoDataExchange(CDataExchange* pDX)
+{
+	CPropertyPage::DoDataExchange(pDX);
+}
+
+BEGIN_MESSAGE_MAP(CDetailsPropertyPage4, CPropertyPage)
+	ON_BN_CLICKED(IDC_TBSVG_BROWSE,      OnBrowse)
+	ON_BN_CLICKED(IDC_TBSVG_USE_BUILTIN, OnUseBuiltin)
+END_MESSAGE_MAP()
+
+BOOL CDetailsPropertyPage4::OnInitDialog()
+{
+	CPropertyPage::OnInitDialog();
+	UpdateStateLabel();
+	return TRUE;
+}
+
+void CDetailsPropertyPage4::UpdateStateLabel()
+{
+	CString label;
+	if (m_sSvg.IsEmpty())
+	{
+		label = _T("Current: built-in title block");
+	}
+	else
+	{
+		label.Format(_T("Current: custom SVG (%d characters)"), m_sSvg.GetLength());
+	}
+	CWnd* pState = GetDlgItem(IDC_TBSVG_STATE);
+	if (pState != NULL) pState->SetWindowText(label);
+}
+
+void CDetailsPropertyPage4::OnBrowse()
+{
+	CFileDialog dlg(TRUE, _T("svg"), NULL,
+		OFN_HIDEREADONLY | OFN_FILEMUSTEXIST,
+		_T("SVG files (*.svg)|*.svg|All files (*.*)|*.*||"), this);
+	if (dlg.DoModal() != IDOK) return;
+
+	CFile file;
+	if (!file.Open(dlg.GetPathName(), CFile::modeRead | CFile::shareDenyWrite))
+	{
+		AfxMessageBox(_T("Could not open SVG file."));
+		return;
+	}
+	ULONGLONG len = file.GetLength();
+	if (len == 0)
+	{
+		AfxMessageBox(_T("That SVG file is empty."));
+		return;
+	}
+	if (len > 5 * 1024 * 1024)
+	{
+		AfxMessageBox(_T("SVG file is larger than 5 MB; refusing to embed."));
+		return;
+	}
+
+	std::vector<char> buf((size_t)len + 1, 0);
+	file.Read(buf.data(), (UINT)len);
+	buf[(size_t)len] = '\0';
+
+	// Treat the file as UTF-8 and convert to the CString native (UTF-16) format.
+	CA2T converted(buf.data(), CP_UTF8);
+	m_sSvg = (LPCTSTR)converted;
+
+	m_bDirty = true;
+	UpdateStateLabel();
+	SetModified(TRUE);
+}
+
+void CDetailsPropertyPage4::OnUseBuiltin()
+{
+	if (!m_sSvg.IsEmpty())
+	{
+		m_sSvg.Empty();
+		m_bDirty = true;
+		UpdateStateLabel();
+		SetModified(TRUE);
+	}
+}
+
+BOOL CDetailsPropertyPage4::OnApply()
+{
+	if (m_bDirty && m_pDesign != NULL)
+	{
+		CDetails& current = m_pDesign->GetCurrentSheet()->GetDetails();
+		current.m_sTitleBlockSvg = m_sSvg;
+
+		// Title-block SVG is design-wide — propagate to every other sheet.
+		int total = m_pDesign->GetNumberOfSheets();
+		for (int i = 0; i < total; ++i)
+		{
+			CTinyCadDoc* pSheet = m_pDesign->GetSheet(i);
+			if (pSheet != NULL && pSheet != m_pDesign->GetCurrentSheet())
+			{
+				pSheet->GetDetails().CopyDesignFields(current);
+			}
+		}
+
+		m_pDesign->GetCurrentSheet()->GetParent()->SetModifiedFlag();
+		m_bDirty = false;
+	}
+	return CPropertyPage::OnApply();
 }

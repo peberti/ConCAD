@@ -162,6 +162,37 @@ protected:
 };
 
 /////////////////////////////////////////////////////////////////////////////
+// CDetailsPropertyPage4 - SVG title-block picker
+
+class CDetailsPropertyPage4: public CPropertyPage
+{
+	DECLARE_DYNCREATE(CDetailsPropertyPage4)
+
+private:
+	CMultiSheetDoc* m_pDesign;
+	CString         m_sSvg;       // pending value to apply
+	bool            m_bDirty;
+
+	void UpdateStateLabel();
+
+public:
+	CDetailsPropertyPage4(CMultiSheetDoc* pDesign = NULL);
+	~CDetailsPropertyPage4();
+
+	enum { IDD = IDD_DETAILS_PAGE4 };
+
+	virtual BOOL OnApply();
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual BOOL OnInitDialog();
+
+	afx_msg void OnBrowse();
+	afx_msg void OnUseBuiltin();
+	DECLARE_MESSAGE_MAP()
+};
+
+/////////////////////////////////////////////////////////////////////////////
 // CEditTokenDlg - modal dialog for adding/editing a single name/value pair
 
 class CEditTokenDlg: public CDialog
