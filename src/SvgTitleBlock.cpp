@@ -292,6 +292,90 @@ Affine ParseTransformAttr(const char* s)
 	return result;
 }
 
+COLORREF ParseHexColor(const char* v, COLORREF fallback);
+
+// Pull font-size, font-family, fill, text-anchor out of an SVG/CSS-style
+// "name:value;name:value" string.  Inkscape stores presentation properties
+// here rather than as discrete XML attributes, so without this the parser
+// silently misses font-size (and the rendered text comes out at the default
+// 12-unit fallback, which is "way too big" for an Inkscape title block).
+struct CssTextProps
+{
+	double fontSize;     bool hasFontSize;
+	CStringA fontFamily; bool hasFontFamily;
+	COLORREF fill;       bool hasFill;
+	UINT align;          bool hasAlign;
+	CssTextProps()
+		: fontSize(0.0), hasFontSize(false), fill(0), hasFill(false),
+		  align(TA_LEFT | TA_BASELINE | TA_NOUPDATECP), hasAlign(false) {}
+};
+
+void ParseCssTextStyle(const char* style, CssTextProps& out)
+{
+	if (!style) return;
+	const char* p = style;
+	while (*p)
+	{
+		while (*p == ' ' || *p == ';' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+		if (!*p) break;
+
+		const char* nameStart = p;
+		while (*p && *p != ':' && *p != ';') ++p;
+		if (*p != ':') { while (*p && *p != ';') ++p; continue; }
+		const size_t nameLen = (size_t)(p - nameStart);
+		++p;  // skip ':'
+
+		while (*p == ' ' || *p == '\t') ++p;
+		const char* valStart = p;
+		while (*p && *p != ';') ++p;
+		size_t valLen = (size_t)(p - valStart);
+		while (valLen > 0 && (valStart[valLen - 1] == ' ' || valStart[valLen - 1] == '\t')) --valLen;
+
+		const auto matches = [&](const char* key) -> bool {
+			const size_t kl = strlen(key);
+			return kl == nameLen && strncmp(nameStart, key, kl) == 0;
+		};
+
+		if (matches("font-size"))
+		{
+			char buf[64] = { 0 };
+			memcpy(buf, valStart, valLen < sizeof(buf) - 1 ? valLen : sizeof(buf) - 1);
+			out.fontSize = atof(buf);  // atof stops at non-numeric (handles "2.82px")
+			out.hasFontSize = true;
+		}
+		else if (matches("font-family"))
+		{
+			size_t end = valLen;
+			for (size_t i = 0; i < valLen; ++i) if (valStart[i] == ',') { end = i; break; }
+			while (end > 0 && (valStart[end - 1] == ' ' || valStart[end - 1] == '\t')) --end;
+			CStringA fam(valStart, (int)end);
+			if (!fam.IsEmpty() && (fam[0] == '\'' || fam[0] == '"')) fam.Delete(0, 1);
+			if (!fam.IsEmpty()) {
+				const int last = fam.GetLength() - 1;
+				if (fam[last] == '\'' || fam[last] == '"') fam.Delete(last, 1);
+			}
+			if (!fam.IsEmpty()) { out.fontFamily = fam; out.hasFontFamily = true; }
+		}
+		else if (matches("fill"))
+		{
+			char buf[64] = { 0 };
+			memcpy(buf, valStart, valLen < sizeof(buf) - 1 ? valLen : sizeof(buf) - 1);
+			if (buf[0] == '#') { out.fill = ParseHexColor(buf, out.fill); out.hasFill = true; }
+		}
+		else if (matches("text-anchor"))
+		{
+			char buf[16] = { 0 };
+			memcpy(buf, valStart, valLen < sizeof(buf) - 1 ? valLen : sizeof(buf) - 1);
+			if      (strcmp(buf, "middle") == 0) out.align = TA_CENTER | TA_BASELINE | TA_NOUPDATECP;
+			else if (strcmp(buf, "end")    == 0) out.align = TA_RIGHT  | TA_BASELINE | TA_NOUPDATECP;
+			else                                  out.align = TA_LEFT   | TA_BASELINE | TA_NOUPDATECP;
+			out.hasAlign = true;
+		}
+
+		if (*p == ';') ++p;
+	}
+}
+
 COLORREF ParseHexColor(const char* v, COLORREF fallback)
 {
 	if (!v || *v != '#') return fallback;
@@ -329,6 +413,9 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 	UINT align = TA_LEFT | TA_BASELINE | TA_NOUPDATECP;
 	CStringA fontFamily;
 
+	// Track whether font-size was set explicitly anywhere — without it, a
+	// 12-unit default scaled through viewBoxToPixel renders absurdly large.
+	bool fontSizeFromAttr = false;
 	for (rapidxml::xml_attribute<>* a = node->first_attribute(); a; a = a->next_attribute())
 	{
 		const char* name = a->name();
@@ -336,13 +423,49 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 		if (!name || !val) continue;
 		if      (strcmp(name, "x") == 0)            x = atof(val);
 		else if (strcmp(name, "y") == 0)            y = atof(val);
-		else if (strcmp(name, "font-size") == 0)    fontSize = atof(val);
+		else if (strcmp(name, "font-size") == 0)  { fontSize = atof(val); fontSizeFromAttr = true; }
 		else if (strcmp(name, "font-family") == 0)  fontFamily = val;
 		else if (strcmp(name, "fill") == 0)         fill = ParseHexColor(val, fill);
 		else if (strcmp(name, "text-anchor") == 0)
 		{
 			if      (strcmp(val, "middle") == 0) align = TA_CENTER | TA_BASELINE | TA_NOUPDATECP;
 			else if (strcmp(val, "end")    == 0) align = TA_RIGHT  | TA_BASELINE | TA_NOUPDATECP;
+		}
+	}
+
+	// CSS-style properties — Inkscape uses these instead of discrete
+	// presentation attributes.  Style takes precedence over attributes.
+	if (rapidxml::xml_attribute<>* st = node->first_attribute("style"))
+	{
+		CssTextProps css;
+		ParseCssTextStyle(st->value(), css);
+		if (css.hasFontSize)   { fontSize = css.fontSize; fontSizeFromAttr = true; }
+		if (css.hasFontFamily) fontFamily = css.fontFamily;
+		if (css.hasFill)       fill = css.fill;
+		if (css.hasAlign)      align = css.align;
+	}
+
+	// Also check the first <tspan> child for style — Inkscape sometimes
+	// puts font-size only on the outer tspan rather than the <text>.
+	if (!fontSizeFromAttr)
+	{
+		for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
+		{
+			if (c->type() != rapidxml::node_element) continue;
+			const char* cn = c->name();
+			if (!cn || strcmp(cn, "tspan") != 0) continue;
+			if (rapidxml::xml_attribute<>* fs = c->first_attribute("font-size"))
+			{
+				fontSize = atof(fs->value()); fontSizeFromAttr = true;
+			}
+			if (rapidxml::xml_attribute<>* st = c->first_attribute("style"))
+			{
+				CssTextProps css;
+				ParseCssTextStyle(st->value(), css);
+				if (css.hasFontSize) { fontSize = css.fontSize; fontSizeFromAttr = true; }
+				if (css.hasFontFamily && fontFamily.IsEmpty()) fontFamily = css.fontFamily;
+			}
+			if (fontSizeFromAttr) break;
 		}
 	}
 
