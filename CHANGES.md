@@ -297,6 +297,47 @@ If you want a "Default color" button added to the edit dialog, ask.
 
 ---
 
+## 6. SQLite library open/delete robustness
+
+Fixes to the SQLite library backend (`CLibrarySQLite`, `CppSQLite3U`),
+surfaced when bringing up the build on a clean machine with many
+configured libraries — including read-only ones under `Program Files`.
+
+- **Startup no longer crashes** on a library that fails to open. The
+  catch handler in `CLibrarySQLite::Attach` called `close()`, which can
+  itself throw (`SQLITE_BUSY`); that throw escaped the handler and went
+  unhandled. It is now guarded.
+- **The `IsConnector` migration (§5) is best-effort.** It probes with
+  `PRAGMA table_info` and only runs `ALTER TABLE … ADD COLUMN` when the
+  column is absent, inside a try/catch. A read-only or locked database
+  (e.g. a library under `Program Files`) now loads normally instead of
+  failing the whole library — the column read is skipped when the column
+  is not present (`getIntField` throws on an unknown column rather than
+  returning its default).
+- **Deleting a library no longer aborts.** `~CppSQLite3DB` now wraps its
+  `close()` in try/catch so a throwing `close()` cannot escape the
+  destructor (which would call `std::terminate`/`abort` — the "abort()
+  has been called" dialog). This matches the existing
+  `~CppSQLite3Query` / `~CppSQLite3Statement` destructors.
+
+### Build note: Visual Studio toolset
+
+The solution targets PlatformToolset **v142** (Win32/x86). This is
+required, not incidental: the vendored NuGet native libs
+`libjpeg_static` and `libiconv.lib` (`packages/`) ship prebuilt `.lib`
+files only for v140/v141/v142, so building with a newer toolset fails to
+link (`_jpeg_*` / `_libiconv_*` unresolved externals). Install **C++ MFC
+for the v142 build tools (x86 & x64)** in the Visual Studio installer
+(an ATL-only install is not enough). Do not let Visual Studio
+auto-retarget the project to a newer toolset.
+
+### Files changed
+
+- `src/LibrarySQLite.cpp`
+- `src/SQLite/CppSQLite3U.cpp`
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
