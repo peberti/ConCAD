@@ -55,15 +55,40 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 		}
 
 		// Migrate older libraries to have the IsConnector column.
-		// SQLite will throw "duplicate column" if the column already exists;
-		// we swallow that and continue.
-		try
+		// Probe with PRAGMA table_info first and only ALTER when the column
+		// is absent, so we never throw/catch on the common (already-migrated)
+		// path - that throw fires on every open and trips the debugger.
+		bool hasIsConnector = false;
 		{
-			m_database.execDML(_T("ALTER TABLE [Name] ADD COLUMN [IsConnector] INTEGER DEFAULT 0"));
+			// Scope the query so its prepared statement is finalized before
+			// any later statement runs - an open statement makes a later
+			// sqlite3_close() return SQLITE_BUSY.
+			CppSQLite3Query cols = m_database.execQuery(_T("PRAGMA table_info([Name])"));
+			while (!cols.eof())
+			{
+				if (_tcsicmp(cols.getStringField(_T("name")), _T("IsConnector")) == 0)
+				{
+					hasIsConnector = true;
+					break;
+				}
+				cols.nextRow();
+			}
 		}
-		catch (CppSQLite3Exception&)
+		if (!hasIsConnector)
 		{
-			// Column already exists - that's fine.
+			// Best-effort migration: the ALTER is a write and will fail on a
+			// read-only or locked database (e.g. libraries under Program
+			// Files). Swallow that and keep loading; without the column we
+			// must NOT read it below (getIntField throws on an unknown field,
+			// it does not fall back to its default), so treat it as absent.
+			try
+			{
+				m_database.execDML(_T("ALTER TABLE [Name] ADD COLUMN [IsConnector] INTEGER DEFAULT 0"));
+				hasIsConnector = true;
+			}
+			catch (CppSQLite3Exception&)
+			{
+			}
 		}
 
 		CString sql("SELECT * FROM [Name] WHERE [Type]=0");
@@ -94,7 +119,7 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 			r.description = q.getStringField(_T("Description"));
 			r.name_type = static_cast<SymbolFieldType> (q.getIntField(_T("ShowName")));
 			r.ref_type = static_cast<SymbolFieldType> (q.getIntField(_T("ShowRef")));
-			r.is_connector = q.getIntField(_T("IsConnector"), 0) != 0;
+			r.is_connector = hasIsConnector && q.getIntField(_T("IsConnector"), 0) != 0;
 
 			if (is_new)
 			{
@@ -116,11 +141,21 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 	}
 	catch (CppSQLite3Exception& e)
 	{
-		if (m_database.mpDB)
-			m_database.close();
+		// Capture the message before any cleanup work.
+		CString msg(e.errorMessage());
+
+		// close() can itself throw (e.g. SQLITE_BUSY); a throw escaping this
+		// handler would be unhandled and crash the app, so swallow it here.
+		try
+		{
+			if (m_database.mpDB)
+				m_database.close();
+		}
+		catch (CppSQLite3Exception&)
+		{
+		}
 
 		CString s;
-		CString msg(e.errorMessage());
 		s.Format(_T("Cannot open library %s.\r\n%s"), (LPCTSTR)m_name, (LPCTSTR)msg);
 		AfxMessageBox(s);
 		return FALSE;
