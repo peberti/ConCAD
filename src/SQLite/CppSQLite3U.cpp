@@ -151,7 +151,16 @@ CppSQLite3DB::CppSQLite3DB(const CppSQLite3DB& db)
 
 CppSQLite3DB::~CppSQLite3DB()
 {
-	close();
+	// A destructor must not let an exception escape (that would call
+	// std::terminate/abort). close() can throw - e.g. SQLITE_BUSY when a
+	// statement is still outstanding - so swallow it here.
+	try
+	{
+		close();
+	}
+	catch (...)
+	{
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
