@@ -21,23 +21,23 @@
 #include <set>
 #include <map>
 
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "special.h"
 #include "library.h"
 #include "net.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 #include "diag.h"
 #include "DlgPCBExport.h"
 #include "MultiSheetDoc.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCadMultiDoc.h"
 
 extern CDlgERCListBox theERCListBox;
 
 ////// Generate the net list for this design //////
 
 
-void CTinyCadView::OnSpecialNet()
+void CConCadView::OnSpecialNet()
 {
 	// Get rid of any drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -73,13 +73,13 @@ void CTinyCadView::OnSpecialNet()
 	// Generate the net list file
 	CNetList netlist;
 	netlist.m_prefix_references = dlg.m_Prefix;
-	netlist.WriteNetListFile(dlg.m_type, static_cast<CTinyCadMultiDoc*> (GetDocument()), dlg.m_Filename);
+	netlist.WriteNetListFile(dlg.m_type, static_cast<CConCadMultiDoc*> (GetDocument()), dlg.m_Filename);
 
 	// Now open the netlist for the user
-	CTinyCadApp::EditTextFile(dlg.m_Filename);
+	CConCadApp::EditTextFile(dlg.m_Filename);
 }
 
-void CTinyCadView::OnSpecialVHDL()
+void CConCadView::OnSpecialVHDL()
 {
 	// Get rid of any drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -115,15 +115,15 @@ void CTinyCadView::OnSpecialVHDL()
 
 	// Generate the net list file
 	CNetList netlist;
-	netlist.WriteVHDLFile(static_cast<CTinyCadMultiDoc*> (GetDocument()), dlg.GetPathName());
+	netlist.WriteVHDLFile(static_cast<CConCadMultiDoc*> (GetDocument()), dlg.GetPathName());
 
 	// Now open the netlist for the user
-	CTinyCadApp::EditTextFile(dlg.GetPathName());
+	CConCadApp::EditTextFile(dlg.GetPathName());
 }
 
 ////// Generate the SPICE output for this design //////
 
-void CTinyCadView::OnSpecialCreatespicefile()
+void CConCadView::OnSpecialCreatespicefile()
 {
 	// Get rid of any drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -159,16 +159,16 @@ void CTinyCadView::OnSpecialCreatespicefile()
 
 	// Generate the SPICE file
 	CNetList netlist;
-	netlist.WriteSpiceFile(static_cast<CTinyCadMultiDoc*> (GetDocument()), dlg.GetPathName());
+	netlist.WriteSpiceFile(static_cast<CConCadMultiDoc*> (GetDocument()), dlg.GetPathName());
 //	TRACE("Spice netlist file path = %S\n",dlg.GetPathName());
 	// Now open the Spice netlist for the user
-	CTinyCadApp::EditTextFile(dlg.GetPathName());
+	CConCadApp::EditTextFile(dlg.GetPathName());
 }
 
-void CTinyCadView::CommandPromptCreatespicefile(CTinyCadMultiDoc *pDesign, CString designFileName, CString outputDirectoryName)
+void CConCadView::CommandPromptCreatespicefile(CConCadMultiDoc *pDesign, CString designFileName, CString outputDirectoryName)
 {	//This method is used to create a spice netlist file from a command line option.  All graphically oriented functionality is assumed to not exist and is avoided.
 	//If the outputDirectoryName is empty, then the output files are stored in the same directory as the design file.
-	//Note:  ERC checks are not run in command line mode and all TinyCad windows have been forced to be invisible, so functionality should only be added that would 
+	//Note:  ERC checks are not run in command line mode and all ConCad windows have been forced to be invisible, so functionality should only be added that would 
 	//       not cause a window or dialog to be displayed.  The goal is to be able to run unattended from a DOS batch file or build script without any windows popping up unexpectedly.
 
 	CString netListFileName(designFileName);
@@ -288,7 +288,7 @@ const int ErcTable[7 /*theNetType*/][7/*theNodeType*/] = {
 /* NoConnect Net*/			{nNoConnect,	ERR_NOCONNECT,	ERR_NOCONNECT,	ERR_NOCONNECT,		ERR_NOCONNECT, 		ERR_NOCONNECT,	ERR_NOCONNECT }
 };
 
-void CTinyCadView::OnSpecialCheck()
+void CConCadView::OnSpecialCheck()
 {
 	/// Get rid of any drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -300,7 +300,7 @@ void CTinyCadView::OnSpecialCheck()
 		WORD i;
 	} theErrorTest;
 
-	theErrorTest.i = (WORD) CTinyCadRegistry::GetInt("ERC", 0xffff);
+	theErrorTest.i = (WORD) CConCadRegistry::GetInt("ERC", 0xffff);
 
 	/// Get the user's options
 	theDialog.SetErrorTest(theErrorTest.e);
@@ -310,12 +310,12 @@ void CTinyCadView::OnSpecialCheck()
 	}
 
 	theErrorTest.e = theDialog.GetErrorTest();
-	CTinyCadRegistry::Set("ERC", theErrorTest.i);
+	CConCadRegistry::Set("ERC", theErrorTest.i);
 
 	DoSpecialCheck();
 }
 
-void CTinyCadView::OnSpecialVHDLCheck()
+void CConCadView::OnSpecialVHDLCheck()
 {
 	/// Get rid of any drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -327,7 +327,7 @@ void CTinyCadView::OnSpecialVHDLCheck()
 		WORD i;
 	} theErrorTest;
 
-	theErrorTest.i = (WORD)CTinyCadRegistry::GetInt("ERC", 0xffff);
+	theErrorTest.i = (WORD)CConCadRegistry::GetInt("ERC", 0xffff);
 
 	/// Get the user's options
 	theDialog.SetErrorTest(theErrorTest.e);
@@ -337,12 +337,12 @@ void CTinyCadView::OnSpecialVHDLCheck()
 	}
 
 	theErrorTest.e = theDialog.GetErrorTest();
-	CTinyCadRegistry::Set("ERC", theErrorTest.i);
+	CConCadRegistry::Set("ERC", theErrorTest.i);
 
 	DoSpecialVHDLCheck();
 }
 
-int CTinyCadView::DoSpecialCheck(bool alwaysShowList)
+int CConCadView::DoSpecialCheck(bool alwaysShowList)
 {
 	typedef std::map<CString, int> stringCollection;
 	CString formattedBuffer;
@@ -356,7 +356,7 @@ int CTinyCadView::DoSpecialCheck(bool alwaysShowList)
 		WORD i;
 	} theErrorTest;
 
-	theErrorTest.i = (WORD) CTinyCadRegistry::GetInt("ERC", 0xffff);
+	theErrorTest.i = (WORD) CConCadRegistry::GetInt("ERC", 0xffff);
 
 	/// Set the Busy icon
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
@@ -364,7 +364,7 @@ int CTinyCadView::DoSpecialCheck(bool alwaysShowList)
 	/// Generate the netlist
 	CNetList netlist;
 	netlist.m_follow_imports = false;
-	CTinyCadMultiDoc *pDoc = static_cast<CTinyCadMultiDoc*> (GetDocument());
+	CConCadMultiDoc *pDoc = static_cast<CConCadMultiDoc*> (GetDocument());
 	netlist.MakeNet(pDoc);
 	netCollection *nets = &netlist.m_nets;
 
@@ -585,7 +585,7 @@ int CTinyCadView::DoSpecialCheck(bool alwaysShowList)
 			int ppp;
 			int parts;
 			CDPoint point;
-			CTinyCadDoc* pDesign;
+			CConCadDoc* pDesign;
 			int sheet;
 			CString name;
 		} partref;
@@ -879,7 +879,7 @@ int CTinyCadView::DoSpecialCheck(bool alwaysShowList)
 	return CurrentError;
 }
 
-int CTinyCadView::DoSpecialVHDLCheck(bool alwaysShowList)
+int CConCadView::DoSpecialVHDLCheck(bool alwaysShowList)
 {
 	typedef std::map<CString, int> stringCollection;
 	CString formattedBuffer;
@@ -893,7 +893,7 @@ int CTinyCadView::DoSpecialVHDLCheck(bool alwaysShowList)
 		WORD i;
 	} theErrorTest;
 
-	theErrorTest.i = (WORD)CTinyCadRegistry::GetInt("ERC", 0xffff);
+	theErrorTest.i = (WORD)CConCadRegistry::GetInt("ERC", 0xffff);
 
 	/// Set the Busy icon
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
@@ -901,7 +901,7 @@ int CTinyCadView::DoSpecialVHDLCheck(bool alwaysShowList)
 	/// Generate the netlist
 	CNetList netlist;
 	netlist.m_follow_imports = false;
-	CTinyCadMultiDoc *pDoc = static_cast<CTinyCadMultiDoc*> (GetDocument());
+	CConCadMultiDoc *pDoc = static_cast<CConCadMultiDoc*> (GetDocument());
 	netlist.MakeNet(pDoc);
 	netCollection *nets = &netlist.m_nets;
 
@@ -1108,7 +1108,7 @@ int CTinyCadView::DoSpecialVHDLCheck(bool alwaysShowList)
 			int ppp;
 			int parts;
 			CDPoint point;
-			CTinyCadDoc* pDesign;
+			CConCadDoc* pDesign;
 			int sheet;
 			CString name;
 		} partref;

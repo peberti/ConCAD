@@ -17,44 +17,44 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-// TinyCadHierarchicalDoc.cpp : implementation file
+// ConCadHierarchicalDoc.cpp : implementation file
 //
 
 #include "stdafx.h"
-#include "TinyCad.h"
-#include "TinyCadHierarchicalDoc.h"
+#include "ConCad.h"
+#include "ConCadHierarchicalDoc.h"
 
-// CTinyCadHierarchicalDoc
+// CConCadHierarchicalDoc
 
-CTinyCadHierarchicalDoc::CTinyCadHierarchicalDoc(CMultiSheetDoc*pParent) :
-	CTinyCadDoc(pParent)
+CConCadHierarchicalDoc::CConCadHierarchicalDoc(CMultiSheetDoc*pParent) :
+	CConCadDoc(pParent)
 {
 }
 
-CTinyCadHierarchicalDoc::~CTinyCadHierarchicalDoc()
+CConCadHierarchicalDoc::~CConCadHierarchicalDoc()
 {
 }
 
-CString CTinyCadHierarchicalDoc::GetSheetName() const
+CString CConCadHierarchicalDoc::GetSheetName() const
 {
 	return "Hierarchical Symbol";
 }
 
-void CTinyCadHierarchicalDoc::SetSheetName(const TCHAR *sName)
+void CConCadHierarchicalDoc::SetSheetName(const TCHAR *sName)
 {
 }
 
-bool CTinyCadHierarchicalDoc::IsHierarchicalSymbol() const
+bool CConCadHierarchicalDoc::IsHierarchicalSymbol() const
 {
 	return true;
 }
 
-const CString CTinyCadHierarchicalDoc::GetXMLTag()
+const CString CConCadHierarchicalDoc::GetXMLTag()
 {
 	return _T("HierarchicalSymbol"); //Historically, this was misspelled "HierachicalSymbol" and has been fixed in many places in a backwards compatible way
 }
 
-const CString CTinyCadHierarchicalDoc::GetAltXMLTag()
+const CString CConCadHierarchicalDoc::GetAltXMLTag()
 { //Note:  Never "fix" the misspelled text string below - this is needed to be able to read in old designs where the keyword actually was misspelled
 	return _T("HierachicalSymbol"); //Historically, this was misspelled "HierachicalSymbol"
 }
@@ -62,13 +62,13 @@ const CString CTinyCadHierarchicalDoc::GetAltXMLTag()
 // Called after a paste or import to enable the
 // document to sort out the imported block when
 // necessary
-void CTinyCadHierarchicalDoc::PostPaste()
+void CConCadHierarchicalDoc::PostPaste()
 {
 	UngroupSymbols();
 }
 
 // Select/add a new symbol for editing
-void CTinyCadHierarchicalDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
+void CConCadHierarchicalDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
 {
 	SelectObject(NULL);
 
@@ -96,7 +96,7 @@ void CTinyCadHierarchicalDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
 	pImport->Import();
 }
 
-CString CTinyCadHierarchicalDoc::getDefaultReferenceString() const
+CString CConCadHierarchicalDoc::getDefaultReferenceString() const
 {
-	return CTinyCadDoc::getDefaultReferenceString();
+	return CConCadDoc::getDefaultReferenceString();
 }

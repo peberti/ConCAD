@@ -37,7 +37,7 @@ protected:
 	friend class CEditDlgHierarchicalEdit;
 
 public:
-	CDrawHierarchicalSymbol(CTinyCadDoc *pDesign);
+	CDrawHierarchicalSymbol(CConCadDoc *pDesign);
 	CDrawHierarchicalSymbol(const CDrawHierarchicalSymbol& b);
 	virtual ~CDrawHierarchicalSymbol(void);
 

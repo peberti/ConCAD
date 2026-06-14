@@ -18,8 +18,8 @@
  */
 
 #include "stdafx.h"
-#include "TinyCad.h"
-#include "TinyCadView.h"
+#include "ConCad.h"
+#include "ConCadView.h"
 
 #include "ChildFrm.h"
 
@@ -104,10 +104,10 @@ void CChildFrame::Dump(CDumpContext& dc) const
 BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 {
 
-	if (pContext->m_pNewViewClass == RUNTIME_CLASS(CTinyCadView))
+	if (pContext->m_pNewViewClass == RUNTIME_CLASS(CConCadView))
 	{
 		// Special folder frame
-		return m_wndFolderFrame.Create(this, RUNTIME_CLASS(CTinyCadView), pContext, 0);
+		return m_wndFolderFrame.Create(this, RUNTIME_CLASS(CConCadView), pContext, 0);
 	}
 	else
 	{

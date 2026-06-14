@@ -8,11 +8,11 @@
 
 #include "stdafx.h"
 #include "startup.h"
-#include "TinyCad.h"
-#include "TinyCadDoc.h"
+#include "ConCad.h"
+#include "ConCadDoc.h"
 #include "EditToolBar.h"
 #include "DlgPositionBox.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 #include "MainFrm.h"
 #include "NewTypes.h"
 #include "AutoSave.h"
@@ -227,7 +227,7 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 
 		m_oldRect = newRect;
 
-		CTinyCadRegistry::SetMaximize(IsZoomed() != 0);
+		CConCadRegistry::SetMaximize(IsZoomed() != 0);
 
 		RecalcLayout();
 	}
@@ -351,7 +351,7 @@ void CMainFrame::OnTimer(UINT t)
 	CAutoSave::Stop();
 
 	// Perform the save
-	CTinyCadApp::SaveAll();
+	CConCadApp::SaveAll();
 
 	// Restart the timer...
 	CAutoSave::Start();

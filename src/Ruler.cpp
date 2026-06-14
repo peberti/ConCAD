@@ -18,7 +18,7 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "revision.h"
 #include "colour.h"
 #include "context.h"

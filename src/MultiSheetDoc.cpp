@@ -21,9 +21,9 @@
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "MultiSheetDoc.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CMultiSheetDoc
@@ -119,13 +119,13 @@ CString CMultiSheetDoc::GetSheetName(int i)
 	return "error";
 }
 
-CTinyCadDoc* CMultiSheetDoc::GetSheet(int i)
+CConCadDoc* CMultiSheetDoc::GetSheet(int i)
 {
 	return NULL;
 }
 
 // Get the currently active sheet to work with
-CTinyCadDoc* CMultiSheetDoc::GetCurrentSheet()
+CConCadDoc* CMultiSheetDoc::GetCurrentSheet()
 {
 	return GetSheet(GetActiveSheetIndex());
 }
@@ -140,9 +140,9 @@ void CMultiSheetDoc::SelectSheetView(int i)
 	while (pos != NULL)
 	{
 		CView* pView = GetNextView(pos);
-		if (pView->IsKindOf(RUNTIME_CLASS( CTinyCadView )))
+		if (pView->IsKindOf(RUNTIME_CLASS( CConCadView )))
 		{
-			static_cast<CTinyCadView*> (pView)->SelectSheet(i);
+			static_cast<CConCadView*> (pView)->SelectSheet(i);
 			pView->RedrawWindow();
 		}
 	}
@@ -154,10 +154,10 @@ void CMultiSheetDoc::SelectERCSheetView(int i, CDrawingObject *ercObject)
 	while (pos != NULL)
 	{
 		CView* pView = GetNextView(pos);
-		if (pView->IsKindOf(RUNTIME_CLASS( CTinyCadView )))
+		if (pView->IsKindOf(RUNTIME_CLASS( CConCadView )))
 		{
-			static_cast<CTinyCadView *> (pView)->SelectSheet(i);
-			static_cast<CTinyCadView *> (pView)->SetScrollCentre(ercObject->m_point_a); //Around the ERC marker - user is still free to change the focus and switch to a different zoom factor
+			static_cast<CConCadView *> (pView)->SelectSheet(i);
+			static_cast<CConCadView *> (pView)->SetScrollCentre(ercObject->m_point_a); //Around the ERC marker - user is still free to change the focus and switch to a different zoom factor
 			pView->RedrawWindow();
 		}
 	}

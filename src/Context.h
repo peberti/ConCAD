@@ -180,7 +180,7 @@ public:
 	Transform();
 };
 
-class CTinyCadDoc;
+class CConCadDoc;
 
 inline bool operator<(const LOGFONT&a, const LOGFONT&b)
 {

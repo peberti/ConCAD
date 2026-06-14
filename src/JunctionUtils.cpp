@@ -22,8 +22,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-#include "tinycad.h"
-#include "TinyCadDoc.h"
+#include "concad.h"
+#include "ConCadDoc.h"
 #include "JunctionUtils.h"
 #include "LineUtils.h"
 
@@ -31,7 +31,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CJunctionUtils::CJunctionUtils(CTinyCadDoc* pDesign)
+CJunctionUtils::CJunctionUtils(CConCadDoc* pDesign)
 {
 	m_pDesign = pDesign;
 }

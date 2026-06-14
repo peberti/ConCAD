@@ -12,7 +12,7 @@
 #include "XMLWriter.h"
 #include "XMLReader.h"
 
-class CTinyCadDoc;
+class CConCadDoc;
 
 typedef Int16 hRESOURCE;
 
@@ -83,9 +83,9 @@ public:
 	void ResetMerge();
 
 public:
-	void SaveXML(CTinyCadDoc *pDesign, const TCHAR *name, CXMLWriter &xml);
+	void SaveXML(CConCadDoc *pDesign, const TCHAR *name, CXMLWriter &xml);
 public:
-	void Load(CTinyCadDoc *pDesign, CStream &);
+	void Load(CConCadDoc *pDesign, CStream &);
 
 	//-- Compare this resource with another resource
 public:
@@ -99,14 +99,14 @@ public:
 
 	//--
 public:
-	virtual void SaveItemXML(CTinyCadDoc *pDesign, CXMLWriter &xml) = 0;
+	virtual void SaveItemXML(CConCadDoc *pDesign, CXMLWriter &xml) = 0;
 
 	//--
 public:
-	virtual void LoadItem(CTinyCadDoc *pDesign, CStream &, hRESOURCE) = 0;
+	virtual void LoadItem(CConCadDoc *pDesign, CStream &, hRESOURCE) = 0;
 
 	//--
 public:
-	virtual void LoadItemXML(CTinyCadDoc *pDesign, CXMLReader &xml) = 0;
+	virtual void LoadItemXML(CConCadDoc *pDesign, CXMLReader &xml) = 0;
 };
 //=========================================================================

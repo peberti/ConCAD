@@ -20,7 +20,7 @@
 #ifndef __EDITDLGPINEDIT_H__
 #define __EDITDLGPINEDIT_H__
 
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 
 class CDrawingObject;
 class CDrawPin;
@@ -53,7 +53,7 @@ protected:
 
 
 public:
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	void Create();
 	void ReFocus();
 

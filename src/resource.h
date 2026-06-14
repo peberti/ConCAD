@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by TinyCad.rc
+// Used by ConCad.rc
 //
 #define IDOK3                           2
 #define IDOK2                           3
@@ -437,7 +437,7 @@
 #define ID_VIEW_GROUPTOOLBAR            32812
 #define ID_VIEW_ANNOTATIONTOOLBAR       32813
 #define ID_VIEW_BUSTOOLBAR              32814
-#define ID_HELP_GOTOTINYCADWEBSITE      32815
+#define ID_HELP_GOTOCONCADWEBSITE      32815
 #define ID_LIBRARY_REFRESHSYMBOLSFROMLIBRARIES 32816
 #define ID_HELP_HELP                    32817
 #define ID_RULER_HORIZ                  32818
@@ -485,7 +485,7 @@
 #define ID_LIBRARY_HETEROGENEOUS        32877
 #define ID_OPTIONS_TOGGLE_UNITS         32884
 #define IDM_TOGGLE_GRIDSIZE             32888
-#define ID_HELP_OPENTINYCADUSERMANUAL   32894
+#define ID_HELP_OPENCONCADUSERMANUAL   32894
 #define IDM_EDITSELECTALL               32895
 #define IDM_TOOLORIGIN                  32896
 #define IDM_TOOLNOTETEXT                32897

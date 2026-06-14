@@ -17,45 +17,45 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-// TinyCadMultiDoc.cpp : implementation file
+// ConCadMultiDoc.cpp : implementation file
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
-#include "TinyCadMultiDoc.h"
+#include "concad.h"
+#include "ConCadMultiDoc.h"
 #include "HeaderStamp.h"
 #include "DlgRenameSheet.h"
-#include ".\tinycadmultidoc.h"
-#include "TinyCadHierarchicalDoc.h"
+#include ".\ConCadMultiDoc.h"
+#include "ConCadHierarchicalDoc.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiDoc
-IMPLEMENT_DYNCREATE(CTinyCadMultiDoc, CMultiSheetDoc)
+// CConCadMultiDoc
+IMPLEMENT_DYNCREATE(CConCadMultiDoc, CMultiSheetDoc)
 
-CTinyCadMultiDoc::CTinyCadMultiDoc()
+CConCadMultiDoc::CConCadMultiDoc()
 {
 	m_active_doc = 0;
 }
 
-BOOL CTinyCadMultiDoc::OnNewDocument()
+BOOL CConCadMultiDoc::OnNewDocument()
 {
 	if (!CMultiSheetDoc::OnNewDocument()) return FALSE;
 
 	Clear();
 
-	m_sheets.push_back(new CTinyCadDoc(this));
+	m_sheets.push_back(new CConCadDoc(this));
 
 	return TRUE;
 }
 
-CTinyCadMultiDoc::~CTinyCadMultiDoc()
+CConCadMultiDoc::~CConCadMultiDoc()
 {
 	m_active_doc = 0;
 	Clear();
 }
 
-BEGIN_MESSAGE_MAP(CTinyCadMultiDoc, CMultiSheetDoc)
-	//{{AFX_MSG_MAP(CTinyCadMultiDoc)
+BEGIN_MESSAGE_MAP(CConCadMultiDoc, CMultiSheetDoc)
+	//{{AFX_MSG_MAP(CConCadMultiDoc)
 	ON_COMMAND(ID_CONTEXT_ADDSHEET, OnContextAddsheet)
 	ON_COMMAND(ID_CONTEXT_DELETESHEET, OnContextDeletesheet)
 	ON_UPDATE_COMMAND_UI(ID_CONTEXT_DELETESHEET, OnUpdateContextDeletesheet)
@@ -72,24 +72,24 @@ BEGIN_MESSAGE_MAP(CTinyCadMultiDoc, CMultiSheetDoc)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiDoc diagnostics
+// CConCadMultiDoc diagnostics
 
 #ifdef _DEBUG
-void CTinyCadMultiDoc::AssertValid() const
+void CConCadMultiDoc::AssertValid() const
 {
 	CMultiSheetDoc::AssertValid();
 }
 
-void CTinyCadMultiDoc::Dump(CDumpContext& dc) const
+void CConCadMultiDoc::Dump(CDumpContext& dc) const
 {
 	CMultiSheetDoc::Dump(dc);
 }
 #endif //_DEBUG
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiDoc serialization
+// CConCadMultiDoc serialization
 
 
-void CTinyCadMultiDoc::Serialize(CArchive& ar)
+void CConCadMultiDoc::Serialize(CArchive& ar)
 {
 	m_xml_filename = ar.m_strFileName;
 
@@ -123,12 +123,12 @@ void CTinyCadMultiDoc::Serialize(CArchive& ar)
 }
 
 // Get the file path name during loading or saving
-CString CTinyCadMultiDoc::GetXMLPathName()
+CString CConCadMultiDoc::GetXMLPathName()
 {
 	return m_xml_filename;
 }
 
-void CTinyCadMultiDoc::Clear()
+void CConCadMultiDoc::Clear()
 {
 	sheetCollection::iterator i = m_sheets.begin();
 	while (i != m_sheets.end())
@@ -140,7 +140,7 @@ void CTinyCadMultiDoc::Clear()
 	m_sheets.clear();
 }
 
-void CTinyCadMultiDoc::UnTag()
+void CConCadMultiDoc::UnTag()
 {
 	sheetCollection::iterator i = m_sheets.begin();
 	while (i != m_sheets.end())
@@ -152,9 +152,9 @@ void CTinyCadMultiDoc::UnTag()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiDoc commands
+// CConCadMultiDoc commands
 
-CTinyCadDoc* CTinyCadMultiDoc::GetSheet(int i)
+CConCadDoc* CConCadMultiDoc::GetSheet(int i)
 {
 	if (m_sheets.size() == 0)
 	{
@@ -172,13 +172,13 @@ CTinyCadDoc* CTinyCadMultiDoc::GetSheet(int i)
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadMultiDoc::InsertSheet(int i, CTinyCadDoc *pDoc)
+void CConCadMultiDoc::InsertSheet(int i, CConCadDoc *pDoc)
 {
 	sheetCollection::iterator it = m_sheets.begin();
 
 	if (!pDoc)
 	{
-		pDoc = new CTinyCadDoc(this);
+		pDoc = new CConCadDoc(this);
 		if (GetCurrentSheet())
 		{
 			pDoc->GetDetails() = GetCurrentSheet()->GetDetails();
@@ -202,7 +202,7 @@ void CTinyCadMultiDoc::InsertSheet(int i, CTinyCadDoc *pDoc)
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadMultiDoc::DeleteSheet(int i)
+void CConCadMultiDoc::DeleteSheet(int i)
 {
 	sheetCollection::iterator it = m_sheets.begin();
 	it += i;
@@ -220,7 +220,7 @@ void CTinyCadMultiDoc::DeleteSheet(int i)
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadMultiDoc::MoveSheet(int index, bool left)
+void CConCadMultiDoc::MoveSheet(int index, bool left)
 {
 
 	if (left && index > 0) 
@@ -251,7 +251,7 @@ void CTinyCadMultiDoc::MoveSheet(int index, bool left)
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadMultiDoc::AutoSave()
+void CConCadMultiDoc::AutoSave()
 {
 	// We only backup files with a file name
 	if (GetPathName().IsEmpty())
@@ -327,7 +327,7 @@ void CTinyCadMultiDoc::AutoSave()
 }
 
 //-------------------------------------------------------------------------
-BOOL CTinyCadMultiDoc::ReadFile(CStreamFile& file)
+BOOL CConCadMultiDoc::ReadFile(CStreamFile& file)
 {
 	// Is this an old style document?
 	//CDrawingObject*	obj		= NULL;
@@ -346,7 +346,7 @@ BOOL CTinyCadMultiDoc::ReadFile(CStreamFile& file)
 	if (oHeader.IsChecked(false))
 	{
 		// Use the old loader...
-		CTinyCadDoc *pNewDoc = new CTinyCadDoc(this);
+		CConCadDoc *pNewDoc = new CConCadDoc(this);
 		if (pNewDoc->ReadFile(file))
 		{
 			m_sheets.push_back(pNewDoc);
@@ -369,7 +369,7 @@ BOOL CTinyCadMultiDoc::ReadFile(CStreamFile& file)
 		if (name == "TinyCAD")
 		{
 			// Single sheet loader...
-			CTinyCadDoc *pNewDoc = new CTinyCadDoc(this);
+			CConCadDoc *pNewDoc = new CConCadDoc(this);
 			if (pNewDoc->ReadFileXML(xml, TRUE))
 			{
 				m_sheets.push_back(pNewDoc);
@@ -401,14 +401,14 @@ BOOL CTinyCadMultiDoc::ReadFile(CStreamFile& file)
 			else if (name == "TinyCAD")
 			{
 				// Single sheet loader...
-				CTinyCadDoc *pNewDoc = new CTinyCadDoc(this);
+				CConCadDoc *pNewDoc = new CConCadDoc(this);
 				pNewDoc->ReadFileXML(xml, TRUE);
 				m_sheets.push_back(pNewDoc);
 			}
 			else if ( (name == _T("HierarchicalSymbol")) || (name == _T("HierachicalSymbol"))) //Unfortunately, "hierarchical" was misspelled as "hierachical" and must still be recognized as a valid tag name
 			{
 				// Hierarchical symbol loader...
-				CTinyCadDoc *pNewDoc = new CTinyCadHierarchicalDoc(this);
+				CConCadDoc *pNewDoc = new CConCadHierarchicalDoc(this);
 				pNewDoc->ReadFileXML(xml, TRUE);
 				m_sheets.push_back(pNewDoc);
 			}
@@ -423,7 +423,7 @@ BOOL CTinyCadMultiDoc::ReadFile(CStreamFile& file)
 }
 
 //-------------------------------------------------------------------------
-bool CTinyCadMultiDoc::SaveXML(CXMLWriter &xml)
+bool CConCadMultiDoc::SaveXML(CXMLWriter &xml)
 {
 	// Write the objects to the file
 	try
@@ -432,7 +432,7 @@ bool CTinyCadMultiDoc::SaveXML(CXMLWriter &xml)
 
 		comment.Format(_T("This file was written by ConCAD (a fork of TinyCAD) %s %s\n")
 		_T("ConCAD files are compatible with TinyCAD; see https://www.tinycad.net\n")
-		_T("for the upstream TinyCAD project."), (LPCTSTR)CTinyCadApp::GetVersion(), (LPCTSTR)CTinyCadApp::GetReleaseType());
+		_T("for the upstream TinyCAD project."), (LPCTSTR)CConCadApp::GetVersion(), (LPCTSTR)CConCadApp::GetReleaseType());
 
 		xml.addComment(comment);
 
@@ -457,7 +457,7 @@ bool CTinyCadMultiDoc::SaveXML(CXMLWriter &xml)
 }
 
 // Is this document editing a library?
-bool CTinyCadMultiDoc::IsLibInUse(CLibraryStore *lib)
+bool CConCadMultiDoc::IsLibInUse(CLibraryStore *lib)
 {
 	sheetCollection::iterator i = m_sheets.begin();
 	while (i != m_sheets.end())
@@ -473,19 +473,19 @@ bool CTinyCadMultiDoc::IsLibInUse(CLibraryStore *lib)
 }
 
 // get the number of documents in this multi-doc
-int CTinyCadMultiDoc::GetNumberOfSheets()
+int CConCadMultiDoc::GetNumberOfSheets()
 {
 	return static_cast<int> (m_sheets.size());
 }
 
 // get the number of documents in this multi-doc
-void CTinyCadMultiDoc::SetActiveSheetIndex(int i)
+void CConCadMultiDoc::SetActiveSheetIndex(int i)
 {
 	ASSERT( i >= 0 && i < GetNumberOfSheets() );
 	m_active_doc = i;
 }
 
-CString CTinyCadMultiDoc::GetSheetName(int i)
+CString CConCadMultiDoc::GetSheetName(int i)
 {
 	ASSERT( i >= 0 && i < GetNumberOfSheets() );
 
@@ -500,7 +500,7 @@ CString CTinyCadMultiDoc::GetSheetName(int i)
 	return r;
 }
 
-void CTinyCadMultiDoc::OnFolderContextMenu()
+void CConCadMultiDoc::OnFolderContextMenu()
 {
 	// Get the current location of the mouse
 	CPoint pt;
@@ -512,7 +512,7 @@ void CTinyCadMultiDoc::OnFolderContextMenu()
 	menu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, AfxGetMainWnd(), NULL);
 }
 
-void CTinyCadMultiDoc::OnContextAddsheet()
+void CConCadMultiDoc::OnContextAddsheet()
 {
 	// switch back to the Edit tool
 	GetCurrentSheet()->SelectObject(new CDrawEditItem(GetCurrentSheet()));
@@ -528,7 +528,7 @@ void CTinyCadMultiDoc::OnContextAddsheet()
 	SetTabsFromDocument();
 }
 
-void CTinyCadMultiDoc::OnContextDeletesheet()
+void CConCadMultiDoc::OnContextDeletesheet()
 {
 	if (AfxMessageBox(IDS_DELETE_SHEET, MB_YESNO) == IDYES)
 	{
@@ -543,12 +543,12 @@ void CTinyCadMultiDoc::OnContextDeletesheet()
 	}
 }
 
-void CTinyCadMultiDoc::OnUpdateContextDeletesheet(CCmdUI* pCmdUI)
+void CConCadMultiDoc::OnUpdateContextDeletesheet(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetNumberOfSheets() > 1);
 }
 
-void CTinyCadMultiDoc::OnContextRenamesheet()
+void CConCadMultiDoc::OnContextRenamesheet()
 {
 	CDlgRenameSheet s;
 	s.m_Name = GetCurrentSheet()->GetSheetName();
@@ -560,36 +560,36 @@ void CTinyCadMultiDoc::OnContextRenamesheet()
 	}
 }
 
-void CTinyCadMultiDoc::OnContextMoveSheetLeft()
+void CConCadMultiDoc::OnContextMoveSheetLeft()
 {
 	int index = GetActiveSheetIndex();
 	MoveSheet(index, true);
 }
 
-void CTinyCadMultiDoc::OnContextMoveSheetRight()
+void CConCadMultiDoc::OnContextMoveSheetRight()
 {
 	int index = GetActiveSheetIndex();
 	MoveSheet(index, false);
 }
 
 
-void CTinyCadMultiDoc::OnUpdateContextRenamesheet(CCmdUI *pCmdUI)
+void CConCadMultiDoc::OnUpdateContextRenamesheet(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(!GetCurrentSheet()->IsHierarchicalSymbol());
 }
 
-void CTinyCadMultiDoc::SetTabsFromDocument()
+void CConCadMultiDoc::SetTabsFromDocument()
 {
 	UpdateAllViews(NULL, DOC_UPDATE_TABS);
 }
 
-void CTinyCadMultiDoc::OnContextAddhierarchicalsymbol()
+void CConCadMultiDoc::OnContextAddhierarchicalsymbol()
 {
 	// Add in a new document that is the hierarchical symbol
 	GetCurrentSheet()->SelectObject(new CDrawEditItem(GetCurrentSheet()));
 
 	// Insert the new sheet		
-	CTinyCadDoc *pDoc = new CTinyCadHierarchicalDoc(this);
+	CConCadDoc *pDoc = new CConCadHierarchicalDoc(this);
 	if (GetCurrentSheet())
 	{
 		pDoc->GetDetails() = GetCurrentSheet()->GetDetails();
@@ -601,19 +601,19 @@ void CTinyCadMultiDoc::OnContextAddhierarchicalsymbol()
 	SetTabsFromDocument();
 }
 
-void CTinyCadMultiDoc::OnUpdateContextAddhierarchicalsymbol(CCmdUI *pCmdUI)
+void CConCadMultiDoc::OnUpdateContextAddhierarchicalsymbol(CCmdUI *pCmdUI)
 {
 	// Determine if we already have the hierarchical symbol
 	pCmdUI->Enable(!m_sheets[0]->IsHierarchicalSymbol());
 }
 
-void CTinyCadMultiDoc::OnLibraryAddpin()
+void CConCadMultiDoc::OnLibraryAddpin()
 {
 	// Add a new pin to this drawing
 	GetCurrentSheet()->SelectObject(new CDrawPin(GetCurrentSheet()));
 }
 
-void CTinyCadMultiDoc::OnUpdateLibraryAddpin(CCmdUI* pCmdUI)
+void CConCadMultiDoc::OnUpdateLibraryAddpin(CCmdUI* pCmdUI)
 {
 	// Only allow pin additions on the hierarchical symbol sheet
 	pCmdUI->Enable(GetCurrentSheet()->IsHierarchicalSymbol());

@@ -7,7 +7,7 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "Option.h"
 #include "Registry.h"
 #include "Colour.h"
@@ -31,7 +31,7 @@ COption::COption()
 	ClosePolygon = FALSE;
 }
 //-------------------------------------------------------------------------
-void COption::Init(CTinyCadDoc *pDesign)
+void COption::Init(CConCadDoc *pDesign)
 {
 	// Keep a track of the design
 	m_pDesign = pDesign;

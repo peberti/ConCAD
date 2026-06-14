@@ -17,7 +17,7 @@
 //*************************************************************************
 
 //=========================================================================
-class CTinyCadRegistry: public CRegistry
+class CConCadRegistry: public CRegistry
 {
 	typedef CRegistry super;
 
@@ -25,8 +25,8 @@ class CTinyCadRegistry: public CRegistry
 	//== ctor/dtor/initializing                                          ==
 	//=====================================================================
 public:
-	CTinyCadRegistry();
-	virtual ~CTinyCadRegistry();
+	CConCadRegistry();
+	virtual ~CConCadRegistry();
 
 	//-- Write the initial data to the registry
 private:

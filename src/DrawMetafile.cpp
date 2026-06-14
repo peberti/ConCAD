@@ -21,7 +21,7 @@
 
 #include "stdafx.h"
 #include <math.h>
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -32,7 +32,7 @@
 #include "ImageJpeg.h"
 
 // The Constructor
-CDrawMetaFile::CDrawMetaFile(CTinyCadDoc *pDesign) :
+CDrawMetaFile::CDrawMetaFile(CConCadDoc *pDesign) :
 	CDrawRectOutline(pDesign)
 {
 	m_segment = 1;

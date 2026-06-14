@@ -21,7 +21,7 @@
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "EditToolbar.h"
 #include "EditDlgHierarchicalEdit.h"
 #include "colour.h"
@@ -145,7 +145,7 @@ void CEditDlgHierarchicalEdit::ReadFields()
 
 }
 
-void CEditDlgHierarchicalEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgHierarchicalEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 
 	stop = TRUE;

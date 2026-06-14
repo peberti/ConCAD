@@ -17,9 +17,9 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "SpecialPrintDlg.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 /////////////////////////////////////////////////////////////////////////////
 // CSpecialPrintDlg
 IMPLEMENT_DYNAMIC(CSpecialPrintDlg, CPrintDialog)
@@ -55,7 +55,7 @@ END_MESSAGE_MAP()
 void CSpecialPrintDlg::OnBandw()
 {
 	m_BlackAndWhite = m_BandWCtrl->GetCheck();
-	CTinyCadRegistry::SetPrintBandW(m_BlackAndWhite != 0);
+	CConCadRegistry::SetPrintBandW(m_BlackAndWhite != 0);
 }
 
 BOOL CSpecialPrintDlg::OnInitDialog()
@@ -63,8 +63,8 @@ BOOL CSpecialPrintDlg::OnInitDialog()
 	CPrintDialog::OnInitDialog();
 
 	m_BandWCtrl = (CButton*) GetDlgItem(PRINT_BANDW);
-	m_BlackAndWhite = CTinyCadRegistry::GetPrintBandW();
-	m_Scale = CTinyCadRegistry::GetPrintScale();
+	m_BlackAndWhite = CConCadRegistry::GetPrintBandW();
+	m_Scale = CConCadRegistry::GetPrintScale();
 
 	m_BandWCtrl->SetCheck(m_BlackAndWhite);
 
@@ -83,7 +83,7 @@ void CSpecialPrintDlg::OnOK()
 	GetDlgItemText(IDC_SCALE, s);
 	m_Scale = _tstof(s);
 	m_Copies = GetDlgItemInt(1154);
-	CTinyCadRegistry::SetPrintScale(m_Scale);
+	CConCadRegistry::SetPrintScale(m_Scale);
 	UpdateData(TRUE);
 	EndDialog(IDOK);
 }

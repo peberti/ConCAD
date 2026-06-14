@@ -9,7 +9,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "DlgAbout.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 
 //*************************************************************************
 //*                                                                       *
@@ -32,7 +32,7 @@ BOOL CDlgAbout::OnInitDialog()
 	super::OnInitDialog();
 
 	CString sVersion;
-	sVersion.Format(_T("%s %s [%s]"), (LPCTSTR)CTinyCadApp::GetName(), (LPCTSTR)CTinyCadApp::GetVersion(), (LPCTSTR)CTinyCadApp::GetReleaseType());
+	sVersion.Format(_T("%s %s [%s]"), (LPCTSTR)CConCadApp::GetName(), (LPCTSTR)CConCadApp::GetVersion(), (LPCTSTR)CConCadApp::GetReleaseType());
 	GetDlgItem(IDC_VERSION)->SetWindowText(sVersion);
 
 	return TRUE;

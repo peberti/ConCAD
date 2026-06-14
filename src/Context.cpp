@@ -26,7 +26,7 @@
 #include "colour.h"
 #include "math.h"
 #include "registry.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 
 ////// The methods for the Context class //////
 

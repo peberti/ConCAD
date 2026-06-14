@@ -8,7 +8,7 @@
 
 #include "stdafx.h"
 #include "DlgColours.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "assert.h"
 
 BEGIN_MESSAGE_MAP(CDlgColours, CDialog)

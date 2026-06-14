@@ -26,7 +26,7 @@
 #include "DRect.h"
 
 class CContext;
-class CTinyCadDoc;
+class CConCadDoc;
 
 enum paint_options
 {
@@ -97,7 +97,7 @@ class CDrawingObject
 
 public:
 
-	CTinyCadDoc *m_pDesign; // Our current design that this object belongs to
+	CConCadDoc *m_pDesign; // Our current design that this object belongs to
 
 	CDPoint m_point_a; // position of this object (in internal units)
 	CDPoint m_point_b; // the size of the object, these two points define
@@ -105,7 +105,7 @@ public:
 
 	char m_segment; // Mode of current edit
 
-	CDrawingObject(CTinyCadDoc *pDesign);
+	CDrawingObject(CConCadDoc *pDesign);
 	virtual ~CDrawingObject()
 	{
 	} // The destructor

@@ -8,7 +8,7 @@
 
 #include "stdafx.h"
 #include "details.h"
-#include "tinycadregistry.h"
+#include "concadregistry.h"
 #include "colour.h"
 #include "SvgTitleBlock.h"
 
@@ -33,9 +33,9 @@ void CDetails::Init()
 {
 	m_bIsVisible = true;
 	m_szLastChange = ""; // CTime::GetCurrentTime();
-	m_bHasRulers = CTinyCadRegistry::GetBool("ShowDesignRulers", false);
-	m_iHorizRulerSize = CTinyCadRegistry::GetInt("HorizRulerSize", 7);
-	m_iVertRulerSize = CTinyCadRegistry::GetInt("VertRulerSize", 5);
+	m_bHasRulers = CConCadRegistry::GetBool("ShowDesignRulers", false);
+	m_iHorizRulerSize = CConCadRegistry::GetInt("HorizRulerSize", 7);
+	m_iVertRulerSize = CConCadRegistry::GetInt("VertRulerSize", 5);
 	m_iSheetNum = 0;
 	m_iSheetTotal = 0;
 
@@ -55,7 +55,7 @@ void CDetails::Reset()
 	m_sTitleBlockName = "";
 	m_sTitleBlockSvg = "";
 	m_sEffectiveSvg = "";
-	m_szPage = CTinyCadRegistry::GetPageSize();
+	m_szPage = CConCadRegistry::GetPageSize();
 }
 //-------------------------------------------------------------------------
 bool CDetails::IsVisible() const
@@ -148,9 +148,9 @@ void CDetails::SetRulers(bool bHasRulers, int v, int h)
 		m_iVertRulerSize = v;
 	}
 
-	CTinyCadRegistry::Set("ShowDesignRulers", m_bHasRulers);
-	CTinyCadRegistry::Set("HorizRulerSize", m_iHorizRulerSize);
-	CTinyCadRegistry::Set("VertRulerSize", m_iVertRulerSize);
+	CConCadRegistry::Set("ShowDesignRulers", m_bHasRulers);
+	CConCadRegistry::Set("HorizRulerSize", m_iHorizRulerSize);
+	CConCadRegistry::Set("VertRulerSize", m_iVertRulerSize);
 }
 //-------------------------------------------------------------------------
 void CDetails::SetLastChange(const TCHAR * szLastChange)

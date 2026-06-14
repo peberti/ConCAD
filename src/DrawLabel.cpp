@@ -19,7 +19,7 @@
 
 // This handles the actual drawing of objects
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -353,7 +353,7 @@ void CDrawLabel::LButtonDown(CDPoint p, CDPoint no_snap_p)
 
 // The constructors
 
-CDrawLabel::CDrawLabel(CTinyCadDoc *pDesign) :
+CDrawLabel::CDrawLabel(CConCadDoc *pDesign) :
 	CDrawRectOutline(pDesign)
 {
 	is_stuck = FALSE;

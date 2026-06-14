@@ -21,12 +21,12 @@
 #include "option.h"
 #include "revision.h"
 #include "registry.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "diag.h"
 
-void CEditDlg::Show(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlg::Show(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	m_pDesign = pDesign;
 	m_pObject = pObject;
@@ -86,7 +86,7 @@ void CEditDlgPowerEdit::Create()
 	CDialog::Create(IDD_POWER, &g_EditToolBar);
 }
 
-void CEditDlgPowerEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgPowerEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	stop = TRUE;
 
@@ -134,7 +134,7 @@ void CEditDlgRotateBox::Create()
 	CDialog::Create(IDD_ROTATE, &g_EditToolBar);
 }
 
-void CEditDlgRotateBox::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgRotateBox::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	Show(pDesign, pObject);
 }

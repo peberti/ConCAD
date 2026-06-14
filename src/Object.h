@@ -22,7 +22,7 @@
 
 // This class is defined in library.h
 class CDesignFileSymbol;
-class CTinyCadDoc;
+class CConCadDoc;
 
 #include "DrawingObject.h"
 #include "ArcPoint.h"
@@ -37,7 +37,7 @@ class CDrawRectOutline: public CDrawingObject
 protected:
 
 	// The constructor
-	CDrawRectOutline(CTinyCadDoc *pDesign) :
+	CDrawRectOutline(CConCadDoc *pDesign) :
 		CDrawingObject(pDesign)
 	{
 	}
@@ -143,7 +143,7 @@ public:
 	}
 
 	// This is used for the construction of this object
-	CDrawLine(CTinyCadDoc *pDesign, ObjType NewType);
+	CDrawLine(CConCadDoc *pDesign, ObjType NewType);
 };
 
 class CDrawPolygon: public CDrawingObject
@@ -216,7 +216,7 @@ public:
 	virtual int GetContextMenu();
 
 	// This is used for the construction of this object
-	CDrawPolygon(CTinyCadDoc *pDesign, ObjType NewType = xLineEx2);
+	CDrawPolygon(CConCadDoc *pDesign, ObjType NewType = xLineEx2);
 };
 
 class CDrawJunction: public CDrawingObject
@@ -247,7 +247,7 @@ public:
 	}
 
 	// This is used for the construction of this object
-	CDrawJunction(CTinyCadDoc *pDesign);
+	CDrawJunction(CConCadDoc *pDesign);
 };
 
 class CDrawBusSlash: public CDrawingObject
@@ -278,7 +278,7 @@ public:
 	virtual bool GetActive(CActiveNode &a);
 
 	// These are used for the construction of this object
-	CDrawBusSlash(CTinyCadDoc *pDesign, int NewDir = 0);
+	CDrawBusSlash(CConCadDoc *pDesign, int NewDir = 0);
 };
 
 class CDrawNoConnect: public CDrawingObject
@@ -308,7 +308,7 @@ public:
 	}
 
 	// This is used for the construction of this object
-	CDrawNoConnect(CTinyCadDoc *pDesign);
+	CDrawNoConnect(CConCadDoc *pDesign);
 	virtual ~CDrawNoConnect()
 	{
 	}
@@ -348,7 +348,7 @@ public:
 	virtual BOOL IsConstruction();
 
 	// This is used for the construction of this object
-	CDrawOrigin(CTinyCadDoc *pDesign);
+	CDrawOrigin(CConCadDoc *pDesign);
 	virtual ~CDrawOrigin()
 	{
 	}
@@ -416,7 +416,7 @@ public:
 	virtual void MoveField(int w, CDPoint r);
 
 	// These are used for the construction of this object
-	CDrawText(CTinyCadDoc *pDesign, ObjType NewType);
+	CDrawText(CConCadDoc *pDesign, ObjType NewType);
 	virtual ~CDrawText()
 	{
 	}
@@ -517,7 +517,7 @@ public:
 	virtual void MoveField(int w, CDPoint r);
 
 	// These are used for the construction of this object
-	CDrawLabel(CTinyCadDoc *pDesign);
+	CDrawLabel(CConCadDoc *pDesign);
 	virtual ~CDrawLabel()
 	{
 	}
@@ -582,7 +582,7 @@ public:
 	virtual bool GetActive(CActiveNode &a);
 
 	// These are used for the construction of this object
-	CDrawPower(CTinyCadDoc *pDesign);
+	CDrawPower(CConCadDoc *pDesign);
 	virtual ~CDrawPower()
 	{
 	}
@@ -687,7 +687,7 @@ public:
 
 	BOOL IsHierarchicalPin();
 
-	CDrawPin(CTinyCadDoc *pDesign); // The constructor
+	CDrawPin(CConCadDoc *pDesign); // The constructor
 	virtual ~CDrawPin()
 	{
 	}
@@ -719,7 +719,7 @@ public:
 	void determineSize(CDC &dc);
 
 	// This is used for the construction of this object
-	CDrawMetaFile(CTinyCadDoc *pDesign);
+	CDrawMetaFile(CConCadDoc *pDesign);
 	virtual ~CDrawMetaFile();
 
 	virtual UINT getMenuID()
@@ -773,7 +773,7 @@ public:
 	}
 	
 	// This is used for the construction of this object
-	CDrawSquare(CTinyCadDoc *pDesign, ObjType type);
+	CDrawSquare(CConCadDoc *pDesign, ObjType type);
 
 	virtual UINT getMenuID() 
 	{
@@ -840,7 +840,7 @@ public:
 	virtual BOOL RButtonDown(CDPoint, CDPoint);
 
 	// This is used for the construction of this object
-	CDrawNoteText(CTinyCadDoc *pDesign, ObjType type);
+	CDrawNoteText(CConCadDoc *pDesign, ObjType type);
 	virtual ~CDrawNoteText()
 	{
 	}
@@ -870,7 +870,7 @@ public:
 	virtual CDrawingObject* Store();
 
 	// This is used for the construction of this object
-	CDrawError(CTinyCadDoc *pDesign, CDPoint NewA, int q);
+	CDrawError(CConCadDoc *pDesign, CDPoint NewA, int q);
 
 };
 
@@ -906,7 +906,7 @@ public:
 	}
 
 	// This is used for the construction of this object
-	CDrawTag(CTinyCadDoc *pDesign, CDPoint NewA, const TCHAR *NewTagName) :
+	CDrawTag(CConCadDoc *pDesign, CDPoint NewA, const TCHAR *NewTagName) :
 		CDrawingObject(pDesign)
 	{
 		m_point_a = NewA;
@@ -914,7 +914,7 @@ public:
 	}
 	;
 
-	CDrawTag(CTinyCadDoc *pDesign) :
+	CDrawTag(CConCadDoc *pDesign) :
 		CDrawingObject(pDesign)
 	{
 		m_point_a = CDPoint(0, 0);
@@ -953,7 +953,7 @@ public:
 	virtual BOOL IsConstruction();
 
 	// This is used for the construction of this object
-	CDrawRuler(CTinyCadDoc *pDesign, BOOL new_horiz);
+	CDrawRuler(CConCadDoc *pDesign, BOOL new_horiz);
 	virtual ~CDrawRuler();
 };
 
@@ -965,7 +965,7 @@ class CDrawBlockMove: public CDrawingObject
 	CDPoint OldPos;
 public:
 	virtual void Paint(CContext &, paint_options);
-	CDrawBlockMove(CTinyCadDoc *);
+	CDrawBlockMove(CConCadDoc *);
 	virtual void EndEdit();
 	virtual void LButtonDown(CDPoint, CDPoint);
 	virtual BOOL RButtonDown(CDPoint, CDPoint);
@@ -984,7 +984,7 @@ class CDrawBlockRotate: public CDrawingObject
 
 public:
 	virtual void Paint(CContext &, paint_options);
-	CDrawBlockRotate(CTinyCadDoc *);
+	CDrawBlockRotate(CConCadDoc *);
 	virtual void EndEdit();
 	virtual void BeginEdit(BOOL re_edit);
 	virtual void LButtonDown(CDPoint, CDPoint);
@@ -1006,7 +1006,7 @@ class CDrawBlockDup: public CDrawingObject
 
 public:
 	virtual void Paint(CContext &, paint_options);
-	CDrawBlockDup(CTinyCadDoc *);
+	CDrawBlockDup(CConCadDoc *);
 	virtual void EndEdit();
 	virtual void LButtonDown(CDPoint, CDPoint);
 	virtual BOOL RButtonDown(CDPoint, CDPoint);
@@ -1027,7 +1027,7 @@ class CDrawBlockDrag: public CDrawingObject
 
 public:
 	virtual void Paint(CContext &, paint_options);
-	CDrawBlockDrag(CTinyCadDoc *pDesign);
+	CDrawBlockDrag(CConCadDoc *pDesign);
 	virtual void EndEdit();
 	virtual void LButtonDown(CDPoint, CDPoint);
 	virtual BOOL RButtonDown(CDPoint, CDPoint);
@@ -1043,7 +1043,7 @@ class CDrawBlockImport: public CDrawingObject
 {
 
 public:
-	CDrawBlockImport(CTinyCadDoc *pDesign);
+	CDrawBlockImport(CConCadDoc *pDesign);
 	virtual void EndEdit();
 	virtual void LButtonDown(CDPoint, CDPoint);
 	virtual BOOL RButtonDown(CDPoint, CDPoint);
@@ -1075,7 +1075,7 @@ class CDrawEditItem: public CDrawingObject
 	void ClickSelection(CDPoint p, CDPoint s);
 
 public:
-	CDrawEditItem(CTinyCadDoc *pDesign);
+	CDrawEditItem(CConCadDoc *pDesign);
 	virtual void NewOptions();
 	virtual void EndEdit();
 	virtual void LButtonDown(CDPoint, CDPoint);
@@ -1303,8 +1303,8 @@ public:
 	virtual int GetContextMenu();
 	virtual void ContextMenu(CDPoint p, UINT id);
 
-	CDrawMethod(CTinyCadDoc *pDesign, hSYMBOL, int new_rotation); // The constructors
-	CDrawMethod(CTinyCadDoc *pDesign);
+	CDrawMethod(CConCadDoc *pDesign, hSYMBOL, int new_rotation); // The constructors
+	CDrawMethod(CConCadDoc *pDesign);
 
 	void ScalePoint(CDPoint &r);
 
@@ -1328,7 +1328,7 @@ public:
 class CDrawCentre: public CDrawingObject
 {
 public:
-	CDrawCentre(CTinyCadDoc *pDesign) :
+	CDrawCentre(CConCadDoc *pDesign) :
 		CDrawingObject(pDesign)
 	{
 	}
@@ -1355,7 +1355,7 @@ private:
 	int m_starting_point;
 
 public:
-	CDrawRefPainter(CTinyCadDoc *pDesign, int starting_point) :
+	CDrawRefPainter(CConCadDoc *pDesign, int starting_point) :
 		CDrawingObject(pDesign)
 	{
 		m_starting_point = starting_point;

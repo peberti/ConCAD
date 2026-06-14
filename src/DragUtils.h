@@ -30,7 +30,7 @@
 #include "JunctionUtils.h"
 
 class CDrawingObject;
-class CTinyCadDoc;
+class CConCadDoc;
 
 class CDragUtils
 {
@@ -123,7 +123,7 @@ protected:
 	void DisplayDraggedWires();
 
 	// Our current design that this object manipulates
-	CTinyCadDoc *m_pDesign;
+	CConCadDoc *m_pDesign;
 
 	// Have we started?
 	BOOL m_started;
@@ -148,7 +148,7 @@ public:
 	//	return *this;
 	//}
 
-	explicit CDragUtils(CTinyCadDoc* pDesign);
+	explicit CDragUtils(CConCadDoc* pDesign);
 	virtual ~CDragUtils();
 
 	void Begin(CDPoint a, CDPoint b);

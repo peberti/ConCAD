@@ -27,14 +27,14 @@
 #define SIZESTRING 254
 #define SIZENOTETEXT 8192
 
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 
 class CDrawingObject;
 class CDrawMethod;
 class CDrawPin;
 class CDrawText;
 class CDrawPower;
-class CTinyCadView;
+class CConCadView;
 
 // The dialog for getting the name of a new find string
 class CDlgFindBox: public CDialog
@@ -96,10 +96,10 @@ class CDlgERCListBox: public CDialog
 	CListBox *theListBox;
 	BOOL stop;
 	CMultiSheetDoc *m_pDesign;
-	CTinyCadView *m_pView;
+	CConCadView *m_pView;
 public:
 	CDlgERCListBox();
-	void Open(CMultiSheetDoc *pDesign, CTinyCadView *pView);
+	void Open(CMultiSheetDoc *pDesign, CConCadView *pView);
 	void Close();
 	void ReCheck();
 	void AddString(CString);
@@ -141,12 +141,12 @@ private:
 	CDrawingObject *m_pObject;
 
 protected:
-	CTinyCadDoc *m_pDesign;
+	CConCadDoc *m_pDesign;
 
 	int opens;
 
 public:
-	void Show(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Show(CConCadDoc *pDesign, CDrawingObject *pObject);
 	CDrawingObject *getObject();
 
 	void changeSelected(CDrawingObject *previous, CDrawingObject *pObject);
@@ -175,7 +175,7 @@ public:
 	{
 		opens = 0;
 	}
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	void Create();
 	void ReFocus();
 
@@ -198,7 +198,7 @@ public:
 	{
 		opens = 0;
 	}
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	void Create();
 
 	afx_msg void OnLeft();

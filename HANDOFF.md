@@ -12,7 +12,7 @@ is the user's call.
 as mode-changed (100644→100755). `git config core.fileMode false` is set
 locally to ignore that; without it `git status` is unusable. Untracked
 working files left in the tree on purpose: `test_file.dsn`, `tCad1.dsn`,
-`*.svg`, `*.png`, `art/`, `src/TinyCad.aps`, `src/TinyCad.vcxproj.user`,
+`*.svg`, `*.png`, `art/`, `src/ConCad.aps`, `src/ConCad.vcxproj.user`,
 and a junk file literally named `src/nul) do set ...` (a stray from a
 `gitbranch.bat` redirect — safe to delete).
 
@@ -45,12 +45,12 @@ and a junk file literally named `src/nul) do set ...` (a stray from a
 
 ## Build & runtime bring-up (fresh VS install, this session)
 
-- **Toolset must stay `v142`** (Win32/x86, MFC Dynamic). The vendored NuGet libs `libjpeg_static` + `libiconv.lib` (`packages/`) ship `.lib`s only for v140/v141/v142 — bumping to v143/v145 fails the link (`_jpeg_*` / `_libiconv_*` unresolved) and also needs MFC for that toolset. A stray `v145` in `src/TinyCad.vcxproj` (uncommitted working-tree drift; history was already v142) was reverted. Don't commit a VS auto-retarget.
+- **Toolset must stay `v142`** (Win32/x86, MFC Dynamic). The vendored NuGet libs `libjpeg_static` + `libiconv.lib` (`packages/`) ship `.lib`s only for v140/v141/v142 — bumping to v143/v145 fails the link (`_jpeg_*` / `_libiconv_*` unresolved) and also needs MFC for that toolset. A stray `v145` in `src/ConCad.vcxproj` (uncommitted working-tree drift; history was already v142) was reverted. Don't commit a VS auto-retarget.
 - **VS install:** "Desktop development with C++" + **C++ MFC for the v142 toolset (x86 & x64)** — note an ATL-only install looks like MFC but isn't. Git for Windows on PATH for `gitbranch.bat`.
 - **SQLite crashes fixed and committed:**
   - `CLibrarySQLite::Attach` no longer crashes when its catch-handler `close()` throws; the IsConnector migration is now best-effort (PRAGMA-probe + try/catch `ALTER`) so read-only libraries (e.g. under Program Files) load instead of failing. The `IsConnector` read is guarded because `getIntField` throws on an unknown column. (`4c04216`)
   - `~CppSQLite3DB` no longer lets `close()` throw out of the destructor (was `abort()` on library delete); now matches the sibling Query/Statement destructors. (`e3e66a6`)
-- **Why the app loaded VeeCAD / TinyCAD libraries:** first-run migration in `CTinyCadApp::InitInstance` (`TinyCad.cpp:361`) recursively copies `HKCU\Software\TinyCAD\TinyCAD` → `HKCU\Software\ConCAD\ConCAD` (`SHCopyKey`), inheriting the whole library list. Prune unwanted libraries via **Library → Libraries…** (rewrites the `Libraries` value under ConCAD's own key). Deleting the ConCAD key just re-triggers the copy.
+- **Why the app loaded VeeCAD / TinyCAD libraries:** first-run migration in `CConCadApp::InitInstance` (`ConCad.cpp:361`) recursively copies `HKCU\Software\TinyCAD\TinyCAD` → `HKCU\Software\ConCAD\ConCAD` (`SHCopyKey`), inheriting the whole library list. Prune unwanted libraries via **Library → Libraries…** (rewrites the `Libraries` value under ConCAD's own key). Deleting the ConCAD key just re-triggers the copy.
 - **Latent, not fixed:** `CLibrarySQLite::GetMethodArchive` (~line 318) is the one SQLite method with no try/catch.
 
 ## Plan progress
@@ -109,13 +109,13 @@ and a junk file literally named `src/nul) do set ...` (a stray from a
 
 - `tCad1.dsn` — test design at repo root with the Inkscape SVG embedded.
 - `Design_details.svg`, `Design_details - Copy.svg` — user's source SVG files.
-- `src/TinyCad.aps`, `src/TinyCad.vcxproj.user` — VS-generated, expected.
+- `src/ConCad.aps`, `src/ConCad.vcxproj.user` — VS-generated, expected.
 
 ## What to do next session
 
 - The build now compiles and runs (v142 toolset; SQLite crashes fixed). The SVG step 4 / 4b tests below were **not** reached this session — the time went to build bring-up and the SQLite crash fixes — so run those next.
 - Confirm step 4 test results from the user.
-- If green, plan and implement **step 5**: `File → New` picker. Same listbox UI from `CDetailsPropertyPage4`, hoisted into a modal dialog (suggested `IDD_PICK_TITLE_TEMPLATE`) that pops before the empty document opens. Hook into `CTinyCadMultiDoc::OnNewDocument` or the doc-template path in `src/TinyCad.cpp`. Remember last choice in `CTinyCadRegistry` (new registry key) and offer a "Don't ask again" checkbox. With 4b done, the picker must set **both** `m_sTitleBlockName` and `m_sTitleBlockSvg` on the new doc's `CDetails`, then call `ResolveTitleBlock()` — same pair the property page writes.
+- If green, plan and implement **step 5**: `File → New` picker. Same listbox UI from `CDetailsPropertyPage4`, hoisted into a modal dialog (suggested `IDD_PICK_TITLE_TEMPLATE`) that pops before the empty document opens. Hook into `CConCadMultiDoc::OnNewDocument` or the doc-template path in `src/ConCad.cpp`. Remember last choice in `CConCadRegistry` (new registry key) and offer a "Don't ask again" checkbox. With 4b done, the picker must set **both** `m_sTitleBlockName` and `m_sTitleBlockSvg` on the new doc's `CDetails`, then call `ResolveTitleBlock()` — same pair the property page writes.
 - If the user later asks for the **2-unit margin** drop or other layout tweaks, that's a one-line change in `CDetails::DisplayBox` in `src/Details.cpp`.
 - Optional cleanups: silence NanoSVG's `C4244` warnings via `#pragma warning(push/disable/pop)` around its `#include`; add more bundled starter templates.
 

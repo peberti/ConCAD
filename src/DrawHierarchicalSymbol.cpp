@@ -18,17 +18,17 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
 #include "LineUtils.h"
 #include "DSize.h"
 #include ".\drawhierarchicalsymbol.h"
-#include "TinyCadHierarchicalDoc.h"
-#include "TinyCad.h"
+#include "ConCadHierarchicalDoc.h"
+#include "ConCad.h"
 
-CDrawHierarchicalSymbol::CDrawHierarchicalSymbol(CTinyCadDoc *pDesign) :
+CDrawHierarchicalSymbol::CDrawHierarchicalSymbol(CConCadDoc *pDesign) :
 	CDrawMethod(pDesign)
 {
 	m_Loaded = false;
@@ -416,7 +416,7 @@ void CDrawHierarchicalSymbol::ContextMenu(CDPoint p, UINT id)
 	switch (id)
 	{
 		case ID_CONTEXT_OPENDESIGN:
-			CTinyCadApp::EditDesign(GetFilename());
+			CConCadApp::EditDesign(GetFilename());
 			break;
 		case ID_CONTEXT_RELOADSYMBOLFROMDESIGN:
 			Display();

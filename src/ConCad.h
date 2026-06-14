@@ -35,7 +35,7 @@
 //	3.  Anything else that you think that you might want to access from a build script or automation script
 //
 	
-class CTinyCadCommandLineInfo : public CCommandLineInfo
+class CConCadCommandLineInfo : public CCommandLineInfo
 {
 	//Documentation on the contents of Window's Shell command line standard definitions 
 	//can be found here:  http://msdn.microsoft.com/en-us/library/zaydx040(VS.80).aspx
@@ -72,7 +72,7 @@ class CTinyCadCommandLineInfo : public CCommandLineInfo
 
 	//public methods for checking these.
 public:
-	CTinyCadCommandLineInfo();	//Constructor
+	CConCadCommandLineInfo();	//Constructor
 	BOOL IsShellOpen();
 	BOOL IsGenerateSpiceFile();
 	BOOL IsGenerateXMLNetlistFile();
@@ -83,7 +83,7 @@ public:
 
 	DWORD RedirectIOToConsole();	//This function is used to associate a console window with this process for command options that require a console
 
-	~CTinyCadCommandLineInfo();	//Destructor
+	~CConCadCommandLineInfo();	//Destructor
 };
 
 
@@ -92,16 +92,16 @@ public:
 //*                  Main application class                               *
 //*                                                                       *
 //*************************************************************************
-class CTinyCadApp: public CWinAppEx
+class CConCadApp: public CWinAppEx
 {
 	//=====================================================================
 	//== class variables                                                 ==
 	//=====================================================================
 	//-- singleton instance of this class
 private:
-	static CTinyCadApp m_oInstance;
+	static CConCadApp m_oInstance;
 
-	// The document template for all TinyCadDoc types
+	// The document template for all ConCadDoc types
 	static CMultiDocTemplate* m_pDocTemplate;
 
 	// The document template for library viewing/editing
@@ -126,8 +126,8 @@ private:
 	virtual BOOL InitInstance();
 
 public:
-	CTinyCadApp();
-	virtual ~CTinyCadApp();
+	CConCadApp();
+	virtual ~CConCadApp();
 
 	//=====================================================================
 	//== accessor                                                        ==
@@ -169,11 +169,11 @@ public:
 	virtual BOOL ProcessMessageFilter(int code, LPMSG lpMsg);
 	void OnMyFileOpen();
 
-	//{{AFX_MSG(CTinyCadApp)
+	//{{AFX_MSG(CConCadApp)
 	afx_msg void OnAppAbout();
 	afx_msg void OnLibLib();
-	afx_msg void OnHelpOpenTinyCADUserManual();
-	afx_msg void OnHelpGototinycadwebsite();
+	afx_msg void OnHelpOpenConCADUserManual();
+	afx_msg void OnHelpGotoconcadwebsite();
 	afx_msg void OnHelpHelp();
 	afx_msg void OnHelpSupport();
 	//}}AFX_MSG

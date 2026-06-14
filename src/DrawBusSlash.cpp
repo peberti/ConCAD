@@ -20,7 +20,7 @@
 // This handles the bus objects
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "MainFrm.h"
 #include "diag.h"
 #include "colour.h"
@@ -61,7 +61,7 @@ void CDrawBusSlash::LoadXML(CXMLReader &xml)
 	m_point_b = m_point_a;
 }
 
-CDrawBusSlash::CDrawBusSlash(CTinyCadDoc *pDesign, int NewDir) :
+CDrawBusSlash::CDrawBusSlash(CConCadDoc *pDesign, int NewDir) :
 	CDrawingObject(pDesign)
 {
 	theDir = (BYTE) NewDir;

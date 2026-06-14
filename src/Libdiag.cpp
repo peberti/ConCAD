@@ -19,10 +19,10 @@
 
 #include "stdafx.h"
 #include <ctype.h>
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "registry.h"
 #include "colour.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "LibraryDb.h"
 
 ////// The symbol rename dialog //////

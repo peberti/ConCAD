@@ -19,7 +19,7 @@
 // DbAttributeSet.cpp : implementation file
 //
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "DbAttributeSet.h"
 /////////////////////////////////////////////////////////////////////////////
 // CDbAttributeSet

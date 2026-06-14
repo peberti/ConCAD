@@ -18,7 +18,7 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 
@@ -47,7 +47,7 @@ void CDrawBlockRotate::Paint(CContext &dc, paint_options options)
 	dc.Rectangle(theArea);
 }
 
-CDrawBlockRotate::CDrawBlockRotate(CTinyCadDoc *pDesign) :
+CDrawBlockRotate::CDrawBlockRotate(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_segment = 1;

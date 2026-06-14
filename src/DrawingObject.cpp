@@ -20,7 +20,7 @@
 // This handles the actual drawing of objects
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -33,7 +33,7 @@ extern CDlgERCListBox theERCListBox;
 ////////// The default actions for each object ///////////
 
 
-CDrawingObject::CDrawingObject(CTinyCadDoc *pDesign)
+CDrawingObject::CDrawingObject(CConCadDoc *pDesign)
 {
 	m_pDesign = pDesign;
 	m_point_a = CDPoint(0, 0);

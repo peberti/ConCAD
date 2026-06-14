@@ -18,13 +18,13 @@
  */
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "LibraryDb.h"
 #include "DbLibNameSet.h"
 #include "StreamDb.h"
-#include "TinyCadSymbolDoc.h"
+#include "ConCadSymbolDoc.h"
 #include "DbAttributeSet.h"
-#include "TinyCadMultiSymbolDoc.h"
+#include "ConCadMultiSymbolDoc.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -115,7 +115,7 @@ BOOL CLibraryDb::Attach(const TCHAR *filename)
 }
 
 // Write a symbol to this library
-void CLibraryDb::Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDoc &document)
+void CLibraryDb::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document)
 {
 	// Set the busy cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
@@ -581,14 +581,14 @@ BOOL CLibraryDb::Upgrade(CLibraryStore *NewLib)
 		return FALSE;
 	}
 
-	CTinyCadApp::SetLockOutSymbolRedraw(true);
+	CConCadApp::SetLockOutSymbolRedraw(true);
 
 	// Now copy our symbols into the new library
 	for (symbolCollection::iterator i = m_Symbols.begin(); i != m_Symbols.end(); i++)
 	{
 		CLibraryStoreNameSet thisSymbol = i->second;
 		// Read the methods file into this design
-		CTinyCadMultiSymbolDoc tmp_design(this, thisSymbol);
+		CConCadMultiSymbolDoc tmp_design(this, thisSymbol);
 
 		// Write this symbol into the new library
 		NewLib->Store(&thisSymbol, tmp_design);
@@ -597,7 +597,7 @@ BOOL CLibraryDb::Upgrade(CLibraryStore *NewLib)
 		tmp_design.GetActiveSheet()->SelectDelete();
 	}
 
-	CTinyCadApp::SetLockOutSymbolRedraw(false);
+	CConCadApp::SetLockOutSymbolRedraw(false);
 
 	// Now rename the old library file out of the way of
 	try

@@ -21,10 +21,10 @@
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 
-#include "TinyCadDoc.h"
-#include "TinyCadView.h"
+#include "ConCadDoc.h"
+#include "ConCadView.h"
 
 #include "EditToolbar.h"
 #include "MainFrm.h"

@@ -21,8 +21,8 @@
 #include "option.h"
 #include "revision.h"
 #include "registry.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "diag.h"
 
@@ -53,10 +53,10 @@ void CEditDlg::OnCancel()
 	// Process this situation in the same way as what would happen if the main application window would
 	// have been in focus and user pressed VK_ESCAPE.
 
-	extern CTinyCadView *g_currentview;
+	extern CConCadView *g_currentview;
 
 	if (g_currentview) {
-		// CTinyCadView maps the VK_ESCAPE to this command
+		// CConCadView maps the VK_ESCAPE to this command
 		g_currentview->SendMessage(WM_COMMAND, IDM_EDITEDIT, 0);
 	}
 }

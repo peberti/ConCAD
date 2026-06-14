@@ -20,7 +20,7 @@
 // This handles the actual drawing of objects
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -266,7 +266,7 @@ BOOL CDrawNoteText::RButtonDown(CDPoint p, CDPoint s)
 }
 
 // The Constructor
-CDrawNoteText::CDrawNoteText(CTinyCadDoc *pDesign, ObjType type) :
+CDrawNoteText::CDrawNoteText(CConCadDoc *pDesign, ObjType type) :
 	CDrawRectOutline(pDesign)
 {
 	//m_type = type = xNoteText;

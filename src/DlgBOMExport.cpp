@@ -20,9 +20,9 @@
 // DlgBOMExport.cpp : implementation file
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "DlgBOMExport.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CDlgBOMExport dialog
@@ -38,11 +38,11 @@ CDlgBOMExport::CDlgBOMExport(CWnd* pParent /*=NULL*/) :
 	m_All_Sheets = FALSE;
 	//}}AFX_DATA_INIT
 
-	m_type = CTinyCadRegistry::GetInt("BOMNetlist", 0);
-	m_Hierarchical = CTinyCadRegistry::GetBool("BOMHierarchical", 0);
-	m_Prefix = CTinyCadRegistry::GetBool("BOMPrefixNetlist", 0);
-	m_All_Sheets = CTinyCadRegistry::GetBool("BOMAllSheets", 0);
-	m_All_Attrs = CTinyCadRegistry::GetBool("BOMAllAttrs", 0);
+	m_type = CConCadRegistry::GetInt("BOMNetlist", 0);
+	m_Hierarchical = CConCadRegistry::GetBool("BOMHierarchical", 0);
+	m_Prefix = CConCadRegistry::GetBool("BOMPrefixNetlist", 0);
+	m_All_Sheets = CConCadRegistry::GetBool("BOMAllSheets", 0);
+	m_All_Attrs = CConCadRegistry::GetBool("BOMAllAttrs", 0);
 }
 
 void CDlgBOMExport::DoDataExchange(CDataExchange* pDX)
@@ -110,11 +110,11 @@ void CDlgBOMExport::OnOK()
 	UpdateData(TRUE);
 
 	m_type = m_Filetype.GetCurSel();
-	CTinyCadRegistry::Set("BOMNetlist", m_type);
-	CTinyCadRegistry::Set("BOMPrefixNetlist", m_Prefix);
-	CTinyCadRegistry::Set("BOMAllSheets", m_All_Sheets);
-	CTinyCadRegistry::Set("BOMAllAttrs", m_All_Attrs);
-	CTinyCadRegistry::Set("BOMHierarchical", m_Hierarchical);
+	CConCadRegistry::Set("BOMNetlist", m_type);
+	CConCadRegistry::Set("BOMPrefixNetlist", m_Prefix);
+	CConCadRegistry::Set("BOMAllSheets", m_All_Sheets);
+	CConCadRegistry::Set("BOMAllAttrs", m_All_Attrs);
+	CConCadRegistry::Set("BOMHierarchical", m_Hierarchical);
 
 	CDialog::OnOK();
 }

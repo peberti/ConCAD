@@ -20,8 +20,8 @@
 // This handles the actual drawing of composite objects (symbols)
 
 #include "stdafx.h"
-#include "TinyCad.h"
-#include "TinyCadView.h"
+#include "ConCad.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -37,7 +37,7 @@
 //    b = offset of the top right hand corner (used to define size)
 
 // The constructor
-CDrawMethod::CDrawMethod(CTinyCadDoc *pDesign, hSYMBOL symbol, int new_rotation) :
+CDrawMethod::CDrawMethod(CConCadDoc *pDesign, hSYMBOL symbol, int new_rotation) :
 	CDrawingObject(pDesign)
 {
 	part = 0;
@@ -329,7 +329,7 @@ int CDrawMethod::DoRotate(int olddir, int newdir)
 }
 
 // Another Constructor
-CDrawMethod::CDrawMethod(CTinyCadDoc *pDesign) :
+CDrawMethod::CDrawMethod(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_Symbol = 0;

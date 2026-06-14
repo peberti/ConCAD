@@ -39,7 +39,7 @@ public:
 	CEditDlgPolygon(CWnd* pParent = NULL); // standard constructor
 
 	void Create();
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 
 	// Dialog Data
 	//{{AFX_DATA(CEditDlgPolygon)

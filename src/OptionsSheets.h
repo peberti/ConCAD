@@ -26,7 +26,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // COptionsGrid dialog
 
-class CTinyCadDoc;
+class CConCadDoc;
 
 class COptionsGrid: public CPropertyPage
 {
@@ -47,7 +47,7 @@ public:
 	//    DO NOT EDIT what you see in these blocks of generated code !
 	//}}AFX_DATA
 
-	CTinyCadDoc *GetDocument();
+	CConCadDoc *GetDocument();
 	void OnChange();
 
 	double Grid;
@@ -90,7 +90,7 @@ public:
 	COptionsAutosnap();
 	~COptionsAutosnap();
 
-	CTinyCadDoc *GetDocument();
+	CConCadDoc *GetDocument();
 
 	// Dialog Data
 	//{{AFX_DATA(COptionsAutosnap)
@@ -197,7 +197,7 @@ public:
 	COptionsDrawing();
 	~COptionsDrawing();
 
-	CTinyCadDoc *GetDocument();
+	CConCadDoc *GetDocument();
 
 	enum
 	{

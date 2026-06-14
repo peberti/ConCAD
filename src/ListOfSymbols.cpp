@@ -64,13 +64,13 @@ CDesignFileSymbol* ListOfSymbols::GetSymbol()
 //=========================================================================
 
 //-------------------------------------------------------------------------
-void ListOfSymbols::SaveItemXML(CTinyCadDoc *pDesign, CXMLWriter &xml)
+void ListOfSymbols::SaveItemXML(CConCadDoc *pDesign, CXMLWriter &xml)
 {
 	// Save the symbol with the document...
 	m_pSymbol->SaveXML(xml);
 }
 //-------------------------------------------------------------------------
-void ListOfSymbols::LoadItemXML(CTinyCadDoc *pDesign, CXMLReader &xml)
+void ListOfSymbols::LoadItemXML(CConCadDoc *pDesign, CXMLReader &xml)
 {
 	hRESOURCE n;
 	CString name;
@@ -87,7 +87,7 @@ void ListOfSymbols::LoadItemXML(CTinyCadDoc *pDesign, CXMLReader &xml)
 	Add(nFS, n);
 }
 //-------------------------------------------------------------------------
-void ListOfSymbols::LoadItem(CTinyCadDoc *pDesign, CStream &theFile, hRESOURCE n)
+void ListOfSymbols::LoadItem(CConCadDoc *pDesign, CStream &theFile, hRESOURCE n)
 {
 	// Save the symbol with the document...
 	CDesignFileSymbol *psymbol = new CDesignFileSymbol;

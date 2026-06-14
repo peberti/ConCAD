@@ -22,11 +22,11 @@
 #include "stdafx.h"
 #include <math.h>
 
-#include "tinycad.h"
+#include "concad.h"
 #include "DlgReplaceBox.h"
 #include "LibraryCollection.h"
 #include "Context.h"
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 #include "Registry.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -153,7 +153,7 @@ void CDlgReplaceBox::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 		// Now access the symbol and draw it next to the name
 		CDPoint p;
-		CTinyCadDoc doc;
+		CConCadDoc doc;
 		CDesignFileSymbol *pSymbol = m_Symbol->GetDesignSymbol(&doc);
 
 		// Determine the rotation

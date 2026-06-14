@@ -123,13 +123,13 @@ void ListOfMetaFiles::Write(CXMLWriter& xml) const
 	m_pImage->SaveXML(xml);
 }
 //--------------------------------------------------------------------------
-void ListOfMetaFiles::SaveItemXML(CTinyCadDoc*, CXMLWriter& xml)
+void ListOfMetaFiles::SaveItemXML(CConCadDoc*, CXMLWriter& xml)
 {
 	xml.addAttribute(_T("type"), m_pImage->GetType());
 	Write(xml);
 }
 //--------------------------------------------------------------------------
-void ListOfMetaFiles::LoadItemXML(CTinyCadDoc*, CXMLReader& xml)
+void ListOfMetaFiles::LoadItemXML(CConCadDoc*, CXMLReader& xml)
 {
 	ListOfMetaFiles oMeta;
 	hRESOURCE nID;
@@ -139,7 +139,7 @@ void ListOfMetaFiles::LoadItemXML(CTinyCadDoc*, CXMLReader& xml)
 	Add(new ListOfMetaFiles(oMeta), nID);
 }
 //--------------------------------------------------------------------------
-void ListOfMetaFiles::LoadItem(CTinyCadDoc*, CStream& oStream, hRESOURCE n)
+void ListOfMetaFiles::LoadItem(CConCadDoc*, CStream& oStream, hRESOURCE n)
 {
 	ListOfMetaFiles oMeta;
 

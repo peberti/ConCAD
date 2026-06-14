@@ -40,7 +40,7 @@ format notes, and a manual test plan.
 Requires **Visual Studio 2019 or 2022** (Community edition is fine) with
 the **MFC C++ component** installed.
 
-1. Open `TinyCad.sln` at the repo root.
+1. Open `ConCad.sln` at the repo root.
 2. Build → Build Solution (Ctrl+Shift+B).
 
 Configurations are `Debug|Win32` and `Release|Win32` — there is no x64

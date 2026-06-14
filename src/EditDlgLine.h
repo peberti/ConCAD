@@ -38,7 +38,7 @@ public:
 	CEditDlgLine(CWnd* pParent = NULL); // standard constructor
 
 	void Create();
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 
 	BOOL m_setup;
 	BOOL m_use_default_style;

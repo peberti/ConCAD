@@ -20,7 +20,7 @@
 // This handles the actual drawing of objects
 #include "stdafx.h"
 #include <stdlib.h>
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -216,7 +216,7 @@ CString CDrawPower::GetName() const
 	return "Power";
 }
 
-CDrawPower::CDrawPower(CTinyCadDoc *pDesign) :
+CDrawPower::CDrawPower(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_segment = 1;

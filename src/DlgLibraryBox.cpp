@@ -19,9 +19,9 @@
 
 #include "stdafx.h"
 #include <assert.h>
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "registry.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "LibraryDb.h"
 #include "LibrarySQLite.h"
 #include "DlgLibraryBox.h"
@@ -220,7 +220,7 @@ void CDlgLibraryBox::OnAdd()
 			}
 		}
 		// Finally update the symbol picker...
-		CTinyCadApp::ResetAllSymbols();
+		CConCadApp::ResetAllSymbols();
 	}
 
 	// Release file names buffer. 
@@ -246,7 +246,7 @@ void CDlgLibraryBox::OnRemove()
 		// listbox and collection should be synchron
 		assert( pLib != NULL );
 
-		if (CTinyCadApp::IsLibInUse(pLib))
+		if (CConCadApp::IsLibInUse(pLib))
 		{
 			// We cannot delete whilst in use
 			AfxMessageBox(IDS_NODELETE);
@@ -257,7 +257,7 @@ void CDlgLibraryBox::OnRemove()
 			RefreshComponents(true);
 
 			// Finally update the symbol picker...
-			CTinyCadApp::ResetAllSymbols();
+			CConCadApp::ResetAllSymbols();
 		}
 	}
 }
@@ -293,7 +293,7 @@ void CDlgLibraryBox::OnEdit()
 		}
 	}
 
-	CTinyCadApp::EditLibrary(pLib);
+	CConCadApp::EditLibrary(pLib);
 	CLibraryCollection::SaveToRegistry();
 	EndDialog(IDOK);
 }

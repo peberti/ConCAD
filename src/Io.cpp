@@ -7,20 +7,20 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "option.h"
 #include "HeaderStamp.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 
 //-------------------------------------------------------------------------
-void CTinyCadDoc::SaveXML(CXMLWriter& xml, BOOL Details, BOOL SaveSelect)
+void CConCadDoc::SaveXML(CXMLWriter& xml, BOOL Details, BOOL SaveSelect)
 {
 	SaveXML(xml, m_drawing, Details, SaveSelect);
 }
 
 //-------------------------------------------------------------------------
 // Save the current design
-BOOL CTinyCadDoc::Save(BOOL GetName, BOOL SaveSelect)
+BOOL CConCadDoc::Save(BOOL GetName, BOOL SaveSelect)
 {
 
 	CString theFileName = m_pParent->GetPathName();
@@ -70,13 +70,13 @@ BOOL CTinyCadDoc::Save(BOOL GetName, BOOL SaveSelect)
 	return r;
 }
 
-const CString CTinyCadDoc::GetXMLTag()
+const CString CConCadDoc::GetXMLTag()
 {
 	return "TinyCAD";
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadDoc::SaveXML(CXMLWriter &xml, drawingCollection &drawing, BOOL Details, BOOL SaveSelect, BOOL SaveResources, BOOL SaveOriginObject)
+void CConCadDoc::SaveXML(CXMLWriter &xml, drawingCollection &drawing, BOOL Details, BOOL SaveSelect, BOOL SaveResources, BOOL SaveOriginObject)
 {
 	// Write the objects to the file
 	try
@@ -165,7 +165,7 @@ void CTinyCadDoc::SaveXML(CXMLWriter &xml, drawingCollection &drawing, BOOL Deta
 	}
 }
 
-BOOL CTinyCadDoc::ReadFile(CStream &theArchive)
+BOOL CConCadDoc::ReadFile(CStream &theArchive)
 {
 	drawingCollection drawing;
 
@@ -181,7 +181,7 @@ BOOL CTinyCadDoc::ReadFile(CStream &theArchive)
 	return FALSE;
 }
 
-BOOL CTinyCadDoc::ReadFileXML(CXMLReader &xml, BOOL AlreadyStarted)
+BOOL CConCadDoc::ReadFileXML(CXMLReader &xml, BOOL AlreadyStarted)
 {
 	drawingCollection drawing;
 
@@ -198,7 +198,7 @@ BOOL CTinyCadDoc::ReadFileXML(CXMLReader &xml, BOOL AlreadyStarted)
 }
 
 //-- Load a design from a file, loaded design will be selected
-BOOL CTinyCadDoc::ReadFile(CStream &theArchive, BOOL Details, drawingCollection &drawing)
+BOOL CConCadDoc::ReadFile(CStream &theArchive, BOOL Details, drawingCollection &drawing)
 {
 	try
 	{
@@ -444,7 +444,7 @@ BOOL CTinyCadDoc::ReadFile(CStream &theArchive, BOOL Details, drawingCollection 
 }
 
 ////// Load a design from a file, loaded design will be selected //////
-BOOL CTinyCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &drawing, BOOL AlreadyStarted)
+BOOL CConCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &drawing, BOOL AlreadyStarted)
 {
 	try
 	{
@@ -689,7 +689,7 @@ BOOL CTinyCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &
 }
 
 // Save the document origin as XML
-void CTinyCadDoc::SaveDocumentOriginXML(CXMLWriter &xml)
+void CConCadDoc::SaveDocumentOriginXML(CXMLWriter &xml)
 {
 	if (theOptions.HasOrigin())
 	{

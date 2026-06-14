@@ -27,7 +27,7 @@
 class COption
 {
 private:
-	CTinyCadDoc* m_pDesign;
+	CConCadDoc* m_pDesign;
 
 	CUserColor m_oColors;
 	ListOfFonts theFontList;
@@ -79,7 +79,7 @@ private:
 public:
 	COption();
 	~COption();
-	void Init(CTinyCadDoc *pDesign);
+	void Init(CConCadDoc *pDesign);
 
 	//=====================================================================
 	//== Accessor                                                        ==

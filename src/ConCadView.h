@@ -17,8 +17,8 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if !defined(AFX_TINYCADVIEW_H__A2D9E56B_4BF2_4F22_98DB_450C36940721__INCLUDED_)
-#define AFX_TINYCADVIEW_H__A2D9E56B_4BF2_4F22_98DB_450C36940721__INCLUDED_
+#if !defined(AFX_CONCADVIEW_H__A2D9E56B_4BF2_4F22_98DB_450C36940721__INCLUDED_)
+#define AFX_CONCADVIEW_H__A2D9E56B_4BF2_4F22_98DB_450C36940721__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -43,13 +43,13 @@ class CDlgPositionBox;
 
 extern CEditToolbar g_EditToolBar;
 
-class CTinyCadView: public CFolderView
+class CConCadView: public CFolderView
 {
 	friend CMultiSheetDoc; //Needs access to centering the screen around ERC objects
 protected:
 	// create from serialization only
-	CTinyCadView();
-	DECLARE_DYNCREATE( CTinyCadView)
+	CConCadView();
+	DECLARE_DYNCREATE( CConCadView)
 
 	// Have we captured the mouse control?
 	int m_captured;
@@ -99,7 +99,7 @@ protected:
 	// Attributes
 public:
 	CMultiSheetDoc* GetDocument();
-	CTinyCadDoc* GetCurrentDocument();
+	CConCadDoc* GetCurrentDocument();
 
 protected:
 	// Our own version of this function, so that we
@@ -115,7 +115,7 @@ public:
 
 	// Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTinyCadView)
+	//{{AFX_VIRTUAL(CConCadView)
 public:
 	virtual void OnDraw(CDC* pDC); // overridden to draw this view
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -131,7 +131,7 @@ protected:
 
 	// Implementation
 public:
-	virtual ~CTinyCadView();
+	virtual ~CConCadView();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -164,7 +164,7 @@ protected:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CTinyCadView)
+	//{{AFX_MSG(CConCadView)
 	afx_msg void OnUpdateEditedit(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateBusback(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateBusslash(CCmdUI* pCmdUI);
@@ -310,7 +310,7 @@ public:	//The following 3 commands have convenience functionality added to the E
 	afx_msg void OnSpecialNet();
 	afx_msg void OnSpecialCreatespicefile();
 	afx_msg void OnSpecialVHDL();
-	void CommandPromptCreatespicefile(CTinyCadMultiDoc *pDesign, CString fileName, CString outputDirectoryName);	//This supports creating a Spice netlist file from a command line option
+	void CommandPromptCreatespicefile(CConCadMultiDoc *pDesign, CString fileName, CString outputDirectoryName);	//This supports creating a Spice netlist file from a command line option
 protected:
 	afx_msg void OnSpecialBom();
 	afx_msg void OnSpecialCheck();
@@ -342,7 +342,7 @@ public:
 	int DoSpecialVHDLCheck(bool alwaysShowList = true);
 };
 
-inline CMultiSheetDoc* CTinyCadView::GetDocument()
+inline CMultiSheetDoc* CConCadView::GetDocument()
 {
 	return (CMultiSheetDoc*) m_pDocument;
 }
@@ -352,4 +352,4 @@ inline CMultiSheetDoc* CTinyCadView::GetDocument()
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_TINYCADVIEW_H__A2D9E56B_4BF2_4F22_98DB_450C36940721__INCLUDED_)
+#endif // !defined(AFX_CONCADVIEW_H__A2D9E56B_4BF2_4F22_98DB_450C36940721__INCLUDED_)

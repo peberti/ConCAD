@@ -6,7 +6,7 @@
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
 #include "stdafx.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "WinXPToolbar.h"
 #include ".\winxptoolbar.h"
 // CWinXPToolbar

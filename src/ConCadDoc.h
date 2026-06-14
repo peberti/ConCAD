@@ -17,8 +17,8 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if !defined(AFX_TINYCADDOC_H__34C3ADE5_C40F_411E_B21B_E123312BD3BE__INCLUDED_)
-#define AFX_TINYCADDOC_H__34C3ADE5_C40F_411E_B21B_E123312BD3BE__INCLUDED_
+#if !defined(AFX_CONCADDOC_H__34C3ADE5_C40F_411E_B21B_E123312BD3BE__INCLUDED_)
+#define AFX_CONCADDOC_H__34C3ADE5_C40F_411E_B21B_E123312BD3BE__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -28,7 +28,7 @@
 #include "Library.h"
 #include "details.h"
 #include "DSize.h"
-class CTinyCadView;
+class CConCadView;
 
 // The update hints
 #define		DOC_UPDATE_INVALIDATE		100
@@ -76,7 +76,7 @@ typedef std::vector<CDocUndoSet> undoCollection;
 
 class CMultiSheetDoc;
 
-class CTinyCadDoc
+class CConCadDoc
 {
 
 	// Operations
@@ -84,8 +84,8 @@ public:
 
 	// Implementation
 public:
-	CTinyCadDoc(CMultiSheetDoc*pParent = NULL);
-	virtual ~CTinyCadDoc();
+	CConCadDoc(CMultiSheetDoc*pParent = NULL);
+	virtual ~CConCadDoc();
 
 protected:
 
@@ -216,7 +216,7 @@ public:
 
 	// Is this document editing a library?
 	virtual bool IsLibInUse(CLibraryStore *lib);
-	void Initalize(CTinyCadView *window);
+	void Initalize(CConCadView *window);
 
 	void SetModifiedFlag(BOOL Changed = TRUE);
 	BOOL IsModified();
@@ -381,4 +381,4 @@ public:
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_TINYCADDOC_H__34C3ADE5_C40F_411E_B21B_E123312BD3BE__INCLUDED_)
+#endif // !defined(AFX_CONCADDOC_H__34C3ADE5_C40F_411E_B21B_E123312BD3BE__INCLUDED_)

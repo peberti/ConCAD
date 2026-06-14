@@ -18,15 +18,15 @@
  */
 
 #include "stdafx.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "ChildFrm.h"
-#include "TinyCadView.h"
-#include "TinyCadRegistry.h"
+#include "ConCadView.h"
+#include "ConCadRegistry.h"
 #include "LibraryView.h"
 #include "LibraryDoc.h"
-#include "TinyCadMultiSymbolDoc.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCadMultiSymbolDoc.h"
+#include "ConCadMultiDoc.h"
 #include "LibraryDb.h"
 #include "LibrarySQLite.h"
 #include "LibraryCollection.h"
@@ -51,9 +51,9 @@
 static CWinAppEx theApp;
 #endif
 
-CTinyCadRegistry * g_pRegistry = NULL;
+CConCadRegistry * g_pRegistry = NULL;
 
-CTinyCadCommandLineInfo::CTinyCadCommandLineInfo()
+CConCadCommandLineInfo::CConCadCommandLineInfo()
 { //Constructor
 	m_bGenerateSpiceFile = FALSE;
 	m_bGenerateXMLNetlistFile = FALSE;
@@ -63,37 +63,37 @@ CTinyCadCommandLineInfo::CTinyCadCommandLineInfo()
 	m_bConsoleAcquired = FALSE;
 }
 
-CTinyCadCommandLineInfo::~CTinyCadCommandLineInfo()
+CConCadCommandLineInfo::~CConCadCommandLineInfo()
 {
 }
 
-BOOL CTinyCadCommandLineInfo::IsShellOpen()
+BOOL CConCadCommandLineInfo::IsShellOpen()
 {
 	return m_nShellCommand == FileOpen; //This flag is parsed by the base class and is set to FileOpen solely if there is a file name on the command line and no other conflicting options.
 }
 
-BOOL CTinyCadCommandLineInfo::IsGenerateSpiceFile()
+BOOL CConCadCommandLineInfo::IsGenerateSpiceFile()
 {
 	return m_bGenerateSpiceFile;
 }
 
-BOOL CTinyCadCommandLineInfo::IsGenerateXMLNetlistFile()
+BOOL CConCadCommandLineInfo::IsGenerateXMLNetlistFile()
 {
 	return m_bGenerateXMLNetlistFile;
 }
 
-BOOL CTinyCadCommandLineInfo::IsConsoleApp()
+BOOL CConCadCommandLineInfo::IsConsoleApp()
 {
 	return m_bConsoleIORequired;
 }
 
-CString CTinyCadCommandLineInfo::getOutputDirectory()
+CString CConCadCommandLineInfo::getOutputDirectory()
 {
 	return m_OutputDirectory;
 }
 
 // RedirectIOToConsole() is adapted from the information provided at http://dslweb.nwnexus.com/~ast/dload/guicon.htm
-DWORD CTinyCadCommandLineInfo::RedirectIOToConsole()
+DWORD CConCadCommandLineInfo::RedirectIOToConsole()
 {
 	//This function is used to associate a console window with this process for command options that require a console
 	int hConHandle=0;
@@ -107,7 +107,7 @@ DWORD CTinyCadCommandLineInfo::RedirectIOToConsole()
 	{
 		DWORD errorCode = GetLastError();
 		//Note:  Error code==6 will be returned when running under the debugger because a parent console process already exists and you are not allowed to attach to it.  The code indicates an invalid handle was used.
-		ATLTRACE2(_T("CTinyCadCommandLineInfo::RedirectIOToConsole():  AttachConsole failed and returned code=%d.  The GetLastError() function returned %u\n"), retCode, errorCode);
+		ATLTRACE2(_T("CConCadCommandLineInfo::RedirectIOToConsole():  AttachConsole failed and returned code=%d.  The GetLastError() function returned %u\n"), retCode, errorCode);
 	}
 	else
 	{
@@ -148,7 +148,7 @@ DWORD CTinyCadCommandLineInfo::RedirectIOToConsole()
 	return retCode;
 }
 
-void CTinyCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLast)
+void CConCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLast)
 {
 	if (bFlag)
 	{ //This is a command line option (Windows calls them "flags")
@@ -174,14 +174,14 @@ void CTinyCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL
 			m_bGenerateSpiceFile = TRUE;
 			m_eLastFlag = TCFlag_GenerateSpiceFile;
 			m_bConsoleIORequired = TRUE;
-			ATLTRACE2("CTinyCadCommandLineInfo::ParseParam():  Found command line option /s or --gen_spice_netlist\n");
+			ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found command line option /s or --gen_spice_netlist\n");
 		}
 		else if ((optionName.CompareNoCase(_T("x")) == 0) || (optionName.CompareNoCase(_T("-gen_xml_netlist")) == 0))
 		{
 			m_bGenerateXMLNetlistFile = TRUE;
 			m_eLastFlag = TCFlag_GenerateXMLNetListFile;
 			m_bConsoleIORequired = TRUE;
-			ATLTRACE2("CTinyCadCommandLineInfo::ParseParam():  Found command line option /x or --gen_xml_netlist\n");
+			ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found command line option /x or --gen_xml_netlist\n");
 		}
 		else if (optionName.CompareNoCase(_T("-out_directory")) == 0)
 		{
@@ -189,7 +189,7 @@ void CTinyCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL
 			m_OutputDirectory = optionValue;
 			m_eLastFlag = TCFlag_OutputDirectory;
 			m_bConsoleIORequired = TRUE;
-			ATLTRACE2("CTinyCadCommandLineInfo::ParseParam():  Found command line option --output_dir=\"%S\"\n", pszParam);
+			ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found command line option --output_dir=\"%S\"\n", pszParam);
 		}
 		else if ((optionName.CompareNoCase(_T("-help")) == 0) || (optionName.CompareNoCase(_T("h")) == 0) || (optionName.CompareNoCase(_T("?")) == 0))
 		{
@@ -197,7 +197,7 @@ void CTinyCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL
 			if (!m_bConsoleAcquired) {
 				m_bConsoleAcquired = RedirectIOToConsole();
 			}
-			fwprintf(stderr, _T("\nConCAD (a fork of TinyCAD) Version %s copyright (c) 1994-2019 Matt Pyne.  Licensed under GNU LGPL 2.1 or newer\n"), (LPCTSTR) (CTinyCadApp::GetVersion()));
+			fwprintf(stderr, _T("\nConCAD (a fork of TinyCAD) Version %s copyright (c) 1994-2019 Matt Pyne.  Licensed under GNU LGPL 2.1 or newer\n"), (LPCTSTR) (CConCadApp::GetVersion()));
 			fwprintf(stderr, _T("Correct usage is:\n"));
 			fwprintf(stderr,_T("ConCAD <design file name with optional path and mandatory file type extension (.dsn for design files)> [options]\n"));
 			fwprintf(stderr,_T("Optional command line options:\n"));
@@ -213,33 +213,33 @@ void CTinyCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL
 		}
 		else
 		{
-			ATLTRACE2("CTinyCadCommandLineInfo::ParseParam():  Found non-TinyCAD command line option \"%S\"\n", pszParam);
+			ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found non-TinyCAD command line option \"%S\"\n", pszParam);
 			m_eLastFlag = TCFlag_Unknown;
 			CStringA temp(pszParam);	//Convert TCHAR string to char string
-			ParseParamFlag(temp.GetString()); //Not one of TinyCad's - let the regular CCommandLineInfo object parse it.  This function expects a char string, not a TCHAR string.
+			ParseParamFlag(temp.GetString()); //Not one of ConCad's - let the regular CCommandLineInfo object parse it.  This function expects a char string, not a TCHAR string.
 		}
 	}
 	else
 	{ 
 		//This is a command line parameter, not an option flag.  However, it may "belong" to the last option flag parsed, or it may be a standalone parameter
 		//For example, an optional output directory may be specified as "--out_directory=somewhere", or as "--out_directory somewhere"
-		ATLTRACE2("CTinyCadCommandLineInfo::ParseParam():  Found command line parameter=\"%S\".\n", pszParam);
+		ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found command line parameter=\"%S\".\n", pszParam);
 		switch(m_eLastFlag)
 		{
 			case TCFlag_OutputDirectory:
 				if (m_OutputDirectory.IsEmpty()) m_OutputDirectory = pszParam;
 				else 
 				{
-					ATLTRACE2("CTinyCadCommandLineInfo::ParseParam():  Found unexpected command line parameter \"%S\" following option --out_directory\n", pszParam);
+					ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found unexpected command line parameter \"%S\" following option --out_directory\n", pszParam);
 				}
 				break;
 			case TCFlag_GenerateSpiceFile:
 			case TCFlag_GenerateXMLNetListFile:
-				ATLTRACE2("CTinyCadCommandLineInfo::ParseParam():  Found unexpected command line parameter \"%S\".  Discarding parameter and continuing.\n", pszParam);
+				ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found unexpected command line parameter \"%S\".  Discarding parameter and continuing.\n", pszParam);
 				break;
 			case TCFlag_Unknown:
 			default:
-				ParseParamNotFlag(pszParam); //Not one of TinyCad's - let the regular Windows CCommandLineInfo object parse it.
+				ParseParamNotFlag(pszParam); //Not one of ConCad's - let the regular Windows CCommandLineInfo object parse it.
 				break;
 		}
 	}
@@ -258,29 +258,29 @@ void CTinyCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL
 //*                                                                       *
 //*************************************************************************
 
-CTinyCadApp::CTinyCadApp()
+CConCadApp::CConCadApp()
 {
 }
 
-CTinyCadApp::~CTinyCadApp()
+CConCadApp::~CConCadApp()
 {
 	CLibraryCollection::Clear();
 	delete g_pRegistry;
 }
 
-BEGIN_MESSAGE_MAP(CTinyCadApp, CWinAppEx)
-//{{AFX_MSG_MAP(CTinyCadApp)
+BEGIN_MESSAGE_MAP(CConCadApp, CWinAppEx)
+//{{AFX_MSG_MAP(CConCadApp)
 	ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
 	ON_COMMAND(IDM_LIBLIB, OnLibLib)
-	ON_COMMAND(ID_HELP_OPENTINYCADUSERMANUAL, OnHelpOpenTinyCADUserManual)
-	ON_COMMAND(ID_HELP_GOTOTINYCADWEBSITE, OnHelpGototinycadwebsite)
+	ON_COMMAND(ID_HELP_OPENCONCADUSERMANUAL, OnHelpOpenConCADUserManual)
+	ON_COMMAND(ID_HELP_GOTOCONCADWEBSITE, OnHelpGotoconcadwebsite)
 	ON_COMMAND(ID_HELP_HELP, OnHelpHelp)
 	ON_COMMAND(ID_HELP_SUPPORTFORUM, OnHelpSupport)
 
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, CWinAppEx::OnFileNew)
-//	ON_COMMAND(ID_FILE_OPEN, CWinAppEx::OnFileOpen)	//The standard OnFileOpen accesses buggy Microsoft MFC code that manifests only in Windows 8.1.  I replaced it with CTinyCadApp::OnMyFileOpen().  See http://yourprosoft.blogspot.com/2012/01/mfc-encountered-improper-argument.html
-	ON_COMMAND(ID_FILE_OPEN, CTinyCadApp::OnMyFileOpen)
+//	ON_COMMAND(ID_FILE_OPEN, CWinAppEx::OnFileOpen)	//The standard OnFileOpen accesses buggy Microsoft MFC code that manifests only in Windows 8.1.  I replaced it with CConCadApp::OnMyFileOpen().  See http://yourprosoft.blogspot.com/2012/01/mfc-encountered-improper-argument.html
+	ON_COMMAND(ID_FILE_OPEN, CConCadApp::OnMyFileOpen)
 
 	// Standard print setup command
 	ON_COMMAND(ID_FILE_PRINT_SETUP, CWinAppEx::OnFilePrintSetup)
@@ -292,12 +292,12 @@ END_MESSAGE_MAP()
 //== init class variables                                                ==
 //=========================================================================
 // base class ctor creates the one and only application object
-CTinyCadApp CTinyCadApp::m_oInstance;
-CMultiDocTemplate* CTinyCadApp::m_pDocTemplate = NULL;
-CMultiDocTemplate* CTinyCadApp::m_pLibTemplate = NULL;
-CMultiDocTemplate* CTinyCadApp::m_pTxtTemplate = NULL;
-bool CTinyCadApp::m_LockOutSymbolRedraw = false;
-COLORREF CTinyCadApp::m_colours[16];
+CConCadApp CConCadApp::m_oInstance;
+CMultiDocTemplate* CConCadApp::m_pDocTemplate = NULL;
+CMultiDocTemplate* CConCadApp::m_pLibTemplate = NULL;
+CMultiDocTemplate* CConCadApp::m_pTxtTemplate = NULL;
+bool CConCadApp::m_LockOutSymbolRedraw = false;
+COLORREF CConCadApp::m_colours[16];
 
 bool m_hiddenWindow = false;
 
@@ -308,13 +308,13 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
 //=========================================================================
-BOOL CTinyCadApp::InitInstance()
+BOOL CConCadApp::InitInstance()
 {
 
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	//djl - this next line doesn't work, presumably because this is not the console!
-	_cwprintf(_T("CTinyCadApp::InitInstance():  This is displayed by _cwprintf() prior to InitCommonControls()\r\n"));
+	_cwprintf(_T("CConCadApp::InitInstance():  This is displayed by _cwprintf() prior to InitCommonControls()\r\n"));
 	
 
 	// InitCommonControls() is required on Windows XP if an application
@@ -342,7 +342,7 @@ BOOL CTinyCadApp::InitInstance()
 		RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
 
 	//djl - this next line doesn't work, presumably because this is not the console!
-	_cwprintf(_T("CTinyCadApp::InitInstance():  This is displayed by _cwprintf() after call to CWinAppEx::InitInstance()\r\n"));
+	_cwprintf(_T("CConCadApp::InitInstance():  This is displayed by _cwprintf() after call to CWinAppEx::InitInstance()\r\n"));
 
 	// Initialize OLE libraries
 	if (!AfxOleInit())
@@ -361,8 +361,8 @@ BOOL CTinyCadApp::InitInstance()
 	// ConCAD is a fork of TinyCAD; on first run, migrate any existing user
 	// settings from the legacy hive to the ConCAD hive so that upgrading users
 	// keep their preferences, recent-file list, and library configuration.
-	// Both the MFC profile (MRU, window state) and the custom CTinyCadRegistry
-	// settings (see CTinyCadRegistry::M_SKEY) live under the shared profile
+	// Both the MFC profile (MRU, window state) and the custom CConCadRegistry
+	// settings (see CConCadRegistry::M_SKEY) live under the shared profile
 	// subkey HKCU\Software\TinyCAD\TinyCAD, so copying that one subtree onto
 	// HKCU\Software\ConCAD\ConCAD migrates everything in one step.
 	{
@@ -389,7 +389,7 @@ BOOL CTinyCadApp::InitInstance()
 	}
 
 	// Change the registry key under which our settings are stored.
-	SetRegistryKey(CTinyCadApp::GetName());
+	SetRegistryKey(CConCadApp::GetName());
 
 	// Read the registry
 	ReadRegistry();
@@ -399,8 +399,8 @@ BOOL CTinyCadApp::InitInstance()
 
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views.
-	m_pDocTemplate = new CMultiDocTemplate(IDR_TCADTYPE, RUNTIME_CLASS(CTinyCadMultiDoc), RUNTIME_CLASS(CChildFrame), // custom MDI child frame
-			RUNTIME_CLASS(CTinyCadView));
+	m_pDocTemplate = new CMultiDocTemplate(IDR_TCADTYPE, RUNTIME_CLASS(CConCadMultiDoc), RUNTIME_CLASS(CChildFrame), // custom MDI child frame
+			RUNTIME_CLASS(CConCadView));
 	AddDocTemplate(m_pDocTemplate);
 
 	m_pLibTemplate = new CMultiDocTemplate(IDR_LIBTYPE, RUNTIME_CLASS(CLibraryDoc), RUNTIME_CLASS(CChildFrame), // custom MDI child frame
@@ -416,7 +416,7 @@ BOOL CTinyCadApp::InitInstance()
 	RegisterShellFileTypes(TRUE);
 
 	// Parse command line for standard shell commands, DDE, file open, but don't process the commands until later in this function after the windows have been created and opened in hidden mode
-	CTinyCadCommandLineInfo cmdInfo; //This is the TinyCAD overridden command line parser class
+	CConCadCommandLineInfo cmdInfo; //This is the TinyCAD overridden command line parser class
 	ParseCommandLine(cmdInfo); //This parses all of the options on the command line
 
 	CPane::m_bHandleMinSize = true;
@@ -431,7 +431,7 @@ BOOL CTinyCadApp::InitInstance()
 		m_nCmdShow = SW_HIDE; //This flag will be explicitly checked by the NOTOOL window to see whether it should be shown or hidden
 		m_hiddenWindow = true;
 	}
-	else if (CTinyCadRegistry::GetMaximize() && m_nCmdShow == 1)
+	else if (CConCadRegistry::GetMaximize() && m_nCmdShow == 1)
 	{
 		m_nCmdShow = SW_SHOWMAXIMIZED;
 	}
@@ -454,15 +454,15 @@ BOOL CTinyCadApp::InitInstance()
 	{
 		//Depending on Windows registry settings, Explorer or a command shell may choose to pass in an old fashioned DOS 8.3 filename.
 		//Lookup the long version of this filename in the current working directory and then open the long version of the filename.
-		ATLTRACE2("CTinyCad::InitInstance() received a file open command from the Windows Shell processor.  Filename=\"%S\"\n", cmdInfo.m_strFileName);
+		ATLTRACE2("CConCad::InitInstance() received a file open command from the Windows Shell processor.  Filename=\"%S\"\n", cmdInfo.m_strFileName);
 		CString longName = GetLongFileName(cmdInfo.m_strFileName); //Convert potential DOS 8.3 short file name into a long file name
 		cmdInfo.m_strFileName = longName; //Replace the short filename with the long filename
-		ATLTRACE2("CTinyCad::InitInstance():                                                          long file name=\"%S\"\n", longName);
+		ATLTRACE2("CConCad::InitInstance():                                                          long file name=\"%S\"\n", longName);
 	}
 
 	// Now dispatch all TinyCAD custom commands specified on the command line, including the DDE commands such as FileOpen, FilePrint, etc.
 	BOOL successful = ProcessShellCommand(cmdInfo);	//This executes all standard shell commands and ignores any custom flags
-	ATLTRACE2("CTinyCad::InitInstance() received %s Shell command (numeric command = %d).  Filename=\"%S\"\n", successful ? "successful" : "unsuccessful", (int) cmdInfo.m_nShellCommand, cmdInfo.m_strFileName);
+	ATLTRACE2("CConCad::InitInstance() received %s Shell command (numeric command = %d).  Filename=\"%S\"\n", successful ? "successful" : "unsuccessful", (int) cmdInfo.m_nShellCommand, cmdInfo.m_strFileName);
 
 	if (!successful)
 	{
@@ -482,7 +482,7 @@ BOOL CTinyCadApp::InitInstance()
 		return FALSE;
 	}
 
-	CTinyCadMultiDoc *pDesign = NULL; //This will be used to hold the FileOpen document, if running as a console app.  Not used otherwise.
+	CConCadMultiDoc *pDesign = NULL; //This will be used to hold the FileOpen document, if running as a console app.  Not used otherwise.
 	int retCode = pMainFrame->consoleAppRetCode; //Save the return code so it can be used for console mode after the mainframe document is destroyed.
 
 	if (cmdInfo.IsConsoleApp())
@@ -491,26 +491,26 @@ BOOL CTinyCadApp::InitInstance()
 		{ //This is a TinyCAD specific custom command line argument
 			if (cmdInfo.IsGenerateSpiceFile())
 			{ //Run spice netlister here in hidden mode since this has been invoked from a command prompt
-				TRACE("CTinyCad::InitInstance() received TinyCad command argument to run the Spice netlister.\n");
+				TRACE("CConCad::InitInstance() received ConCad command argument to run the Spice netlister.\n");
 
 				// The main window has been initialized, so show and update it in hidden display mode.
 				pMainFrame->ShowWindow(m_nCmdShow);
 				pMainFrame->UpdateWindow();
 
-				//Retrieve a pointer to the newly opened CTinyCadMultiDoc (i.e., the dsn file that the command prompt just opened)
+				//Retrieve a pointer to the newly opened CConCadMultiDoc (i.e., the dsn file that the command prompt just opened)
 				POSITION localPosition = m_pDocTemplate->GetFirstDocPosition(); //The open design is the only design file in the template collection at this point
-				pDesign = static_cast<CTinyCadMultiDoc *> (m_pDocTemplate->GetNextDoc(localPosition));
+				pDesign = static_cast<CConCadMultiDoc *> (m_pDocTemplate->GetNextDoc(localPosition));
 
-				static_cast<CTinyCadView *> (pMainFrame->GetActiveView())->CommandPromptCreatespicefile(pDesign, cmdInfo.m_strFileName, cmdInfo.getOutputDirectory()); //create the spice file
+				static_cast<CConCadView *> (pMainFrame->GetActiveView())->CommandPromptCreatespicefile(pDesign, cmdInfo.m_strFileName, cmdInfo.getOutputDirectory()); //create the spice file
 				retCode = pMainFrame->consoleAppRetCode; //Save the return code so it can be used for console mode after the mainframe document is destroyed.
 			}
 			else
 			{ //Run XML netlister here!
-				TRACE("CTinyCad::InitInstance() received TinyCad command argument to run the XML netlister.\n");
+				TRACE("CConCad::InitInstance() received ConCad command argument to run the XML netlister.\n");
 				//retCode = pMainFrame->consoleAppRetCode; //Save the return code so it can be used for console mode after the mainframe document is destroyed.
 			}
 			//Now take an early exit
-			ATLTRACE2("CTinyCad::InitInstance():  Console mode operation is completed.  Sending Quit message\n");
+			ATLTRACE2("CConCad::InitInstance():  Console mode operation is completed.  Sending Quit message\n");
 
 			//Close opened document(s) and anything else created here in InitInstance that needs closing
 			//Note:  If due to some unanticipated error in the netlist, a dialog box does manage to pop up, not closing it here will cause memory leaks.
@@ -540,13 +540,13 @@ BOOL CTinyCadApp::InitInstance()
 //=========================================================================
 
 //-------------------------------------------------------------------------
-bool CTinyCadApp::IsLibInUse(CLibraryStore* pLib)
+bool CConCadApp::IsLibInUse(CLibraryStore* pLib)
 {
 	POSITION p = m_pDocTemplate->GetFirstDocPosition();
 
 	while (p != NULL)
 	{
-		CTinyCadMultiDoc *t = static_cast<CTinyCadMultiDoc*> (m_pDocTemplate->GetNextDoc(p));
+		CConCadMultiDoc *t = static_cast<CConCadMultiDoc*> (m_pDocTemplate->GetNextDoc(p));
 		if (t->IsLibInUse(pLib))
 		{
 			return true;
@@ -567,7 +567,7 @@ bool CTinyCadApp::IsLibInUse(CLibraryStore* pLib)
 	return false;
 }
 //-------------------------------------------------------------------------
-CString CTinyCadApp::GetVersion()
+CString CConCadApp::GetVersion()
 {
 	// ConCAD versioning: major is always 0; the build number is the git
 	// commit count emitted into BuildId.h by gitbranch.bat at pre-build.
@@ -576,7 +576,7 @@ CString CTinyCadApp::GetVersion()
 	return sReturn;
 }
 //-------------------------------------------------------------------------
-CString CTinyCadApp::GetReleaseType()
+CString CConCadApp::GetReleaseType()
 {
 	// If we are building from "master" then assume it is a release build,
 	// otherwise use the branch name
@@ -588,17 +588,17 @@ CString CTinyCadApp::GetReleaseType()
 }
 
 //-------------------------------------------------------------------------
-CString CTinyCadApp::GetName()
+CString CConCadApp::GetName()
 {
 	return "ConCAD";
 }
 //-------------------------------------------------------------------------
-CString CTinyCadApp::GetMainDir()
+CString CConCadApp::GetMainDir()
 {
 	CString sReturn;
 	TCHAR theBuffer[1024];
 	DWORD theBytes = GetModuleFileName(NULL, theBuffer, (sizeof (theBuffer) - 1) / sizeof(TCHAR));
-	TRACE("CTinyCadApp::GetModuleFileName() returned \"%S\"\n", theBuffer);
+	TRACE("CConCadApp::GetModuleFileName() returned \"%S\"\n", theBuffer);
 	if (theBytes != 0)
 	{
 		TCHAR* thePtr = theBuffer + theBytes;
@@ -615,7 +615,7 @@ CString CTinyCadApp::GetMainDir()
 	return sReturn;
 }
 
-CString CTinyCadApp::GetMyDocumentDir(CString subfolder)
+CString CConCadApp::GetMyDocumentDir(CString subfolder)
 {
 	/*
 	 * Gets the default location of the TinyCAD libraries.
@@ -637,17 +637,17 @@ CString CTinyCadApp::GetMyDocumentDir(CString subfolder)
 								 0, 
 								 szPath))) 
 	{
-		TRACE("CTinyCadApp::GetLibraryDir() - SHGetFolderPath(CSIDL_PERSONAL) returned \"%S\"\n", szPath);
+		TRACE("CConCadApp::GetLibraryDir() - SHGetFolderPath(CSIDL_PERSONAL) returned \"%S\"\n", szPath);
 		PathAppend(szPath, TEXT("ConCAD"));
 		PathAppend(szPath, subfolder);
-		TRACE("CTinyCadApp::GetLibraryDir() - concatenated string = \"%S\"\n", szPath);
+		TRACE("CConCadApp::GetLibraryDir() - concatenated string = \"%S\"\n", szPath);
 	}
 	else {	//May be pre- Windows XP - use the old method
-		TRACE("CTinyCadApp::GetLibraryDir() - SHGetFolderPath(CSIDL_PERSONAL) returned failure code\n");
+		TRACE("CConCadApp::GetLibraryDir() - SHGetFolderPath(CSIDL_PERSONAL) returned failure code\n");
 		szPath[0]='\0';
 
 		DWORD theBytes = GetModuleFileName(NULL, szPath, (sizeof (szPath) - 1) / sizeof(TCHAR));
-		TRACE("CTinyCadApp::GetModuleFileName() returned \"%S\"\n", szPath);
+		TRACE("CConCadApp::GetModuleFileName() returned \"%S\"\n", szPath);
 		if (theBytes != 0)
 		{
 			PathRemoveFileSpec(szPath);
@@ -660,7 +660,7 @@ CString CTinyCadApp::GetMyDocumentDir(CString subfolder)
 }
 
 
-CString CTinyCadApp::GetAppDir(CString subfolder)
+CString CConCadApp::GetAppDir(CString subfolder)
 {
 	CString sReturn;
 	TCHAR szPath[MAX_PATH];
@@ -668,7 +668,7 @@ CString CTinyCadApp::GetAppDir(CString subfolder)
 	szPath[0] = '\0';
 
 	DWORD theBytes = GetModuleFileName(NULL, szPath, (sizeof(szPath) - 1) / sizeof(TCHAR));
-	TRACE("CTinyCadApp::GetModuleFileName() returned \"%S\"\n", szPath);
+	TRACE("CConCadApp::GetModuleFileName() returned \"%S\"\n", szPath);
 	if (theBytes != 0)
 	{
 		PathRemoveFileSpec(szPath);
@@ -679,7 +679,7 @@ CString CTinyCadApp::GetAppDir(CString subfolder)
 	return sReturn;
 }
 
-CString CTinyCadApp::GetLongFileName(const CString shortFilename)
+CString CConCadApp::GetLongFileName(const CString shortFilename)
 {
 	//This function returns the newer format long filename (i.e., non-DOS 8.3 format) from a short file name.
 	//It should work ok with a normal long filename also, if all you are trying to do is retrieve the full path.
@@ -697,7 +697,7 @@ CString CTinyCadApp::GetLongFileName(const CString shortFilename)
 //=========================================================================
 
 
-void CTinyCadApp::SetLockOutSymbolRedraw(bool r)
+void CConCadApp::SetLockOutSymbolRedraw(bool r)
 {
 	m_LockOutSymbolRedraw = r;
 
@@ -715,13 +715,13 @@ void CTinyCadApp::SetLockOutSymbolRedraw(bool r)
 //=========================================================================
 //-------------------------------------------------------------------------
 // Read the registry
-void CTinyCadApp::ReadRegistry()
+void CConCadApp::ReadRegistry()
 {
 	// create singleton registry
-	g_pRegistry = new CTinyCadRegistry();
+	g_pRegistry = new CConCadRegistry();
 
 	// Is there a list of libraries in the registry?
-	CStringList* colLibs = CTinyCadRegistry::GetLibraryNames();
+	CStringList* colLibs = CConCadRegistry::GetLibraryNames();
 
 	// Iterate through the list in head-to-tail order.
 	CString sSearch;
@@ -787,9 +787,9 @@ void CTinyCadApp::ReadRegistry()
 
 //-------------------------------------------------------------------------
 // Edit a library using the doc/view
-void CTinyCadApp::EditSymbol(CLibraryStore* pLib, CLibraryStoreNameSet &symbol)
+void CConCadApp::EditSymbol(CLibraryStore* pLib, CLibraryStoreNameSet &symbol)
 {
-	CTinyCadMultiSymbolDoc *pMulti = new CTinyCadMultiSymbolDoc(pLib, symbol);
+	CConCadMultiSymbolDoc *pMulti = new CConCadMultiSymbolDoc(pLib, symbol);
 
 	CFrameWnd *pFrame = m_pDocTemplate->CreateNewFrame(pMulti, NULL);
 	m_pDocTemplate->InitialUpdateFrame(pFrame, pMulti, TRUE);
@@ -797,7 +797,7 @@ void CTinyCadApp::EditSymbol(CLibraryStore* pLib, CLibraryStoreNameSet &symbol)
 
 //-------------------------------------------------------------------------
 // Edit a text file using the doc/view
-void CTinyCadApp::EditTextFile(const TCHAR *filename)
+void CConCadApp::EditTextFile(const TCHAR *filename)
 {
 	TRACE("CTinyCADApp::EditTextFile(\"%S\")\n", filename);
 	CTextEditDoc *pDoc = static_cast<CTextEditDoc *> (m_pTxtTemplate->CreateNewDocument());
@@ -817,7 +817,7 @@ void CTinyCadApp::EditTextFile(const TCHAR *filename)
 //-------------------------------------------------------------------------
 // Edit a design file using the doc/view
 //
-void CTinyCadApp::EditDesign(const TCHAR *filename)
+void CConCadApp::EditDesign(const TCHAR *filename)
 {
 	TRACE("CTinyCADApp::EditDesign(\"%S\")\n", filename);
 	AfxGetApp()->OpenDocumentFile(filename);
@@ -825,7 +825,7 @@ void CTinyCadApp::EditDesign(const TCHAR *filename)
 
 //-------------------------------------------------------------------------
 // Edit a library using the doc/view
-void CTinyCadApp::EditLibrary(CLibraryStore* pLib)
+void CConCadApp::EditLibrary(CLibraryStore* pLib)
 {
 	// Is this library already being edited?
 	POSITION p = m_pLibTemplate->GetFirstDocPosition();
@@ -857,7 +857,7 @@ void CTinyCadApp::EditLibrary(CLibraryStore* pLib)
 	}
 }
 //-------------------------------------------------------------------------
-void CTinyCadApp::ResetAllSymbols()
+void CConCadApp::ResetAllSymbols()
 {
 	if (!m_LockOutSymbolRedraw)
 	{
@@ -873,14 +873,14 @@ void CTinyCadApp::ResetAllSymbols()
 	}
 }
 //-------------------------------------------------------------------------
-void CTinyCadApp::SaveAll()
+void CConCadApp::SaveAll()
 {
 	// Save a backup copy of all of the files so far
 	POSITION p = m_pDocTemplate->GetFirstDocPosition();
 
 	while (p != NULL)
 	{
-		CTinyCadMultiDoc *t = static_cast<CTinyCadMultiDoc*> (m_pDocTemplate->GetNextDoc(p));
+		CConCadMultiDoc *t = static_cast<CConCadMultiDoc*> (m_pDocTemplate->GetNextDoc(p));
 
 		// Force an auto-save...
 		t->AutoSave();
@@ -894,7 +894,7 @@ void CTinyCadApp::SaveAll()
 //=========================================================================
 //---------------------------------------------------------------------
 
-void CTinyCadApp::OnMyFileOpen()
+void CConCadApp::OnMyFileOpen()
 {
 	//manual open using CFileDialog to get around buggy Microsoft MFC code that affects Windows 8.1
 	//example code copied and modified taken from http://yourprosoft.blogspot.com/2012/01/mfc-encountered-improper-argument.html
@@ -914,7 +914,7 @@ void CTinyCadApp::OnMyFileOpen()
 
 //-------------------------------------------------------------------------
 // This is the idle time processing
-BOOL CTinyCadApp::OnIdle(LONG nCount)
+BOOL CConCadApp::OnIdle(LONG nCount)
 {
 	CWinAppEx::OnIdle(nCount);
 
@@ -929,24 +929,24 @@ BOOL CTinyCadApp::OnIdle(LONG nCount)
 //-------------------------------------------------------------------------
 // Process the main window accelerator keys when a MFC dialog has the focus.
 // This is an implementation suggested by Microsoft KB100770.
-BOOL CTinyCadApp::ProcessMessageFilter(int code, LPMSG lpMsg)
+BOOL CConCadApp::ProcessMessageFilter(int code, LPMSG lpMsg)
 {
 	return CWinAppEx::ProcessMessageFilter(code, lpMsg);
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadApp::OnLibLib()
+void CConCadApp::OnLibLib()
 {
 	CDlgLibraryBox(AfxGetMainWnd()).DoModal();
 }
 //-------------------------------------------------------------------------
-void CTinyCadApp::OnHelpOpenTinyCADUserManual()
+void CConCadApp::OnHelpOpenConCADUserManual()
 {
 	// Open a browser for our web site
 	ShellExecute(AfxGetMainWnd()->m_hWnd, _T("open"), _T("https://www.tinycad.net/Home/Documentation"), NULL, NULL, SW_SHOWNORMAL);
 }
 //-------------------------------------------------------------------------
-void CTinyCadApp::OnHelpGototinycadwebsite()
+void CConCadApp::OnHelpGotoconcadwebsite()
 {
 	// Open a browser for our web site
 	ShellExecute(AfxGetMainWnd()->m_hWnd, _T("open"), _T("https://www.tinycad.net"), NULL, NULL, SW_SHOWNORMAL);
@@ -954,26 +954,26 @@ void CTinyCadApp::OnHelpGototinycadwebsite()
 
 //-------------------------------------------------------------------------
 
-void CTinyCadApp::OnHelpSupport()
+void CConCadApp::OnHelpSupport()
 {
 	// Open a browser for our web site
 	ShellExecute(AfxGetMainWnd()->m_hWnd, _T("open"), _T("https://forum.tinycad.net"), NULL, NULL, SW_SHOWNORMAL);
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadApp::OnAppAbout()
+void CConCadApp::OnAppAbout()
 {
 	CDlgAbout().DoModal();
 }
 //-------------------------------------------------------------------------
-void CTinyCadApp::OnHelpHelp()
+void CConCadApp::OnHelpHelp()
 {
 	CString url = "file://" + CString(m_pszHelpFilePath);
 	ShellExecute(AfxGetMainWnd()->m_hWnd, _T("open"), url, NULL, NULL, SW_SHOWNORMAL);
 
 }
 //-------------------------------------------------------------------------
-BOOL CTinyCadApp::ChooseColor(COLORREF &col)
+BOOL CConCadApp::ChooseColor(COLORREF &col)
 {
 	// Bring up the colour dialogue...
 	CHOOSECOLOR c;
@@ -996,7 +996,7 @@ BOOL CTinyCadApp::ChooseColor(COLORREF &col)
 	return FALSE;
 }
 
-BOOL CTinyCadApp::LoadWindowPlacement(CRect& rectNormalPosition, int& nFflags, int& nShowCmd)
+BOOL CConCadApp::LoadWindowPlacement(CRect& rectNormalPosition, int& nFflags, int& nShowCmd)
 {
 	if (m_hiddenWindow)
 	{	// Force window to be hidden

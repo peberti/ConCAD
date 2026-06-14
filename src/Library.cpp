@@ -18,13 +18,13 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "registry.h"
-#include "TinyCad.h"
-#include "TinyCadSymbolDoc.h"
+#include "ConCad.h"
+#include "ConCadSymbolDoc.h"
 #include "Symbol.h"
 #include "HeaderStamp.h"
-#include "TinyCadMultiSymbolDoc.h"
+#include "ConCadMultiSymbolDoc.h"
 
 ////// The Library Member Functions //////
 
@@ -319,7 +319,7 @@ void CLibraryFile::SaveSymbolCollection( symbolCollection &temp_symbols )
 
 	// Now we can write the new index file back
 	DWORD OldPos=-1;
-	CTinyCadDoc tmp_design;
+	CConCadDoc tmp_design;
 
 	for( symbolCollection::iterator i = temp_symbols.begin(); i != temp_symbols.end(); i++ )
 	{
@@ -357,7 +357,7 @@ void CLibraryFile::SaveSymbolCollection( symbolCollection &temp_symbols )
 #endif
 
 // Write a symbol to the file
-void CLibraryFile::WriteMethod(CStreamFile &stream, CTinyCadDoc &design)
+void CLibraryFile::WriteMethod(CStreamFile &stream, CConCadDoc &design)
 {
 	// Write a place holder for the method length.
 	// We only need this if we are storing methods and
@@ -391,7 +391,7 @@ void CLibraryFile::WriteMethod(CStreamFile &stream, CTinyCadDoc &design)
 }
 
 // Write a symbol to this library
-void CLibraryFile::Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDoc &document)
+void CLibraryFile::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document)
 {
 	// Writing to the old file type is not supported - must upgrade to the new library type
 #if 0
@@ -517,7 +517,7 @@ void CLibraryFile::Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDoc 
 	ReRead();
 
 	// Inform the document views
-	CTinyCadApp::ResetAllSymbols();
+	CConCadApp::ResetAllSymbols();
 
 	SetCursor( AfxGetApp()->LoadStandardCursor( IDC_ARROW ) );
 #endif
@@ -589,7 +589,7 @@ BOOL CLibraryFile::Upgrade(CLibraryStore *NewLib)
 	// Now we can write the new index file back
 	for (symbolCollection::iterator i = m_Symbols.begin(); i != m_Symbols.end(); i++)
 	{
-		CTinyCadMultiSymbolDoc tmp_design;
+		CConCadMultiSymbolDoc tmp_design;
 		CLibraryStoreNameSet thisSymbol = i->second;
 
 		// Read the methods file into this design

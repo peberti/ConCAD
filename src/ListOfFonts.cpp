@@ -198,7 +198,7 @@ void ListOfFonts::Read(CXMLReader& xml, hFONT& nID)
 	xml.outofTag();
 }
 //-------------------------------------------------------------------------
-void ListOfFonts::LoadItem(CTinyCadDoc *pDesign, CStream& oStream, hRESOURCE n)
+void ListOfFonts::LoadItem(CConCadDoc *pDesign, CStream& oStream, hRESOURCE n)
 {
 	ListOfFonts oFont;
 
@@ -207,12 +207,12 @@ void ListOfFonts::LoadItem(CTinyCadDoc *pDesign, CStream& oStream, hRESOURCE n)
 	Add(new ListOfFonts(oFont), n);
 }
 //-------------------------------------------------------------------------
-void ListOfFonts::SaveItemXML(CTinyCadDoc *pDesign, CXMLWriter &xml)
+void ListOfFonts::SaveItemXML(CConCadDoc *pDesign, CXMLWriter &xml)
 {
 	Write(xml);
 }
 //-------------------------------------------------------------------------
-void ListOfFonts::LoadItemXML(CTinyCadDoc* pDesign, CXMLReader& xml)
+void ListOfFonts::LoadItemXML(CConCadDoc* pDesign, CXMLReader& xml)
 {
 	hRESOURCE nID;
 	ListOfFonts oFont;

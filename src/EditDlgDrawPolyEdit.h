@@ -51,7 +51,7 @@ public:
 	int mode;
 
 	void Create();
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	int GetAngle()
 	{
 		int r = GetCheckedRadioButton(LINEBOX_FREE, LINEBOX_ARC2);

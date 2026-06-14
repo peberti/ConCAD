@@ -20,8 +20,8 @@
 #include "stdafx.h"
 #include "option.h"
 #include "revision.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "EditDlgTextEdit.h"
 
 ////// The text edit dialog box //////
@@ -55,7 +55,7 @@ void CEditDlgTextEdit::Create()
 }
 
 // Open the dialog window
-void CEditDlgTextEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgTextEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	stop = TRUE;
 
@@ -103,7 +103,7 @@ void CEditDlgTextEdit::ReFocus()
 
 void CEditDlgTextEdit::OnTextColour()
 {
-	if (CTinyCadApp::ChooseColor(static_cast<CDrawText*> (getObject())->FontColour))
+	if (CConCadApp::ChooseColor(static_cast<CDrawText*> (getObject())->FontColour))
 	{
 		getObject()->NewOptions();
 	}

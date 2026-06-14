@@ -27,7 +27,7 @@
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-class CTinyCadDoc;
+class CConCadDoc;
 
 #include "Object.h"
 
@@ -81,7 +81,7 @@ protected:
 	typedef std::set<todo_point> todoList;
 	todoList m_todo;
 
-	CTinyCadDoc* m_pDesign;
+	CConCadDoc* m_pDesign;
 
 	typedef std::set<CDrawingObject *> discardCollection;
 	discardCollection m_discards;
@@ -101,7 +101,7 @@ public:
 	// Paint the junctions in the todo list
 	void PaintJunctions(CContext &dc, paint_options opt);
 
-	CJunctionUtils(CTinyCadDoc* pDesign);
+	CJunctionUtils(CConCadDoc* pDesign);
 	virtual ~CJunctionUtils();
 
 };

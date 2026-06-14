@@ -100,12 +100,12 @@ void ListOfFillStyles::Write(CXMLWriter& xml) const
 	xml.addTag(_T("COLOR"), m_oFillStyle.Colour);
 }
 //-------------------------------------------------------------------------
-void ListOfFillStyles::SaveItemXML(CTinyCadDoc*, CXMLWriter& xml)
+void ListOfFillStyles::SaveItemXML(CConCadDoc*, CXMLWriter& xml)
 {
 	Write(xml);
 }
 //-------------------------------------------------------------------------
-void ListOfFillStyles::LoadItemXML(CTinyCadDoc*, CXMLReader &xml)
+void ListOfFillStyles::LoadItemXML(CConCadDoc*, CXMLReader &xml)
 {
 	ListOfFillStyles oFillStyle;
 	hFILL nID;
@@ -115,7 +115,7 @@ void ListOfFillStyles::LoadItemXML(CTinyCadDoc*, CXMLReader &xml)
 	Add(new ListOfFillStyles(oFillStyle), nID);
 }
 //-------------------------------------------------------------------------
-void ListOfFillStyles::LoadItem(CTinyCadDoc*, CStream& oStream, hRESOURCE n)
+void ListOfFillStyles::LoadItem(CConCadDoc*, CStream& oStream, hRESOURCE n)
 {
 	ListOfFillStyles oStyle;
 

@@ -21,8 +21,8 @@
 #include "option.h"
 #include "revision.h"
 #include "registry.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "diag.h"
 

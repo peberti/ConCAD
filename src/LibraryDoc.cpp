@@ -18,10 +18,10 @@
  */
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "LibraryDoc.h"
-#include "TinyCadSymbolDoc.h"
-#include "TinyCadMultiSymbolDoc.h"
+#include "ConCadSymbolDoc.h"
+#include "ConCadMultiSymbolDoc.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CLibraryDoc
@@ -178,7 +178,7 @@ void CLibraryDoc::EditSymbol(int which)
 		CLibraryStoreNameSet new_symbol;
 		new_symbol.Blank();
 		new_symbol.lib = m_pLibrary;
-		CTinyCadApp::EditSymbol(m_pLibrary, new_symbol);
+		CConCadApp::EditSymbol(m_pLibrary, new_symbol);
 	}
 	else
 	{
@@ -188,7 +188,7 @@ void CLibraryDoc::EditSymbol(int which)
 		CLibraryStore::symbolCollection::iterator it = getSymbol(which);
 		if (it != m_pLibrary->m_Symbols.end())
 		{
-			CTinyCadApp::EditSymbol(m_pLibrary, it->second);
+			CConCadApp::EditSymbol(m_pLibrary, it->second);
 		}
 	}
 }
@@ -201,7 +201,7 @@ void CLibraryDoc::DuplicateSymbol(int which)
 	if (it != m_pLibrary->m_Symbols.end())
 	{
 		// Load this symbol into a dummy document
-		CTinyCadMultiSymbolDoc tempDoc(m_pLibrary, it->second);
+		CConCadMultiSymbolDoc tempDoc(m_pLibrary, it->second);
 
 		CLibraryStoreNameSet *r = tempDoc.getSymbol();
 		for (int i = 0; i < r->GetNumRecords(); i++)
@@ -225,7 +225,7 @@ void CLibraryDoc::CopySymbol(int which, CLibraryStore *target)
 	if (it != m_pLibrary->m_Symbols.end())
 	{
 		// Load this symbol into a dummy document
-		CTinyCadMultiSymbolDoc tempDoc(target, it->second);
+		CConCadMultiSymbolDoc tempDoc(target, it->second);
 
 		CLibraryStoreNameSet *r = tempDoc.getSymbol();
 		for (int i = 0; i < r->GetNumRecords(); i++)
@@ -245,7 +245,7 @@ void CLibraryDoc::SymbolProperties(int which)
 	if (it != m_pLibrary->m_Symbols.end())
 	{
 		// Load this symbol into a dummy document
-		CTinyCadMultiSymbolDoc tempDoc(m_pLibrary, it->second);
+		CConCadMultiSymbolDoc tempDoc(m_pLibrary, it->second);
 		tempDoc.Store();
 	}
 }

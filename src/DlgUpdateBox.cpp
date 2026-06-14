@@ -21,10 +21,10 @@
 #include "resource.h"
 #include "DlgUpdateBox.h"
 #include <ctype.h>
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "registry.h"
 #include "colour.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 
 #include "Net.h"
 

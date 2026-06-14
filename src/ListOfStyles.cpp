@@ -110,7 +110,7 @@ void ListOfStyles::Write(CXMLWriter& xml) const
 	xml.addTag(_T("THICKNESS"), m_oStyle.Thickness);
 }
 //-------------------------------------------------------------------------
-void ListOfStyles::LoadItem(CTinyCadDoc*, CStream& oStream, hRESOURCE nID)
+void ListOfStyles::LoadItem(CConCadDoc*, CStream& oStream, hRESOURCE nID)
 {
 	ListOfStyles oStyle;
 
@@ -119,12 +119,12 @@ void ListOfStyles::LoadItem(CTinyCadDoc*, CStream& oStream, hRESOURCE nID)
 	Add(new ListOfStyles(oStyle), nID);
 }
 //-------------------------------------------------------------------------
-void ListOfStyles::SaveItemXML(CTinyCadDoc*, CXMLWriter &xml)
+void ListOfStyles::SaveItemXML(CConCadDoc*, CXMLWriter &xml)
 {
 	Write(xml);
 }
 //-------------------------------------------------------------------------
-void ListOfStyles::LoadItemXML(CTinyCadDoc*, CXMLReader& xml)
+void ListOfStyles::LoadItemXML(CConCadDoc*, CXMLReader& xml)
 {
 	ListOfStyles oStyle;
 	hSTYLE nID;

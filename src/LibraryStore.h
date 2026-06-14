@@ -22,7 +22,7 @@
 
 #include "Symbol.h"
 
-class CTinyCadMultiSymbolDoc;
+class CConCadMultiSymbolDoc;
 
 class CLibraryStore
 {
@@ -76,7 +76,7 @@ public:
 	virtual void DeleteSymbol(CLibraryStoreNameSet &symbol) = 0;
 
 	// Write a symbol to this library
-	virtual void Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDoc &document) = 0;
+	virtual void Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document) = 0;
 
 	// Do any idle time tasks...
 	virtual void OnIdle() = 0;

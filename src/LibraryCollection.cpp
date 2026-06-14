@@ -20,7 +20,7 @@
 #include "stdafx.h"
 #include "LibraryCollection.h"
 #include "registry.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "LibrarySQLite.h"
 #include <assert.h>
 #include <typeinfo>
@@ -303,7 +303,7 @@ void CLibraryCollection::SaveToRegistry()
 // Cleanup a library (runs VACUUM)
 void CLibraryCollection::Cleanup(CLibraryStore* pLib)
 {
-	if (CTinyCadApp::IsLibInUse(pLib))
+	if (CConCadApp::IsLibInUse(pLib))
 	{
 		// We cannot clanup whilst in use
 		AfxMessageBox(IDS_NOCLEANUP);
@@ -312,7 +312,7 @@ void CLibraryCollection::Cleanup(CLibraryStore* pLib)
 	{
 		if (pLib->Cleanup())
 		{
-			CTinyCadApp::ResetAllSymbols();
+			CConCadApp::ResetAllSymbols();
 		}
 	}
 }
@@ -322,7 +322,7 @@ void CLibraryCollection::Cleanup(CLibraryStore* pLib)
 //-- the new Microsoft Access database format.
 CLibraryStore* CLibraryCollection::Upgrade(CLibraryStore* pOldLib)
 {
-	if (CTinyCadApp::IsLibInUse(pOldLib))
+	if (CConCadApp::IsLibInUse(pOldLib))
 	{
 		// We cannot upgrade whilst in use
 		AfxMessageBox(IDS_NOUPGRADE);
@@ -340,7 +340,7 @@ CLibraryStore* CLibraryCollection::Upgrade(CLibraryStore* pOldLib)
 			Add(pNewLib);
 
 			// Finally update the symbol picker...
-			CTinyCadApp::ResetAllSymbols();
+			CConCadApp::ResetAllSymbols();
 
 			return pNewLib;
 		}

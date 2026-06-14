@@ -21,7 +21,7 @@
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "colour.h"
 #include "EditDlgLine.h"
 #include "EditToolbar.h"
@@ -76,7 +76,7 @@ void CEditDlgLine::Create()
 
 }
 
-void CEditDlgLine::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgLine::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	m_setup = TRUE;
 
@@ -113,7 +113,7 @@ void CEditDlgLine::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
 void CEditDlgLine::OnLineColour()
 {
 	// Bring up the colour dialogue...
-	if (CTinyCadApp::ChooseColor(m_lStyle.Colour))
+	if (CConCadApp::ChooseColor(m_lStyle.Colour))
 	{
 		UpdateOptions();
 	}

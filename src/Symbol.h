@@ -26,8 +26,8 @@
 #include "net.h"
 
 class CLibraryStore;
-class CTinyCadSymbolDoc;
-class CTinyCadMultiSymbolDoc;
+class CConCadSymbolDoc;
+class CConCadMultiSymbolDoc;
 
 //enum SymbolFieldType	//Values used for 2.60.00 and earlier
 //{
@@ -147,13 +147,13 @@ class CDesignFileSymbol: public CSymbolRecord
 private:
 	// Here we manipulate the main symbol to generate the different types of symbols
 	// from this one
-	void CreateSymbol(CTinyCadDoc *pDesign, drawingCollection &drawing, const CDesignFileSymbolFilter& filter);
+	void CreateSymbol(CConCadDoc *pDesign, drawingCollection &drawing, const CDesignFileSymbolFilter& filter);
 
 	// To speed things up, here is a cache of created symbols
 	typedef std::map<CDesignFileSymbolFilter, drawingCollection> FilteredSymbolCollection;
 	FilteredSymbolCollection m_filter_cache;
 
-	CDPoint GetTr(CTinyCadDoc *pDesign, drawingCollection &drawing);
+	CDPoint GetTr(CConCadDoc *pDesign, drawingCollection &drawing);
 
 public:
 	typedef std::vector<CNetListNode> nodeCollection;
@@ -166,9 +166,9 @@ public:
 	BYTE ppp; // Parts per package
 
 	void SaveXML(CXMLWriter &xml, bool refpoints = true); // Save this symbol into an archive
-	void LoadXML(CTinyCadDoc *, CXMLReader &xml); // Load this symbol from an archive
-	void Load(CTinyCadDoc *, CStream &); // Load this symbol from an archive
-	BOOL LoadSymbol(CTinyCadDoc *, CStream &); // Load just the symbol, (no details) from the stream
+	void LoadXML(CConCadDoc *, CXMLReader &xml); // Load this symbol from an archive
+	void Load(CConCadDoc *, CStream &); // Load this symbol from an archive
+	BOOL LoadSymbol(CConCadDoc *, CStream &); // Load just the symbol, (no details) from the stream
 
 	// Return the methods object
 	BOOL GetMethod(int part, bool include_power_pins, drawingCollection &drawing);
@@ -182,9 +182,9 @@ public:
 	}
 
 	// Create default blank symbol
-	void CreateNoSymbol(CTinyCadDoc *pDesign);
+	void CreateNoSymbol(CConCadDoc *pDesign);
 
-	CTinyCadDoc* GetDesign()
+	CConCadDoc* GetDesign()
 	{
 		return m_pDesign;
 	}
@@ -193,7 +193,7 @@ public:
 	virtual bool operator!=(const CDesignFileSymbol &obj) const; // Compare two objects for unequality
 
 private:
-	CTinyCadDoc* m_pDesign;
+	CConCadDoc* m_pDesign;
 
 	bool m_heterogeneous;
 	typedef std::vector<drawingCollection> symbolCollection;
@@ -211,7 +211,7 @@ public:
 	CLibraryStoreSymbol();
 	~CLibraryStoreSymbol();
 
-	CDesignFileSymbol *GetDesignSymbol(CTinyCadDoc *pDesign);
+	CDesignFileSymbol *GetDesignSymbol(CConCadDoc *pDesign);
 	bool IsMatching(const TCHAR * theString) const;
 };
 
@@ -246,7 +246,7 @@ public:
 	void SaveXML(CXMLWriter &xml);
 
 	// Load this NameSet from an XML file
-	void LoadXML(CTinyCadMultiSymbolDoc *pDesign, CXMLReader &xml);
+	void LoadXML(CConCadMultiSymbolDoc *pDesign, CXMLReader &xml);
 
 	void Save(CStream &); // Save this symbol into an archive
 	void Load(CStream &); // Load this symbol from an archive
@@ -257,7 +257,7 @@ public:
 	// Return the methods object
 	CString GetLibName();
 
-	CDesignFileSymbol *GetDesignSymbol(CTinyCadDoc *pDesign, int index);
+	CDesignFileSymbol *GetDesignSymbol(CConCadDoc *pDesign, int index);
 	CStream *GetMethodArchive();
 
 };

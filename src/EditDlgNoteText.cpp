@@ -23,8 +23,8 @@
 #include "stdafx.h"
 #include "option.h"
 #include "revision.h"
-#include "TinyCadView.h"
-#include "tinycad.h"
+#include "ConCadView.h"
+#include "concad.h"
 #include "colour.h"
 #include "EditToolbar.h"
 #include "diag.h"
@@ -63,7 +63,7 @@ void CEditDlgNoteText::Create()
 
 }
 
-void CEditDlgNoteText::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgNoteText::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	CDrawNoteText *noteText = static_cast<CDrawNoteText *> (pObject);
 
@@ -254,7 +254,7 @@ BOOL CEditDlgNoteText::OnInitDialog()
 void CEditDlgNoteText::OnFillColour()
 {
 	// Bring up the colour dialogue...
-	if (CTinyCadApp::ChooseColor(m_fStyle.Colour))
+	if (CConCadApp::ChooseColor(m_fStyle.Colour))
 	{
 		UpdateOptions();
 	}
@@ -263,7 +263,7 @@ void CEditDlgNoteText::OnFillColour()
 void CEditDlgNoteText::OnLineColour()
 {
 	// Bring up the colour dialogue...
-	if (CTinyCadApp::ChooseColor(m_lStyle.Colour))
+	if (CConCadApp::ChooseColor(m_lStyle.Colour))
 	{
 		UpdateOptions();
 	}
@@ -313,7 +313,7 @@ void CEditDlgNoteText::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 void CEditDlgNoteText::OnTextColour()
 {
-	if (CTinyCadApp::ChooseColor(static_cast<CDrawNoteText*> (getObject())->FontColour))
+	if (CConCadApp::ChooseColor(static_cast<CDrawNoteText*> (getObject())->FontColour))
 	{
 		getObject()->NewOptions();
 	}

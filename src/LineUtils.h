@@ -28,7 +28,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 class TransformSnap;
-class CTinyCadDoc;
+class CConCadDoc;
 
 class CLineUtils
 {
@@ -64,7 +64,7 @@ public:
 
 	// Split this line up into rectangles for
 	// display, without redrawing too large an area...
-	void SplitForDisplay(CTinyCadDoc *pDesign, BOOL erase, int grow);
+	void SplitForDisplay(CConCadDoc *pDesign, BOOL erase, int grow);
 
 	// Determine if the line is diagonal
 	BOOL IsDiagonal() const;

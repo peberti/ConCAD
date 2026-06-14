@@ -21,7 +21,7 @@
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "EditToolbar.h"
 #include "EditDlgMethodEdit.h"
 #include "colour.h"
@@ -154,7 +154,7 @@ void CEditDlgMethodEdit::ReadFields()
 
 }
 
-void CEditDlgMethodEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgMethodEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 
 	stop = TRUE;

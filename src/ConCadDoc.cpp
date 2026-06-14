@@ -7,22 +7,22 @@
  */
 
 #include "stdafx.h"
-#include "TinyCad.h"
-#include "TinyCadDoc.h"
-#include "TinyCadRegistry.h" 
+#include "ConCad.h"
+#include "ConCadDoc.h"
+#include "ConCadRegistry.h" 
 #include "LineUtils.h"
 #include <math.h>
 #include "ImagePNG.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCadMultiDoc.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadDoc
+// CConCadDoc
 
 #if 0
-IMPLEMENT_DYNCREATE(CTinyCadDoc, CDocument)
+IMPLEMENT_DYNCREATE(CConCadDoc, CDocument)
 
-BEGIN_MESSAGE_MAP(CTinyCadDoc, CDocument)
-//{{AFX_MSG_MAP(CTinyCadDoc)
+BEGIN_MESSAGE_MAP(CConCadDoc, CDocument)
+//{{AFX_MSG_MAP(CConCadDoc)
 // NOTE - the ClassWizard will add and remove mapping macros here.
 //    DO NOT EDIT what you see in these blocks of generated code!
 //}}AFX_MSG_MAP
@@ -30,9 +30,9 @@ END_MESSAGE_MAP()
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadDoc construction/destruction
+// CConCadDoc construction/destruction
 
-CTinyCadDoc::CTinyCadDoc(CMultiSheetDoc *pParent)
+CConCadDoc::CConCadDoc(CMultiSheetDoc *pParent)
 {
 
 	theOptions.Init(this);
@@ -55,14 +55,14 @@ CTinyCadDoc::CTinyCadDoc(CMultiSheetDoc *pParent)
 	SelectObject(new CDrawEditItem(this));
 
 	// Attempt to load the defaults for the grid
-	m_snap.SetAccurateGrid(CTinyCadRegistry::GetDouble("GridSpacingF", NormalGrid));
-	m_snap.SetGridSnap(CTinyCadRegistry::GetBool("GridSnap", TRUE));
+	m_snap.SetAccurateGrid(CConCadRegistry::GetDouble("GridSpacingF", NormalGrid));
+	m_snap.SetGridSnap(CConCadRegistry::GetBool("GridSnap", TRUE));
 }
 
-CTinyCadDoc::~CTinyCadDoc()
+CConCadDoc::~CConCadDoc()
 {
-	CTinyCadRegistry::Set("GridSpacingF", m_snap.GetAccurateGrid());
-	CTinyCadRegistry::Set("GridSnap", m_snap.GetGridSnap());
+	CConCadRegistry::Set("GridSpacingF", m_snap.GetAccurateGrid());
+	CConCadRegistry::Set("GridSnap", m_snap.GetGridSnap());
 
 	// Remove any editing tool
 	if (edit)
@@ -89,21 +89,21 @@ CTinyCadDoc::~CTinyCadDoc()
 }
 
 // Iterate through the drawing
-drawingIterator CTinyCadDoc::GetDrawingBegin()
+drawingIterator CConCadDoc::GetDrawingBegin()
 {
 	return m_drawing.begin();
 }
 
-drawingIterator CTinyCadDoc::GetDrawingEnd()
+drawingIterator CConCadDoc::GetDrawingEnd()
 {
 	return m_drawing.end();
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadDoc serialization
+// CConCadDoc serialization
 
 
-BOOL CTinyCadDoc::Import(CStream& ar)
+BOOL CConCadDoc::Import(CStream& ar)
 {
 	drawingCollection drawing;
 
@@ -130,11 +130,11 @@ BOOL CTinyCadDoc::Import(CStream& ar)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadDoc commands
+// CConCadDoc commands
 
 
 // Save as a PNG file
-void CTinyCadDoc::SavePNG(const TCHAR *file_name, CDC &ref_dc, int scaling, bool bw, bool rotate)
+void CConCadDoc::SavePNG(const TCHAR *file_name, CDC &ref_dc, int scaling, bool bw, bool rotate)
 {
 	// Calculate the boundaries
 	CDRect rect = CDRect(0, 0, 0, 0);
@@ -242,7 +242,7 @@ void CTinyCadDoc::SavePNG(const TCHAR *file_name, CDC &ref_dc, int scaling, bool
 
 // Convert this document into a metafile for pasting into
 // other applications
-HENHMETAFILE CTinyCadDoc::CreateMetafile(CDC &ref_dc, const TCHAR *file_name, bool bw)
+HENHMETAFILE CConCadDoc::CreateMetafile(CDC &ref_dc, const TCHAR *file_name, bool bw)
 {
 	HDC hdcMeta = NULL;
 	CRect rect = CRect(0, 0, 0, 0);
@@ -354,7 +354,7 @@ HENHMETAFILE CTinyCadDoc::CreateMetafile(CDC &ref_dc, const TCHAR *file_name, bo
 // The DC must already be inside a StartPage()/EndPage() pair.
 // The whole design page is scaled to fit the printable area,
 // preserving the aspect ratio and centred on the page.
-void CTinyCadDoc::SavePDFPage(CDC &dc)
+void CConCadDoc::SavePDFPage(CDC &dc)
 {
 	// The printable area of the page in device pixels
 	double devW = dc.GetDeviceCaps(HORZRES);
@@ -392,7 +392,7 @@ void CTinyCadDoc::SavePDFPage(CDC &dc)
 }
 
 // Tag all the resources being used by this design
-void CTinyCadDoc::TagAllResources()
+void CConCadDoc::TagAllResources()
 {
 	for (drawingIterator i = GetDrawingBegin(); i != GetDrawingEnd(); i++)
 	{
@@ -401,7 +401,7 @@ void CTinyCadDoc::TagAllResources()
 }
 
 // Remove all errors from this design
-void CTinyCadDoc::DeleteErrors()
+void CConCadDoc::DeleteErrors()
 {
 	// Get rid of any drawing tool
 	SelectObject(new CDrawEditItem(this));
@@ -427,36 +427,36 @@ void CTinyCadDoc::DeleteErrors()
 }
 
 // Is this document editing a library?
-bool CTinyCadDoc::IsLibInUse(CLibraryStore *lib)
+bool CConCadDoc::IsLibInUse(CLibraryStore *lib)
 {
 	return false;
 }
 
-BOOL CTinyCadDoc::IsSelected() const
+BOOL CConCadDoc::IsSelected() const
 {
 	return m_selected.size() > 0;
 }
 
-selectIterator CTinyCadDoc::GetSelectBegin()
+selectIterator CConCadDoc::GetSelectBegin()
 {
 	return m_selected.begin();
 }
 
-selectIterator CTinyCadDoc::GetSelectEnd()
+selectIterator CConCadDoc::GetSelectEnd()
 {
 	return m_selected.end();
 }
 
-BOOL CTinyCadDoc::IsSelected(CDrawingObject * p) const
+BOOL CConCadDoc::IsSelected(CDrawingObject * p) const
 {
 	return m_selected.find(p) != m_selected.end();
 }
-BOOL CTinyCadDoc::IsSingleItemSelected() const
+BOOL CConCadDoc::IsSingleItemSelected() const
 {
 	return m_selected.size() == 1;
 }
 
-CDrawingObject* CTinyCadDoc::GetSingleSelectedItem()
+CDrawingObject* CConCadDoc::GetSingleSelectedItem()
 {
 	if (m_selected.size() == 1)
 	{
@@ -468,7 +468,7 @@ CDrawingObject* CTinyCadDoc::GetSingleSelectedItem()
 	}
 }
 
-void CTinyCadDoc::Add(drawingCollection& drawing)
+void CConCadDoc::Add(drawingCollection& drawing)
 {
 	for (drawingCollection::iterator i = drawing.begin(); i != drawing.end(); ++i)
 	{
@@ -478,7 +478,7 @@ void CTinyCadDoc::Add(drawingCollection& drawing)
 }
 
 // Add a new object to this drawing
-void CTinyCadDoc::Add(CDrawingObject *NewObject)
+void CConCadDoc::Add(CDrawingObject *NewObject)
 {
 	// Is this a valid object?
 	if (m_DuplicateObjectOnly || NewObject == NULL) return;
@@ -528,13 +528,13 @@ void CTinyCadDoc::Add(CDrawingObject *NewObject)
 	}
 }
 
-void CTinyCadDoc::BeginNewChangeSet()
+void CConCadDoc::BeginNewChangeSet()
 {
 	m_change_set = TRUE;
 }
 
 // Flush the Redo Buffer
-void CTinyCadDoc::FlushRedo()
+void CConCadDoc::FlushRedo()
 {
 	for (unsigned int i = m_undo_level; i < m_undo.size(); i++)
 	{
@@ -554,7 +554,7 @@ void CTinyCadDoc::FlushRedo()
 }
 
 // Undo the last action
-void CTinyCadDoc::Undo(BOOL SingleLevel)
+void CConCadDoc::Undo(BOOL SingleLevel)
 {
 	SetSelectable(NULL);
 	BOOL action_taken = FALSE;
@@ -666,7 +666,7 @@ void CTinyCadDoc::Undo(BOOL SingleLevel)
 }
 
 // Redo the last action
-void CTinyCadDoc::Redo()
+void CConCadDoc::Redo()
 {
 	SetSelectable(NULL);
 	BOOL action_taken = FALSE;
@@ -784,7 +784,7 @@ void CTinyCadDoc::Redo()
 }
 
 // Make a duplicate of an object..
-CDrawingObject* CTinyCadDoc::Dup(CDrawingObject *p)
+CDrawingObject* CConCadDoc::Dup(CDrawingObject *p)
 {
 	// Now make a duplicate for the Undo/Redo list
 	// Don't actualy store the object
@@ -794,7 +794,7 @@ CDrawingObject* CTinyCadDoc::Dup(CDrawingObject *p)
 	return pNewObject;
 }
 
-void CTinyCadDoc::AddUndoAction(CDocUndoSet::action action, CDrawingObject *index_object)
+void CConCadDoc::AddUndoAction(CDocUndoSet::action action, CDrawingObject *index_object)
 {
 	// Don't store Error objects
 	if (index_object && index_object->GetType() == xError)
@@ -887,27 +887,27 @@ void CTinyCadDoc::AddUndoAction(CDocUndoSet::action action, CDrawingObject *inde
 	m_InUndoAddAction--;
 }
 
-void CTinyCadDoc::MarkDeleteForUndo(CDrawingObject *pObject)
+void CConCadDoc::MarkDeleteForUndo(CDrawingObject *pObject)
 {
 	AddUndoAction(CDocUndoSet::Deletion, pObject);
 }
 
-void CTinyCadDoc::MarkAdditionForUndo(CDrawingObject *pObject)
+void CConCadDoc::MarkAdditionForUndo(CDrawingObject *pObject)
 {
 	AddUndoAction(CDocUndoSet::Addition, pObject);
 }
 
-void CTinyCadDoc::MarkDocSavedForUndo()
+void CConCadDoc::MarkDocSavedForUndo()
 {
 	AddUndoAction(CDocUndoSet::Change, NULL);
 }
 
-void CTinyCadDoc::MarkChangeForUndo(CDrawingObject* pObject)
+void CConCadDoc::MarkChangeForUndo(CDrawingObject* pObject)
 {
 	AddUndoAction(CDocUndoSet::Change, pObject);
 }
 
-void CTinyCadDoc::MarkSelectChangeForUndo()
+void CConCadDoc::MarkSelectChangeForUndo()
 {
 	selectIterator it = GetSelectBegin();
 	while (it != GetSelectEnd())
@@ -919,7 +919,7 @@ void CTinyCadDoc::MarkSelectChangeForUndo()
 }
 
 // Real Undo action available
-BOOL CTinyCadDoc::IsModified()
+BOOL CConCadDoc::IsModified()
 {
 	if (m_pParent->CDocument::IsModified())
 	{
@@ -996,7 +996,7 @@ BOOL CTinyCadDoc::IsModified()
 // The object selection functions
 // This selects objects in a box
 // (We don't select construction objects)
-void CTinyCadDoc::Select(CDPoint p1, CDPoint p2)
+void CConCadDoc::Select(CDPoint p1, CDPoint p2)
 {
 	double left = min(p1.x,p2.x);
 	double right = max(p1.x,p2.x);
@@ -1028,13 +1028,13 @@ void CTinyCadDoc::Select(CDPoint p1, CDPoint p2)
 }
 
 // Select an object
-void CTinyCadDoc::Select(CDrawingObject *obj)
+void CConCadDoc::Select(CDrawingObject *obj)
 {
 	m_selected.insert(obj);
 }
 
 // Unselect a single object
-void CTinyCadDoc::UnSelect(CDrawingObject *p)
+void CConCadDoc::UnSelect(CDrawingObject *p)
 {
 	selectIterator it = m_selected.find(p);
 	if (it != m_selected.end())
@@ -1044,7 +1044,7 @@ void CTinyCadDoc::UnSelect(CDrawingObject *p)
 }
 
 // Unselect the objects
-void CTinyCadDoc::UnSelect()
+void CConCadDoc::UnSelect()
 {
 	// Get rid of any currently selected objects
 	selectIterator it = GetSelectBegin();
@@ -1058,7 +1058,7 @@ void CTinyCadDoc::UnSelect()
 }
 
 // Change the Z-order of the selected objects
-void CTinyCadDoc::BringToFront()
+void CConCadDoc::BringToFront()
 {
 	if (!IsSelected()) return;
 
@@ -1093,7 +1093,7 @@ void CTinyCadDoc::BringToFront()
 
 }
 
-BOOL CTinyCadDoc::IsInDrawing(CDrawingObject *obj)
+BOOL CConCadDoc::IsInDrawing(CDrawingObject *obj)
 {
 	drawingIterator it = GetDrawingBegin();
 	drawingIterator itEnd = GetDrawingEnd();
@@ -1110,7 +1110,7 @@ BOOL CTinyCadDoc::IsInDrawing(CDrawingObject *obj)
 }
 
 // Change the Z-order of the selected objects
-void CTinyCadDoc::SendToBack()
+void CConCadDoc::SendToBack()
 {
 	if (!IsSelected()) return;
 
@@ -1138,7 +1138,7 @@ void CTinyCadDoc::SendToBack()
 }
 
 // Remove an item from the drawing...
-void CTinyCadDoc::Delete(drawingIterator it)
+void CConCadDoc::Delete(drawingIterator it)
 {
 	CDrawingObject *pointer = *it;
 
@@ -1157,7 +1157,7 @@ void CTinyCadDoc::Delete(drawingIterator it)
 }
 
 // Remove an item from the drawing...
-void CTinyCadDoc::Delete(CDrawingObject *p)
+void CConCadDoc::Delete(CDrawingObject *p)
 {
 	drawingIterator it = GetDrawingBegin();
 	//(Don't prefetch GetDrawingEnd here)
@@ -1177,7 +1177,7 @@ void CTinyCadDoc::Delete(CDrawingObject *p)
 }
 
 // Delete the selected objects!
-void CTinyCadDoc::SelectDelete()
+void CConCadDoc::SelectDelete()
 {
 	if (!IsSelected()) return;
 
@@ -1217,7 +1217,7 @@ void CTinyCadDoc::SelectDelete()
 }
 
 // Place the Selected objects into the Undo List in the original position
-void CTinyCadDoc::SelectUndoMove(CDPoint r)
+void CConCadDoc::SelectUndoMove(CDPoint r)
 {
 
 	if (!IsSelected()) return;
@@ -1250,7 +1250,7 @@ void CTinyCadDoc::SelectUndoMove(CDPoint r)
 }
 
 // Load a new design
-BOOL CTinyCadDoc::Import(BOOL select_import_object)
+BOOL CConCadDoc::Import(BOOL select_import_object)
 {
 	CFileDialog dlg(TRUE, _T("*.dsn"), NULL, OFN_HIDEREADONLY, _T("Designs (*.dsn)|*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
 
@@ -1280,13 +1280,13 @@ BOOL CTinyCadDoc::Import(BOOL select_import_object)
 	return r;
 }
 
-void CTinyCadDoc::ForceSetCursor()
+void CConCadDoc::ForceSetCursor()
 {
 	m_pParent->UpdateAllViews(NULL, DOC_UPDATE_SETCURSOR, NULL);
 }
 
 // Redraw our window
-void CTinyCadDoc::Invalidate()
+void CConCadDoc::Invalidate()
 {
 	if (m_pParent)
 	{
@@ -1295,7 +1295,7 @@ void CTinyCadDoc::Invalidate()
 }
 
 // Redraw the rulers
-void CTinyCadDoc::InvalidateRulers()
+void CConCadDoc::InvalidateRulers()
 {
 	if (m_pParent)
 	{
@@ -1303,7 +1303,7 @@ void CTinyCadDoc::InvalidateRulers()
 	}
 }
 
-void CTinyCadDoc::InvalidateRect(CDRect r, BOOL erase, int grow, BOOL outline_only)
+void CConCadDoc::InvalidateRect(CDRect r, BOOL erase, int grow, BOOL outline_only)
 {
 	if (outline_only)
 	{
@@ -1330,7 +1330,7 @@ void CTinyCadDoc::InvalidateRect(CDRect r, BOOL erase, int grow, BOOL outline_on
 
 // No obvious answer to this one, but it is
 // a function that should go in here...
-CDSize CTinyCadDoc::GetTextExtent(const TCHAR *str, int style)
+CDSize CConCadDoc::GetTextExtent(const TCHAR *str, int style)
 {
 	Transform dummy;
 	CContext dc(AfxGetMainWnd(), dummy);
@@ -1339,7 +1339,7 @@ CDSize CTinyCadDoc::GetTextExtent(const TCHAR *str, int style)
 }
 
 // Select/add a new symbol for editing
-void CTinyCadDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
+void CConCadDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
 {
 	SelectObject(new CDrawEditItem(this));
 	hSYMBOL symbol = GetOptions()->AddSymbol(theSymbol->GetDesignSymbol(this));
@@ -1349,7 +1349,7 @@ void CTinyCadDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
 }
 
 // Select a new editing object
-void CTinyCadDoc::SelectObject(CDrawingObject *NewO)
+void CConCadDoc::SelectObject(CDrawingObject *NewO)
 {
 	if (edit)
 	{
@@ -1373,7 +1373,7 @@ void CTinyCadDoc::SelectObject(CDrawingObject *NewO)
 }
 
 // Draw the design rulers and the details box
-void CTinyCadDoc::Display(CContext& dc)
+void CConCadDoc::Display(CContext& dc)
 {
 	CString pathName;
 	CString fileName;
@@ -1433,7 +1433,7 @@ void CTinyCadDoc::Display(CContext& dc)
 	GetDetails().Display(dc, theOptions, preFix + fileName);
 }
 
-void CTinyCadDoc::SetSelectable(CDrawingObject *obj)
+void CConCadDoc::SetSelectable(CDrawingObject *obj)
 {
 	// Only redraw if the selectable changes
 	if (obj != selectable)
@@ -1452,13 +1452,13 @@ void CTinyCadDoc::SetSelectable(CDrawingObject *obj)
 	}
 }
 
-CDrawingObject* CTinyCadDoc::GetSelectable()
+CDrawingObject* CConCadDoc::GetSelectable()
 {
 	return selectable;
 }
 
 #if 0
-BOOL CTinyCadDoc::OnOpenDocument(LPCTSTR lpszPathName)
+BOOL CConCadDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
 	// Is this an emf file?
 	CString path = lpszPathName;
@@ -1490,14 +1490,14 @@ BOOL CTinyCadDoc::OnOpenDocument(LPCTSTR lpszPathName)
 // Called after a paste or import to enable the
 // document to sort out the imported block when
 // necessary
-void CTinyCadDoc::PostPaste()
+void CConCadDoc::PostPaste()
 {
 }
 
 // Called after a paste or import to enable the
 // document to sort out the imported block when
 // necessary
-void CTinyCadDoc::UngroupSymbols()
+void CConCadDoc::UngroupSymbols()
 {
 	// Scan and convert any imported symbols
 	// into their component parts
@@ -1556,7 +1556,7 @@ void CTinyCadDoc::UngroupSymbols()
 	}
 }
 
-CDPoint CTinyCadDoc::GetStickyPoint(CDPoint no_snap_q, BOOL pins, BOOL wires, BOOL &is_stuck, BOOL &is_junction)
+CDPoint CConCadDoc::GetStickyPoint(CDPoint no_snap_q, BOOL pins, BOOL wires, BOOL &is_stuck, BOOL &is_junction)
 {
 	CDPoint r(0, 0);
 	bool first = true;
@@ -1721,7 +1721,7 @@ CDPoint CTinyCadDoc::GetStickyPoint(CDPoint no_snap_q, BOOL pins, BOOL wires, BO
 }
 
 // Replace all of the symbols in our drawing with a different one...
-void CTinyCadDoc::ReplaceSymbol(hSYMBOL old_symbol, hSYMBOL new_symbol, bool keep_old_fields)
+void CConCadDoc::ReplaceSymbol(hSYMBOL old_symbol, hSYMBOL new_symbol, bool keep_old_fields)
 {
 	// Search for methods, and look at their pins
 	drawingIterator it = GetDrawingBegin();
@@ -1740,7 +1740,7 @@ void CTinyCadDoc::ReplaceSymbol(hSYMBOL old_symbol, hSYMBOL new_symbol, bool kee
 }
 
 // Duplicate the selected objects
-void CTinyCadDoc::SelectDup()
+void CConCadDoc::SelectDup()
 {
 	drawingCollection newSelection;
 
@@ -1771,7 +1771,7 @@ void CTinyCadDoc::SelectDup()
 }
 
 // Move the selected items (the CPoint is the relative shift)
-void CTinyCadDoc::SelectMove(CDPoint r)
+void CConCadDoc::SelectMove(CDPoint r)
 {
 	CJunctionUtils j(this);
 
@@ -1804,7 +1804,7 @@ void CTinyCadDoc::SelectMove(CDPoint r)
 }
 
 // Select all objects
-void CTinyCadDoc::SelectAll()
+void CConCadDoc::SelectAll()
 {
 	drawingIterator it = GetDrawingBegin();
 	drawingIterator itEnd = GetDrawingEnd();
@@ -1819,7 +1819,7 @@ void CTinyCadDoc::SelectAll()
 	}
 }
 
-void CTinyCadDoc::AddNewJunction(CDPoint q)
+void CConCadDoc::AddNewJunction(CDPoint q)
 {
 	// A junction is required, create it!
 	CDrawJunction *junction = new CDrawJunction(this);
@@ -1832,24 +1832,24 @@ void CTinyCadDoc::AddNewJunction(CDPoint q)
 }
 
 //-------------------------------------------------------------------------
-CDetails& CTinyCadDoc::GetDetails()
+CDetails& CConCadDoc::GetDetails()
 {
 	return m_oDetails;
 }
 //-------------------------------------------------------------------------
 // Get the current options for this document
-COption *CTinyCadDoc::GetOptions()
+COption *CConCadDoc::GetOptions()
 {
 	return &theOptions;
 }
 //-------------------------------------------------------------------------
 // Get the current options for this document
-COption& CTinyCadDoc::GetOption()
+COption& CConCadDoc::GetOption()
 {
 	return theOptions;
 }
 
-void CTinyCadDoc::ShowModifiedFlag()
+void CConCadDoc::ShowModifiedFlag()
 {
 	if (m_pParent)
 	{
@@ -1859,7 +1859,7 @@ void CTinyCadDoc::ShowModifiedFlag()
 }
 
 //-------------------------------------------------------------------------
-void CTinyCadDoc::SetModifiedFlag(BOOL bModified)
+void CConCadDoc::SetModifiedFlag(BOOL bModified)
 {
 	if (m_pParent)
 	{
@@ -1882,22 +1882,22 @@ void CTinyCadDoc::SetModifiedFlag(BOOL bModified)
 }
 
 //-------------------------------------------------------------------------
-CString CTinyCadDoc::GetSheetName() const
+CString CConCadDoc::GetSheetName() const
 {
 	return m_sheet_name;
 }
 //-------------------------------------------------------------------------
-bool CTinyCadDoc::IsHierarchicalSymbol() const
+bool CConCadDoc::IsHierarchicalSymbol() const
 {
 	return false;
 }
 //-------------------------------------------------------------------------
-void CTinyCadDoc::SetSheetName(const TCHAR *n)
+void CConCadDoc::SetSheetName(const TCHAR *n)
 {
 	m_sheet_name = n;
 }
 //-------------------------------------------------------------------------
-void CTinyCadDoc::AddImage(CDrawMetaFile *pObject)
+void CConCadDoc::AddImage(CDrawMetaFile *pObject)
 {
 	Add(pObject);
 	UnSelect();
@@ -1909,7 +1909,7 @@ void CTinyCadDoc::AddImage(CDrawMetaFile *pObject)
 //-------------------------------------------------------------------------
 
 // Format a filename for display
-CString CTinyCadDoc::formatFilename(const TCHAR *filename)
+CString CConCadDoc::formatFilename(const TCHAR *filename)
 {
 	TCHAR *brk = (TCHAR *) _tcsrchr(filename, '\\');
 	if (brk)
@@ -1924,7 +1924,7 @@ CString CTinyCadDoc::formatFilename(const TCHAR *filename)
 //-------------------------------------------------------------------------
 
 // Format a filename for saving
-CString CTinyCadDoc::formatXMLFilename(const TCHAR *filename)
+CString CConCadDoc::formatXMLFilename(const TCHAR *filename)
 {
 
 	TCHAR out[MAX_PATH];
@@ -1941,7 +1941,7 @@ CString CTinyCadDoc::formatXMLFilename(const TCHAR *filename)
 //-------------------------------------------------------------------------
 
 // Unformat a filename after loading
-CString CTinyCadDoc::unformatXMLFilename(const TCHAR *filename)
+CString CConCadDoc::unformatXMLFilename(const TCHAR *filename)
 {
 	TCHAR out[MAX_PATH];
 
@@ -1963,7 +1963,7 @@ CString CTinyCadDoc::unformatXMLFilename(const TCHAR *filename)
 }
 //-------------------------------------------------------------------------
 
-CString CTinyCadDoc::getDefaultReferenceString() const
+CString CConCadDoc::getDefaultReferenceString() const
 {
 	// this is important for documents which are
 	// used as embedded hierarchical designs

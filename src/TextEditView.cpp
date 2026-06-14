@@ -21,7 +21,7 @@
 //
 
 #include "stdafx.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "TextEditView.h"
 #include ".\texteditview.h"
 #include "TextEditDoc.h"

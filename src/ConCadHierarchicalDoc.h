@@ -19,15 +19,15 @@
 
 #pragma once
 
-// CTinyCadHierarchicalDoc document
+// CConCadHierarchicalDoc document
 
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 
-class CTinyCadHierarchicalDoc: public CTinyCadDoc
+class CConCadHierarchicalDoc: public CConCadDoc
 {
 public:
-	CTinyCadHierarchicalDoc(CMultiSheetDoc*pParent = NULL);
-	virtual ~CTinyCadHierarchicalDoc();
+	CConCadHierarchicalDoc(CMultiSheetDoc*pParent = NULL);
+	virtual ~CConCadHierarchicalDoc();
 
 	/////////////////////////////////////////////////////////////////////////////
 	//

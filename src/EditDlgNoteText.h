@@ -33,7 +33,7 @@ public:
 	CEditDlgNoteText(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CEditDlgNoteText();
 	void Create();
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	afx_msg void OnChange();
 
 // Dialog Data

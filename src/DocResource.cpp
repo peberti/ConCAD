@@ -146,7 +146,7 @@ void CDocResource::ResetMerge()
 	}
 }
 //-------------------------------------------------------------------------
-void CDocResource::SaveXML(CTinyCadDoc* pDesign, const TCHAR* name, CXMLWriter& xml)
+void CDocResource::SaveXML(CConCadDoc* pDesign, const TCHAR* name, CXMLWriter& xml)
 {
 	// Now actually save the resources
 	for (CDocResource* pointer = this; pointer != NULL; pointer = pointer->next)
@@ -161,7 +161,7 @@ void CDocResource::SaveXML(CTinyCadDoc* pDesign, const TCHAR* name, CXMLWriter& 
 	}
 }
 //-------------------------------------------------------------------------
-void CDocResource::Load(CTinyCadDoc* pDesign, CStream& oStream)
+void CDocResource::Load(CConCadDoc* pDesign, CStream& oStream)
 {
 	// Number of Fonts in this list
 	UInt16 nCntRes = 0;
