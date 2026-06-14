@@ -7,22 +7,22 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadRegistry.h"
-#include "tinycad.h"
+#include "ConCadRegistry.h"
+#include "concad.h"
 #include "BuildId.h"
 #include <assert.h>
 
-const CString CTinyCadRegistry::M_SKEY = "Software\\ConCAD\\ConCAD\\1x20";
-const CString CTinyCadRegistry::M_BUILDID = "BuildID";
-const CString CTinyCadRegistry::M_INSTALLED = "Installed";
-const CString CTinyCadRegistry::M_SPAGESIZE = "PageSize";
-const CString CTinyCadRegistry::M_SPRINTSCALE = "PrintScaleFactor";
-const CString CTinyCadRegistry::M_SPRINTBANDW = "PrintBandW";
-const CString CTinyCadRegistry::M_SMDIMAXIMIZE = "MdiMaximize";
-const CString CTinyCadRegistry::M_SMAXIMIZE = "Maximize";
-const CString CTinyCadRegistry::M_SLIBRARIES = "Libraries";
-const CString CTinyCadRegistry::M_AUTOUDPATES = "AutomaticUpdates";
-const CString CTinyCadRegistry::M_AUTOUDPATEVERSION = "AutomaticUpdateVersion";
+const CString CConCadRegistry::M_SKEY = "Software\\ConCAD\\ConCAD\\1x20";
+const CString CConCadRegistry::M_BUILDID = "BuildID";
+const CString CConCadRegistry::M_INSTALLED = "Installed";
+const CString CConCadRegistry::M_SPAGESIZE = "PageSize";
+const CString CConCadRegistry::M_SPRINTSCALE = "PrintScaleFactor";
+const CString CConCadRegistry::M_SPRINTBANDW = "PrintBandW";
+const CString CConCadRegistry::M_SMDIMAXIMIZE = "MdiMaximize";
+const CString CConCadRegistry::M_SMAXIMIZE = "Maximize";
+const CString CConCadRegistry::M_SLIBRARIES = "Libraries";
+const CString CConCadRegistry::M_AUTOUDPATES = "AutomaticUpdates";
+const CString CConCadRegistry::M_AUTOUDPATEVERSION = "AutomaticUpdateVersion";
 
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
@@ -30,7 +30,7 @@ const CString CTinyCadRegistry::M_AUTOUDPATEVERSION = "AutomaticUpdateVersion";
 
 //-------------------------------------------------------------------------
 //-- Attach this object to the registry
-CTinyCadRegistry::CTinyCadRegistry() :
+CConCadRegistry::CConCadRegistry() :
 	CRegistry()
 {
 	m_oKey.Create(HKEY_CURRENT_USER, M_SKEY);
@@ -55,16 +55,16 @@ CTinyCadRegistry::CTinyCadRegistry() :
 	}
 }
 //-------------------------------------------------------------------------
-CTinyCadRegistry::~CTinyCadRegistry()
+CConCadRegistry::~CConCadRegistry()
 {
 }
 
 //-------------------------------------------------------------------------
 //-- Try and determine when TinyCAD was installed, so we can see if it has
 //	 changed/been re-installed.
-CString CTinyCadRegistry::GetInstalledFileTime()
+CString CConCadRegistry::GetInstalledFileTime()
 {
-	CString app_installed_file = CTinyCadApp::GetAppDir("") + _T("installed.txt");
+	CString app_installed_file = CConCadApp::GetAppDir("") + _T("installed.txt");
 	auto hFile = CreateFile(app_installed_file, GENERIC_READ, FILE_SHARE_READ, NULL,
 		OPEN_EXISTING, 0, NULL);
 
@@ -99,14 +99,14 @@ CString CTinyCadRegistry::GetInstalledFileTime()
 //-------------------------------------------------------------------------
 //-- Copy the example files from the installation folder to the users
 //   My Documents folder
-void CTinyCadRegistry::CopyExampleFiles()
+void CConCadRegistry::CopyExampleFiles()
 {
 	// Make a copy of the examples and libraries
 	const TCHAR* from_paths[] = { _T("library"), _T("examples") };
 	for (int i = 0; i < 2; ++i)
 	{
-		CString app_dir = CTinyCadApp::GetAppDir(from_paths[i]);
-		CString to_dir = CTinyCadApp::GetMyDocumentDir(from_paths[i]);
+		CString app_dir = CConCadApp::GetAppDir(from_paths[i]);
+		CString to_dir = CConCadApp::GetMyDocumentDir(from_paths[i]);
 
 		// Create the folder
 		SHCreateDirectoryEx(NULL,to_dir, NULL);
@@ -134,9 +134,9 @@ void CTinyCadRegistry::CopyExampleFiles()
 
 //-------------------------------------------------------------------------
 //-- Write the initial data to the registry
-void CTinyCadRegistry::CreateDefaultEntries()
+void CConCadRegistry::CreateDefaultEntries()
 {
-	TRACE("Virgin install detected:  CTinyCadRegistry::CreateDefaultEntries() is creating the very first registry entries for Tinycad\n");
+	TRACE("Virgin install detected:  CConCadRegistry::CreateDefaultEntries() is creating the very first registry entries for Tinycad\n");
 
 	// Save the page size setup
 	SetPageSize(CSize(297 * PIXELSPERMM, 210 * PIXELSPERMM));
@@ -145,7 +145,7 @@ void CTinyCadRegistry::CreateDefaultEntries()
 	// Search the default library directory for libraries
 	for (int l = 0; l < 3; l++)
 	{
-		CString sSearch = CTinyCadApp::GetMyDocumentDir("library");
+		CString sSearch = CConCadApp::GetMyDocumentDir("library");
 
 		if (l == 0)
 		{
@@ -172,7 +172,7 @@ void CTinyCadRegistry::CreateDefaultEntries()
 				{
 					// Add this library to the list of libraries in use
 					if (Libraries != "") Libraries += ",";
-					Libraries += CTinyCadApp::GetMyDocumentDir("library") /* + "library\\" */ + theFind.GetName();
+					Libraries += CConCadApp::GetMyDocumentDir("library") /* + "library\\" */ + theFind.GetName();
 					// Remove the extension (of .idx or .mdb or .TCLib)
 					Libraries = Libraries.Left(Libraries.ReverseFind('.'));
 				}
@@ -190,7 +190,7 @@ void CTinyCadRegistry::CreateDefaultEntries()
 
 //-------------------------------------------------------------------------
 //-- Returns the page size
-CSize CTinyCadRegistry::GetPageSize()
+CSize CConCadRegistry::GetPageSize()
 {
 	CSize szReturn = super::GetSize(M_SPAGESIZE, CSize());
 
@@ -198,7 +198,7 @@ CSize CTinyCadRegistry::GetPageSize()
 }
 //-------------------------------------------------------------------------
 //-- Returns the print scale
-double CTinyCadRegistry::GetPrintScale()
+double CConCadRegistry::GetPrintScale()
 {
 	double nReturn = super::GetDouble(M_SPRINTSCALE, 100);
 
@@ -206,7 +206,7 @@ double CTinyCadRegistry::GetPrintScale()
 }
 //-------------------------------------------------------------------------
 //-- Returns black and white print
-bool CTinyCadRegistry::GetPrintBandW()
+bool CConCadRegistry::GetPrintBandW()
 {
 	bool bReturn = super::GetBool(M_SPRINTBANDW, false);
 
@@ -214,7 +214,7 @@ bool CTinyCadRegistry::GetPrintBandW()
 }
 //-------------------------------------------------------------------------
 //-- Returns MDI child window state
-bool CTinyCadRegistry::GetMDIMaximize()
+bool CConCadRegistry::GetMDIMaximize()
 {
 	bool bReturn = super::GetBool(M_SMDIMAXIMIZE, false);
 
@@ -222,7 +222,7 @@ bool CTinyCadRegistry::GetMDIMaximize()
 }
 //-------------------------------------------------------------------------
 //-- Returns main window state
-bool CTinyCadRegistry::GetMaximize()
+bool CConCadRegistry::GetMaximize()
 {
 	bool bReturn = super::GetBool(M_SMAXIMIZE, false);
 
@@ -230,7 +230,7 @@ bool CTinyCadRegistry::GetMaximize()
 }
 //-------------------------------------------------------------------------
 //-- Returns list of libraries
-CStringList* CTinyCadRegistry::GetLibraryNames()
+CStringList* CConCadRegistry::GetLibraryNames()
 {
 	CStringList* colReturn = CRegistry::GetStringList(M_SLIBRARIES);
 
@@ -238,13 +238,13 @@ CStringList* CTinyCadRegistry::GetLibraryNames()
 }
 //-------------------------------------------------------------------------
 //-- Are automatic updates on (1), off (0) or unconfigured (-1)?
-int CTinyCadRegistry::GetAutomaticUpdatesOn()
+int CConCadRegistry::GetAutomaticUpdatesOn()
 {
 	return CRegistry::GetInt(M_AUTOUDPATES,-1);
 }
 //-------------------------------------------------------------------------
 //-- What was the last version of TinyCAD update the user was told about?
-CString CTinyCadRegistry::GetLastAutomaticUpdateVersion()
+CString CConCadRegistry::GetLastAutomaticUpdateVersion()
 {
 	return CRegistry::GetString(M_AUTOUDPATEVERSION, "");
 }
@@ -257,45 +257,45 @@ CString CTinyCadRegistry::GetLastAutomaticUpdateVersion()
 
 //-------------------------------------------------------------------------
 //-- Changes the page size
-void CTinyCadRegistry::SetPageSize(CSize szPage)
+void CConCadRegistry::SetPageSize(CSize szPage)
 {
 	super::Set(M_SPAGESIZE, szPage);
 }
 //-------------------------------------------------------------------------
 //-- Changes the print scale
-void CTinyCadRegistry::SetPrintScale(double nPrintScale)
+void CConCadRegistry::SetPrintScale(double nPrintScale)
 {
 	super::Set(M_SPRINTSCALE, nPrintScale);
 }
 //-------------------------------------------------------------------------
 //-- Changes black and white print
-void CTinyCadRegistry::SetPrintBandW(bool bPrintBandW)
+void CConCadRegistry::SetPrintBandW(bool bPrintBandW)
 {
-	CTinyCadRegistry::Set(M_SPRINTBANDW, bPrintBandW);
+	CConCadRegistry::Set(M_SPRINTBANDW, bPrintBandW);
 }
 //-------------------------------------------------------------------------
 //-- Changes MDI child window state
-void CTinyCadRegistry::SetMDIMaximize(bool bMDIMaximize)
+void CConCadRegistry::SetMDIMaximize(bool bMDIMaximize)
 {
-	CTinyCadRegistry::Set(M_SMDIMAXIMIZE, bMDIMaximize);
+	CConCadRegistry::Set(M_SMDIMAXIMIZE, bMDIMaximize);
 }
 //-------------------------------------------------------------------------
 //-- Changes Changes main window state
-void CTinyCadRegistry::SetMaximize(bool bMaximize)
+void CConCadRegistry::SetMaximize(bool bMaximize)
 {
-	CTinyCadRegistry::Set(M_SMAXIMIZE, bMaximize);
+	CConCadRegistry::Set(M_SMAXIMIZE, bMaximize);
 }
 //-------------------------------------------------------------------------
 //-- Save auto-update preferences
-void CTinyCadRegistry::SetAutomaticUpdatesOn(bool on)
+void CConCadRegistry::SetAutomaticUpdatesOn(bool on)
 {
-	CTinyCadRegistry::Set(M_AUTOUDPATES, on ? 1 : 0);
+	CConCadRegistry::Set(M_AUTOUDPATES, on ? 1 : 0);
 }
 //-------------------------------------------------------------------------
 //-- What was the last version of TinyCAD update the user was told about
-void CTinyCadRegistry::SetLastAutomaticUpdateVersion(CString version)
+void CConCadRegistry::SetLastAutomaticUpdateVersion(CString version)
 {
-	CTinyCadRegistry::Set(M_AUTOUDPATEVERSION, version);
+	CConCadRegistry::Set(M_AUTOUDPATEVERSION, version);
 }
 //-------------------------------------------------------------------------
 

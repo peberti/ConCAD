@@ -21,8 +21,8 @@
 #include "option.h"
 #include "revision.h"
 #include "registry.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "EditDlgPinEdit.h"
 
@@ -98,7 +98,7 @@ void CEditDlgPinEdit::Create()
 
 }
 
-void CEditDlgPinEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgPinEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	stop = TRUE;
 

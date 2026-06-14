@@ -18,7 +18,7 @@
  */
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "startup.h"
 #include "revision.h"
 #include "BuildID.h"
@@ -105,7 +105,7 @@ void CDlgStartUpWindow::OnPaint()
 	dc.SelectObject(&fontMed);
 
 	CString version;
-	version.Format(_T("Version %s"), (LPCTSTR) CTinyCadApp::GetVersion());
+	version.Format(_T("Version %s"), (LPCTSTR) CConCadApp::GetVersion());
 	dc.TextOut(rect.Width() / 2, rect.Height() / 2 + 10, version);
 
 	// Tagline / branch (small)

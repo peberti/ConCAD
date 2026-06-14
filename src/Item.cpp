@@ -20,7 +20,7 @@
 #include "stdafx.h"
 #include <math.h>
 
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -30,7 +30,7 @@
 ////// The item edit object //////
 
 
-CDrawEditItem::CDrawEditItem(CTinyCadDoc *pDesign) :
+CDrawEditItem::CDrawEditItem(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign), m_drag_utils(pDesign)
 {
 	m_segment = 1;

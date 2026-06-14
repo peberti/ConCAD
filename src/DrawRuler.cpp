@@ -22,14 +22,14 @@
 #include "stdafx.h"
 #include <math.h>
 
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
 #include "ruler.h"
 
 // This is used for the construction of this object
-CDrawRuler::CDrawRuler(CTinyCadDoc *pDesign, BOOL new_horiz) :
+CDrawRuler::CDrawRuler(CConCadDoc *pDesign, BOOL new_horiz) :
 	CDrawingObject(pDesign)
 {
 	m_point_a = CDPoint(0, 0);

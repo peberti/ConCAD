@@ -51,9 +51,9 @@ public:
 	//== serialization                                                   ==
 	//=====================================================================
 
-	virtual void SaveItemXML(CTinyCadDoc*, CXMLWriter& xml);
-	virtual void LoadItem(CTinyCadDoc* pDesign, CStream&, hRESOURCE);
-	virtual void LoadItemXML(CTinyCadDoc* pDesign, CXMLReader& xml);
+	virtual void SaveItemXML(CConCadDoc*, CXMLWriter& xml);
+	virtual void LoadItem(CConCadDoc* pDesign, CStream&, hRESOURCE);
+	virtual void LoadItemXML(CConCadDoc* pDesign, CXMLReader& xml);
 
 	//=====================================================================
 	//== Comparison                                                      ==

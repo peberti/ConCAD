@@ -18,9 +18,9 @@
  */
 
 #include "stdafx.h"
-#include "TinyCad.h"
-#include "TinyCadView.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCad.h"
+#include "ConCadView.h"
+#include "ConCadMultiDoc.h"
 
 #include ".\bomgenerator.h"
 
@@ -72,7 +72,7 @@ void CBOMGenerator::GenerateBomForDesign(int level, size_t parentPos, const CImp
 {
 	CollectionMemberReference<CImportFile*> cmrDefaultParent(m_imports, (int) parentPos);
 	CollectionMemberReference<CImportFile*> cmrParent;
-	CTinyCadMultiDoc* pDesign = static_cast<CTinyCadMultiDoc*> (impfile.getDesign());
+	CConCadMultiDoc* pDesign = static_cast<CConCadMultiDoc*> (impfile.getDesign());
 
 	if (parentPos >= 0) cmrParent = cmrDefaultParent;
 

@@ -17,7 +17,7 @@ pun on the two meanings of *bus* in a schematic-capture program.
 python3 art/make_icon.py      # requires Pillow
 ```
 
-This overwrites `src/res/idr_main.ico`, which `src/TinyCad.rc` uses for both
+This overwrites `src/res/idr_main.ico`, which `src/ConCad.rc` uses for both
 `IDR_MAINFRAME` (app window / taskbar) and `IDR_TCADTYPE` (the `.dsn` file icon).
 The small sizes (≤32 px) use a simplified, higher-contrast drawing so the bus
 silhouette stays legible; 48 px and up use the detailed art with the roof taps.

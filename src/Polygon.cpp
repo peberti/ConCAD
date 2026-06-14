@@ -20,7 +20,7 @@
 // This handles the actual drawing of objects
 #include "stdafx.h"
 #include <math.h>
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -31,7 +31,7 @@
 ////// The Polygon Class //////
 
 
-CDrawPolygon::CDrawPolygon(CTinyCadDoc *pDesign, ObjType NewType) :
+CDrawPolygon::CDrawPolygon(CConCadDoc *pDesign, ObjType NewType) :
 	CDrawingObject(pDesign)
 {
 	m_segment = 1;

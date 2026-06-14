@@ -22,11 +22,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "LineUtils.h"
 #include <math.h>
 #include "Context.h"
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 
 double CLineUtils::pointOnLineDistance = 0.01;
 
@@ -459,7 +459,7 @@ double CLineUtils::GetLength()
 
 // Split this line up into rectangles for
 // display, without redrawing too large an area...
-void CLineUtils::SplitForDisplay(CTinyCadDoc *pDesign, BOOL erase, int grow)
+void CLineUtils::SplitForDisplay(CConCadDoc *pDesign, BOOL erase, int grow)
 {
 	// Horizontal and vertical lines are easy...
 	if (a.x == b.x || a.y == b.y)

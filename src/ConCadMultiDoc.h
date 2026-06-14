@@ -17,25 +17,25 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if !defined(AFX_TINYCADMULTIDOC_H__7E25C39B_649E_4421_A207_635409612FB6__INCLUDED_)
-#define AFX_TINYCADMULTIDOC_H__7E25C39B_649E_4421_A207_635409612FB6__INCLUDED_
+#if !defined(AFX_CONCADMULTIDOC_H__7E25C39B_649E_4421_A207_635409612FB6__INCLUDED_)
+#define AFX_CONCADMULTIDOC_H__7E25C39B_649E_4421_A207_635409612FB6__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 #include "MultiSheetDoc.h"
 
-// TinyCadMultiDoc.h : header file
+// ConCadMultiDoc.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiDoc document
+// CConCadMultiDoc document
 
-class CTinyCadMultiDoc: public CMultiSheetDoc
+class CConCadMultiDoc: public CMultiSheetDoc
 {
 protected:
-	DECLARE_DYNCREATE( CTinyCadMultiDoc)
+	DECLARE_DYNCREATE( CConCadMultiDoc)
 
 	void UnTag();
 
@@ -48,7 +48,7 @@ protected:
 	void SetTabsFromDocument();
 
 	void Clear();
-	void InsertSheet(int i, CTinyCadDoc *pDoc = NULL);
+	void InsertSheet(int i, CConCadDoc *pDoc = NULL);
 	void DeleteSheet(int i);
 	void MoveSheet(int index, bool left);
 
@@ -56,7 +56,7 @@ protected:
 public:
 
 	// Construction
-	CTinyCadMultiDoc();
+	CConCadMultiDoc();
 
 	// Force an autosave of the document
 	virtual void AutoSave();
@@ -74,7 +74,7 @@ public:
 	virtual CString GetSheetName(int i);
 
 	// Get the currently active sheet to work with
-	virtual CTinyCadDoc* GetSheet(int i);
+	virtual CConCadDoc* GetSheet(int i);
 
 	virtual void OnFolderContextMenu();
 
@@ -82,7 +82,7 @@ public:
 	virtual CString GetXMLPathName();
 
 protected:
-	typedef std::vector<CTinyCadDoc*> sheetCollection;
+	typedef std::vector<CConCadDoc*> sheetCollection;
 	sheetCollection m_sheets;
 
 	unsigned int m_active_doc;
@@ -95,7 +95,7 @@ public:
 
 	// Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTinyCadMultiDoc)
+	//{{AFX_VIRTUAL(CConCadMultiDoc)
 public:
 	virtual void Serialize(CArchive& ar); // overridden for document i/o
 protected:
@@ -104,7 +104,7 @@ protected:
 
 	// Implementation
 public:
-	virtual ~CTinyCadMultiDoc();
+	virtual ~CConCadMultiDoc();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -112,7 +112,7 @@ public:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CTinyCadMultiDoc)
+	//{{AFX_MSG(CConCadMultiDoc)
 	afx_msg void OnContextAddsheet();
 	afx_msg void OnContextDeletesheet();
 	afx_msg void OnUpdateContextDeletesheet(CCmdUI* pCmdUI);
@@ -132,4 +132,4 @@ public:
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_TINYCADMULTIDOC_H__7E25C39B_649E_4421_A207_635409612FB6__INCLUDED_)
+#endif // !defined(AFX_CONCADMULTIDOC_H__7E25C39B_649E_4421_A207_635409612FB6__INCLUDED_)

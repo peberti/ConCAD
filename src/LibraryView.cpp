@@ -18,8 +18,8 @@
  */
 
 #include "stdafx.h"
-#include "tinycad.h"
-#include "TinyCadView.h"
+#include "concad.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -123,7 +123,7 @@ void CLibraryView::OnDraw(CDC* pDC)
 	TransformSnap s;
 	s.SetGridSnap(FALSE);
 	s.SetAccurateGrid(FineGrid);
-	CTinyCadDoc doc;
+	CConCadDoc doc;
 
 	//const int inter_spacing = 20;
 	const int text_spacing = 25;
@@ -459,7 +459,7 @@ void CLibraryView::OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo)
 
 	TransformSnap s;
 	s.SetGridSnap(FALSE);
-	CTinyCadDoc doc;
+	CConCadDoc doc;
 
 	//const int inter_spacing = 20;
 	//const int text_spacing = 25;

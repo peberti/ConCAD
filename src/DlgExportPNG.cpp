@@ -21,9 +21,9 @@
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "DlgExportPNG.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CDlgExportPNG dialog
@@ -37,9 +37,9 @@ CDlgExportPNG::CDlgExportPNG(CWnd* pParent /*=NULL*/) :
 	m_Scaling = 0;
 	//}}AFX_DATA_INIT
 
-	m_type = CTinyCadRegistry::GetInt("BitmapType", 0);
-	m_Scaling = CTinyCadRegistry::GetInt("BitmapScaling", 100);
-	m_Rotate = CTinyCadRegistry::GetInt("BitmapRotation", 0) != 0;
+	m_type = CConCadRegistry::GetInt("BitmapType", 0);
+	m_Scaling = CConCadRegistry::GetInt("BitmapScaling", 100);
+	m_Rotate = CConCadRegistry::GetInt("BitmapRotation", 0) != 0;
 }
 
 void CDlgExportPNG::DoDataExchange(CDataExchange* pDX)
@@ -114,9 +114,9 @@ void CDlgExportPNG::OnOK()
 	m_type = m_Filetype.GetCurSel();
 	m_Rotate = m_RotateCtrl.GetCheck() != 0;
 
-	CTinyCadRegistry::Set("BitmapType", m_type);
-	CTinyCadRegistry::Set("BitmapScaling", m_Scaling);
-	CTinyCadRegistry::Set("BitmapRotation", m_Rotate);
+	CConCadRegistry::Set("BitmapType", m_type);
+	CConCadRegistry::Set("BitmapScaling", m_Scaling);
+	CConCadRegistry::Set("BitmapRotation", m_Rotate);
 
 	CDialog::OnOK();
 }

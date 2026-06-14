@@ -27,7 +27,7 @@
 
 #include "OptionsSheets.h"
 
-class CTinyCadDoc;
+class CConCadDoc;
 
 /////////////////////////////////////////////////////////////////////////////
 // COptionsPropertySheet
@@ -43,7 +43,7 @@ public:
 	// Attributes
 public:
 
-	CTinyCadDoc* m_pDocument;
+	CConCadDoc* m_pDocument;
 
 	COptionsGrid m_Page1;
 	COptionsAutosnap m_Page2;

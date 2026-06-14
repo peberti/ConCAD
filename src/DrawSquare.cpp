@@ -20,7 +20,7 @@
 // This handles the actual drawing of objects
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -30,7 +30,7 @@
 // The Rectangle Class //
 
 // The Constructor
-CDrawSquare::CDrawSquare(CTinyCadDoc *pDesign, ObjType type) :
+CDrawSquare::CDrawSquare(CConCadDoc *pDesign, ObjType type) :
 	CDrawRectOutline(pDesign)
 {
 	m_type = type;

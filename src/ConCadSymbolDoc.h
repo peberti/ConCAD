@@ -17,26 +17,26 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-// TinyCadSymbolDoc.h: interface for the CTinyCadSymbolDoc class.
+// ConCadSymbolDoc.h: interface for the CConCadSymbolDoc class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_TINYCADSYMBOLDOC_H__843EC4AD_D70A_4DB4_865D_633006592CCB__INCLUDED_)
-#define AFX_TINYCADSYMBOLDOC_H__843EC4AD_D70A_4DB4_865D_633006592CCB__INCLUDED_
+#if !defined(AFX_CONCADSYMBOLDOC_H__843EC4AD_D70A_4DB4_865D_633006592CCB__INCLUDED_)
+#define AFX_CONCADSYMBOLDOC_H__843EC4AD_D70A_4DB4_865D_633006592CCB__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 
-class CTinyCadSymbolDoc: public CTinyCadDoc
+class CConCadSymbolDoc: public CConCadDoc
 {
 	int m_part;
 
 public:
 	void setSymbol();
-	CTinyCadSymbolDoc(CMultiSheetDoc *pParent = NULL);
-	virtual ~CTinyCadSymbolDoc();
+	CConCadSymbolDoc(CMultiSheetDoc *pParent = NULL);
+	virtual ~CConCadSymbolDoc();
 
 	virtual BOOL IsEditLibrary()
 	{
@@ -67,4 +67,4 @@ public:
 	virtual void PostPaste();
 };
 
-#endif // !defined(AFX_TINYCADSYMBOLDOC_H__843EC4AD_D70A_4DB4_865D_633006592CCB__INCLUDED_)
+#endif // !defined(AFX_CONCADSYMBOLDOC_H__843EC4AD_D70A_4DB4_865D_633006592CCB__INCLUDED_)

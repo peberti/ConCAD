@@ -18,8 +18,8 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "EditDlgDrawPolyEdit.h"
 
 ////// The Line editing Dialog //////
@@ -52,7 +52,7 @@ void CEditDlgDrawPolyEdit::Create()
 	m_angle_polygon = LINEBOX_FREE;
 }
 
-void CEditDlgDrawPolyEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgDrawPolyEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	Show(pDesign, pObject);
 

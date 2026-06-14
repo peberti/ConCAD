@@ -20,9 +20,9 @@
 #include "stdafx.h"
 #include "option.h"
 #include "revision.h"
-#include "TinyCadRegistry.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadRegistry.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "diag.h"
 
@@ -204,7 +204,7 @@ void CDlgPageSizeBox::OnOK()
 
 	if (PageSetupChanged || PageSizeChanged)
 	{
-		CTinyCadRegistry::SetPageSize(Size);
+		CConCadRegistry::SetPageSize(Size);
 	}
 
 	if (Size.x < 10 || Size.y < 10)

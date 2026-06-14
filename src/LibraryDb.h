@@ -43,7 +43,7 @@ public:
 	virtual BOOL Attach(const TCHAR *filename) OVERRIDE;
 
 	// Write a symbol to this library
-	virtual void Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDoc &document) OVERRIDE;
+	virtual void Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document) OVERRIDE;
 
 	// Delete a symbol from this library
 	virtual void DeleteSymbol(CLibraryStoreNameSet &symbol) OVERRIDE;

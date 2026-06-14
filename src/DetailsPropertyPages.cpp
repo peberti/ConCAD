@@ -24,7 +24,7 @@
 #include "resource.h"
 #include "MultiSheetDoc.h"
 #include "DetailsPropertyPages.h"
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 #include "Object.h"
 
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage1, CPropertyPage)
@@ -253,7 +253,7 @@ BOOL CDetailsPropertyPage1::OnApply()
 	int total = m_pDesign->GetNumberOfSheets();
 	for (int i = 0; i < total; ++i)
 	{
-		CTinyCadDoc* pSheet = m_pDesign->GetSheet(i);
+		CConCadDoc* pSheet = m_pDesign->GetSheet(i);
 		if (pSheet != NULL && pSheet != m_pDesign->GetCurrentSheet())
 		{
 			pSheet->GetDetails().CopyDesignFields(current);
@@ -296,7 +296,7 @@ void CDetailsPropertyPage1::CollectReferencedTokenNames(std::vector<CString>& ou
 	const int total = m_pDesign->GetNumberOfSheets();
 	for (int s = 0; s < total; ++s)
 	{
-		CTinyCadDoc* pSheet = m_pDesign->GetSheet(s);
+		CConCadDoc* pSheet = m_pDesign->GetSheet(s);
 		if (pSheet == NULL)
 		{
 			continue;
@@ -645,7 +645,7 @@ void CDetailsPropertyPage3::MergeReferencedTokens()
 	const int total = m_pDesign->GetNumberOfSheets();
 	for (int s = 0; s < total; ++s)
 	{
-		CTinyCadDoc* pSheet = m_pDesign->GetSheet(s);
+		CConCadDoc* pSheet = m_pDesign->GetSheet(s);
 		if (pSheet == NULL)
 		{
 			continue;
@@ -831,7 +831,7 @@ BOOL CDetailsPropertyPage3::OnApply()
 		int total = m_pDesign->GetNumberOfSheets();
 		for (int i = 0; i < total; ++i)
 		{
-			CTinyCadDoc* pSheet = m_pDesign->GetSheet(i);
+			CConCadDoc* pSheet = m_pDesign->GetSheet(i);
 			if (pSheet != NULL)
 			{
 				pSheet->GetDetails().SetUserTokens(m_oTokens);
@@ -1041,7 +1041,7 @@ BOOL CDetailsPropertyPage4::OnApply()
 		int total = m_pDesign->GetNumberOfSheets();
 		for (int i = 0; i < total; ++i)
 		{
-			CTinyCadDoc* pSheet = m_pDesign->GetSheet(i);
+			CConCadDoc* pSheet = m_pDesign->GetSheet(i);
 			if (pSheet != NULL && pSheet != m_pDesign->GetCurrentSheet())
 			{
 				pSheet->GetDetails().CopyDesignFields(current);

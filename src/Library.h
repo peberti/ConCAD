@@ -33,7 +33,7 @@ class CLibraryFile: public CLibraryStore
 
 	// Write the method into either it's own file or the index
 	// file.
-	void WriteMethod(CStreamFile &ar, CTinyCadDoc &design);
+	void WriteMethod(CStreamFile &ar, CConCadDoc &design);
 
 public:
 	CLibraryFile(); // The constructor
@@ -42,7 +42,7 @@ public:
 	virtual BOOL Attach(const TCHAR *filename) OVERRIDE; // Attach this library to a file
 
 	// Write a symbol to this library
-	virtual void Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDoc &document) OVERRIDE;
+	virtual void Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document) OVERRIDE;
 
 	// Delete a symbol from this library
 	virtual void DeleteSymbol(CLibraryStoreNameSet &symbol) OVERRIDE;

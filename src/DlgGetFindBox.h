@@ -20,7 +20,7 @@
 #ifndef __DLGGETFINDBOX__
 #define __DLGGETFINDBOX__
 
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 #include "InitDialogBar.h"
 #include "ResizeWnd.h"
 

@@ -19,7 +19,7 @@
 
 // This handles the actual drawing of objects
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -401,7 +401,7 @@ void CDrawText::LButtonDown(CDPoint p, CDPoint no_snap_p)
 
 // The constructors
 
-CDrawText::CDrawText(CTinyCadDoc *pDesign, ObjType NewType) :
+CDrawText::CDrawText(CConCadDoc *pDesign, ObjType NewType) :
 	CDrawRectOutline(pDesign)
 {
 	is_stuck = FALSE;

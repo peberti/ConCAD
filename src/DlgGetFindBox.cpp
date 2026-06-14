@@ -23,9 +23,9 @@
 #include "option.h"
 #include "revision.h"
 #include "registry.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
-#include "TinyCadRegistry.h"
+#include "ConCadView.h"
+#include "ConCad.h"
+#include "ConCadRegistry.h"
 #include "MainFrm.h"
 #include "DlgGetFindBox.h"
 #include "LibraryCollection.h"
@@ -84,7 +84,7 @@ BOOL CDlgGetFindBox::OnInitDialog()
 	CRect lib_list_rect;
 	m_Tree.GetWindowRect(lib_list_rect);
 	ScreenToClient(lib_list_rect);
-	int height = CTinyCadRegistry::GetInt("SymbolTreeHeightPx", lib_list_rect.Height());
+	int height = CConCadRegistry::GetInt("SymbolTreeHeightPx", lib_list_rect.Height());
 	lib_list_rect.bottom = lib_list_rect.top + height;
 	m_Tree.MoveWindow(lib_list_rect);
 	DetermineLayout();
@@ -260,7 +260,7 @@ void CDlgGetFindBox::DrawSymbol(CDC &dc, CRect rect)
 
 		// Now access the symbol and draw it next to the name
 		CDPoint p;
-		CTinyCadDoc doc;
+		CConCadDoc doc;
 		CDesignFileSymbol *pSymbol = m_Symbol->GetDesignSymbol(&doc);
 
 		// Determine the rotation
@@ -434,7 +434,7 @@ void CDlgGetFindBox::OnHorzResize()
 	r.bottom += delta;
 	m_Tree.MoveWindow(r);
 
-	CTinyCadRegistry::Set("SymbolTreeHeightPx", r.Height());
+	CConCadRegistry::Set("SymbolTreeHeightPx", r.Height());
 
 	m_Show_Symbol.GetWindowRect(r);
 	ScreenToClient(r);

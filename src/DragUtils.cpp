@@ -22,8 +22,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-#include "tinycad.h"
-#include "TinyCadDoc.h"
+#include "concad.h"
+#include "ConCadDoc.h"
 #include "Object.h"
 #include "DragUtils.h"
 #include "LineUtils.h"
@@ -34,7 +34,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CDragUtils::CDragUtils(CTinyCadDoc* pDesign) :
+CDragUtils::CDragUtils(CConCadDoc* pDesign) :
 	m_j(pDesign)
 {
 	m_pDesign = pDesign;

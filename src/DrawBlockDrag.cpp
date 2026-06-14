@@ -18,7 +18,7 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "LineUtils.h"
@@ -48,7 +48,7 @@ void CDrawBlockDrag::Paint(CContext&dc, paint_options options)
 	dc.Rectangle(theArea);
 }
 
-CDrawBlockDrag::CDrawBlockDrag(CTinyCadDoc *pDesign) :
+CDrawBlockDrag::CDrawBlockDrag(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign), m_drag_utils(pDesign)
 {
 	m_segment = 1;

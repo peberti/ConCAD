@@ -18,7 +18,7 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 
@@ -30,7 +30,7 @@
 ////// The block import object //////
 
 
-CDrawBlockImport::CDrawBlockImport(CTinyCadDoc *pDesign) :
+CDrawBlockImport::CDrawBlockImport(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_segment = 1;

@@ -21,7 +21,7 @@
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "colour.h"
 #include "EditDlgPolygon.h"
 #include "EditToolbar.h"
@@ -78,7 +78,7 @@ void CEditDlgPolygon::Create()
 
 }
 
-void CEditDlgPolygon::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgPolygon::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	Show(pDesign, pObject);
 
@@ -137,7 +137,7 @@ void CEditDlgPolygon::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
 void CEditDlgPolygon::OnFillColour()
 {
 	// Bring up the colour dialogue...
-	if (CTinyCadApp::ChooseColor(m_fStyle.Colour))
+	if (CConCadApp::ChooseColor(m_fStyle.Colour))
 	{
 		UpdateOptions();
 	}
@@ -146,7 +146,7 @@ void CEditDlgPolygon::OnFillColour()
 void CEditDlgPolygon::OnLineColour()
 {
 	// Bring up the colour dialogue...
-	if (CTinyCadApp::ChooseColor(m_lStyle.Colour))
+	if (CConCadApp::ChooseColor(m_lStyle.Colour))
 	{
 		UpdateOptions();
 	}

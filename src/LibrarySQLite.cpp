@@ -18,15 +18,15 @@
  */
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 //#include "LibraryDb.h"
 #include "LibrarySQLite.h"
 #include "SQLite/CppSQLite3U.h"
 #include "DbLibNameSet.h"
 #include "StreamMemory.h"
-#include "TinyCadSymbolDoc.h"
+#include "ConCadSymbolDoc.h"
 #include "DbAttributeSet.h"
-#include "TinyCadMultiSymbolDoc.h"
+#include "ConCadMultiSymbolDoc.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -163,7 +163,7 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 }
 
 // Write a symbol to this library
-void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CTinyCadMultiSymbolDoc &document)
+void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document)
 {
 	// Set the busy cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));

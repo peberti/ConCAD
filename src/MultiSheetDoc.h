@@ -55,10 +55,10 @@ public:
 	virtual void SetActiveSheetIndex(int i);
 	virtual int GetActiveSheetIndex();
 	virtual CString GetSheetName(int i);
-	virtual CTinyCadDoc* GetSheet(int i);
+	virtual CConCadDoc* GetSheet(int i);
 
 	// Get the currently active sheet to work with
-	virtual CTinyCadDoc* GetCurrentSheet();
+	virtual CConCadDoc* GetCurrentSheet();
 
 	virtual void OnFolderContextMenu();
 

@@ -19,7 +19,7 @@
 
 // This handles the actual drawing of objects
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "colour.h"
 #include "option.h"
 #include "LineUtils.h"
@@ -28,7 +28,7 @@
 ////// The Junction Class ////
 
 
-CDrawJunction::CDrawJunction(CTinyCadDoc *pDesign) :
+CDrawJunction::CDrawJunction(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_point_a = m_point_b = CDPoint(0, 0);

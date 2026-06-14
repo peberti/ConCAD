@@ -17,41 +17,41 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-// TinyCadSymbolDoc.cpp: implementation of the CTinyCadSymbolDoc class.
+// ConCadSymbolDoc.cpp: implementation of the CConCadSymbolDoc class.
 //
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-#include "tinycad.h"
-#include "TinyCadSymbolDoc.h"
+#include "concad.h"
+#include "ConCadSymbolDoc.h"
 #include "diag.h"
 #include "library.h"
 #include "Object.h"
 #include "DlgUpdateBox.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCadMultiDoc.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTinyCadSymbolDoc::CTinyCadSymbolDoc(CMultiSheetDoc *pParent) :
-	CTinyCadDoc(pParent)
+CConCadSymbolDoc::CConCadSymbolDoc(CMultiSheetDoc *pParent) :
+	CConCadDoc(pParent)
 {
 	m_part = 0;
 }
 
-CTinyCadSymbolDoc::~CTinyCadSymbolDoc()
+CConCadSymbolDoc::~CConCadSymbolDoc()
 {
 
 }
 
-void CTinyCadSymbolDoc::setSymbol()
+void CConCadSymbolDoc::setSymbol()
 {
 	// Reset the part number to zero
 	m_part = 0;
 }
 
-int CTinyCadSymbolDoc::GetPartsPerPackage()
+int CConCadSymbolDoc::GetPartsPerPackage()
 {
 	// Find out how many parts in this package
 	int max = 0;
@@ -72,7 +72,7 @@ int CTinyCadSymbolDoc::GetPartsPerPackage()
 }
 
 // Enforce parts per package
-void CTinyCadSymbolDoc::SetPartsPerPackage(int p)
+void CConCadSymbolDoc::SetPartsPerPackage(int p)
 {
 	if (GetPart() >= p)
 	{
@@ -105,7 +105,7 @@ void CTinyCadSymbolDoc::SetPartsPerPackage(int p)
 }
 
 // Select/add a new symbol for editing
-void CTinyCadSymbolDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
+void CConCadSymbolDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
 {
 	SelectObject(NULL);
 
@@ -136,13 +136,13 @@ void CTinyCadSymbolDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
 // Called after a paste or import to enable the
 // document to sort out the imported block when
 // necessary
-void CTinyCadSymbolDoc::PostPaste()
+void CConCadSymbolDoc::PostPaste()
 {
 	UngroupSymbols();
 }
 
 // Set which part in the package to edit
-void CTinyCadSymbolDoc::EditPartInPackage(int p)
+void CConCadSymbolDoc::EditPartInPackage(int p)
 {
 	int OldPart = GetPart();
 

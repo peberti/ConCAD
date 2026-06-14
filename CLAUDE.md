@@ -8,7 +8,7 @@ ConCAD is a fork of TinyCAD (https://www.tinycad.net), an open-source schematic-
 
 ## Build
 
-- Open `TinyCad.sln` at the repo root in **Visual Studio 2019 or 2022 (Community edition is fine) with the MFC C++ component installed**. Build → Build Solution (Ctrl+Shift+B). There is no CMake / no command-line build flow checked in.
+- Open `ConCad.sln` at the repo root in **Visual Studio 2019 or 2022 (Community edition is fine) with the MFC C++ component installed**. Build → Build Solution (Ctrl+Shift+B). There is no CMake / no command-line build flow checked in.
 - Configurations: `Debug|Win32` and `Release|Win32`. There is no x64 config.
 - Pre-build step: `src/gitbranch.bat` runs on every build and (re)writes `src/BuildId.h` with `GIT_BRANCH` and a fresh `BUILD_UUID`. `BuildId.h` is intentionally regenerated — do not commit hand edits to it.
 - Installer: NSIS script at `installer/ConCAD.nsi` (not invoked by msbuild; run NSIS separately after a Release build).
@@ -24,12 +24,12 @@ ConCAD is a fork of TinyCAD (https://www.tinycad.net), an open-source schematic-
 ### Document model (MFC Doc/View, three-layered)
 
 - **`CMultiSheetDoc`** (`MultiSheetDoc.h/.cpp`) — outer `CDocument` subclass. One per opened file. Owns a collection of "sheets". Two concrete subclasses:
-  - **`CTinyCadMultiDoc`** — a normal schematic design (`.dsn`). Each sheet is a `CTinyCadDoc`.
-  - **`CTinyCadMultiSymbolDoc`** — a library symbol being edited. Each sheet is a `CTinyCadSymbolDoc`.
-- **`CTinyCadDoc`** (`TinyCadDoc.h/.cpp`, `Io.cpp`) — one sheet's worth of drawing objects, page setup, and `CDetails`. `CTinyCadSymbolDoc` and `CTinyCadHierarchicalDoc` extend it.
-- **`CTinyCadView`** (`TinyCadView.h/.cpp`) — `CScrollView` that renders the active sheet and routes input. Most user-facing command IDs and accelerators land here first.
+  - **`CConCadMultiDoc`** — a normal schematic design (`.dsn`). Each sheet is a `CConCadDoc`.
+  - **`CConCadMultiSymbolDoc`** — a library symbol being edited. Each sheet is a `CConCadSymbolDoc`.
+- **`CConCadDoc`** (`ConCadDoc.h/.cpp`, `Io.cpp`) — one sheet's worth of drawing objects, page setup, and `CDetails`. `CConCadSymbolDoc` and `CConCadHierarchicalDoc` extend it.
+- **`CConCadView`** (`ConCadView.h/.cpp`) — `CScrollView` that renders the active sheet and routes input. Most user-facing command IDs and accelerators land here first.
 
-Anything that touches "all sheets in the open design" lives on `CMultiSheetDoc` / `CTinyCadMultiDoc`; per-sheet state lives on `CTinyCadDoc`. The CHANGES.md "Shared design details" feature is an example of code that has to fan out from one sheet to all the others on Apply.
+Anything that touches "all sheets in the open design" lives on `CMultiSheetDoc` / `CConCadMultiDoc`; per-sheet state lives on `CConCadDoc`. The CHANGES.md "Shared design details" feature is an example of code that has to fan out from one sheet to all the others on Apply.
 
 ### Drawing objects
 
@@ -44,7 +44,7 @@ Anything that touches "all sheets in the open design" lives on `CMultiSheetDoc` 
 
 ### Serialization — two formats
 
-- **XML `.dsn`** is the live format. Save path: `CTinyCadDoc::SaveXML` → `CXMLWriter`. Load path: `Io.cpp` factory dispatches XML tags (`<WIRE>`, `<CABLE>`, `<SYMBOL>`, `<DETAILS>`, …) to the right `CDrawingObject::LoadXML`. New tags should be **additive** and tolerate older files that do not contain them.
+- **XML `.dsn`** is the live format. Save path: `CConCadDoc::SaveXML` → `CXMLWriter`. Load path: `Io.cpp` factory dispatches XML tags (`<WIRE>`, `<CABLE>`, `<SYMBOL>`, `<DETAILS>`, …) to the right `CDrawingObject::LoadXML`. New tags should be **additive** and tolerate older files that do not contain them.
 - **Legacy binary `CStream`** (`Stream.cpp`, `StreamFile.cpp`, `StreamMemory.cpp`) is still readable for old files but is **not extended**. New features (tokens, cables, connector color overrides — see CHANGES.md) exist only in XML.
 
 ### Libraries (symbol storage)
@@ -54,17 +54,17 @@ Anything that touches "all sheets in the open design" lives on `CMultiSheetDoc` 
 
 ### Netlist
 
-- **`CNetList`** (`Net.h/.cpp`, `NetList.cpp`) walks the drawing to build nets. `xWire` and `xCable` are treated as electrically equivalent — both feed the same trace/junction/label-binding paths. If you add another wire-like object, mirror the existing `xWire || xCable` checks in `NetList.cpp`, `DragUtils.cpp`, `JunctionUtils.cpp`, and `TinyCadDoc.cpp` rather than inventing a new code path.
+- **`CNetList`** (`Net.h/.cpp`, `NetList.cpp`) walks the drawing to build nets. `xWire` and `xCable` are treated as electrically equivalent — both feed the same trace/junction/label-binding paths. If you add another wire-like object, mirror the existing `xWire || xCable` checks in `NetList.cpp`, `DragUtils.cpp`, `JunctionUtils.cpp`, and `ConCadDoc.cpp` rather than inventing a new code path.
 
 ### Title block / "Design Details"
 
 - **`CDetails`** (`Details.h/.cpp`) is per-sheet title-block state: Title, Author, Revision, DocNo, Organisation, Date, plus a `map<CString, CString>` of user-defined tokens. `Display(CContext&)` does token substitution at paint time (`{Title}`, `{Sheets}`, and any user-defined `{Name}`; built-ins are case-insensitive; cycle-safe up to 8 passes).
 - **`CDetailsPropertySheet`** (`DetailsPropertySheet.*`) + `CDetailsPropertyPage1/2/3` are the `File → Design Details…` dialog (Design / Guides / Variables tabs). Page 1 and Page 3's `OnApply` propagate edits to every sheet via `CDetails::CopyDesignFields`.
-- "Sheets X of Y" is recomputed into `CDetails::m_sSheets` immediately before every paint (`TinyCadDoc.cpp`) and every save (`Io.cpp`), so the in-memory value is never trusted.
+- "Sheets X of Y" is recomputed into `CDetails::m_sSheets` immediately before every paint (`ConCadDoc.cpp`) and every save (`Io.cpp`), so the in-memory value is never trusted.
 
 ## Resources / IDs
 
-- `src/resource.h`, `src/TinyCad.rc` — Windows resource IDs and dialog templates. **Never reuse a numeric ID**; pick fresh ones for new commands / controls.
+- `src/resource.h`, `src/ConCad.rc` — Windows resource IDs and dialog templates. **Never reuse a numeric ID**; pick fresh ones for new commands / controls.
 - `src/res/Toolbar.bmp`, `src/res/toolbar1.bmp` — drawing toolbars are 16×15-pixel sprite sheets. The "Drawing" toolbar (`IDR_DRAWING`) is currently full (15/15 slots used) — adding a new tool button means extending the bitmap and the toolbar resource. (For example, the Cable tool ships with only a keyboard shortcut for this reason; see CHANGES.md §4.)
 
 ## Fork-specific features

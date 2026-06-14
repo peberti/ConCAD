@@ -20,7 +20,7 @@
 // This handles the actual drawing of objects
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -35,7 +35,7 @@ extern CDlgERCListBox theERCListBox;
 
 #define ERRORSIZE	6
 
-CDrawError::CDrawError(CTinyCadDoc *pDesign, CDPoint NewA, int q) :
+CDrawError::CDrawError(CConCadDoc *pDesign, CDPoint NewA, int q) :
 	CDrawingObject(pDesign)
 {
 	m_point_a = NewA;

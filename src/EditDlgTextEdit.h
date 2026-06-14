@@ -20,7 +20,7 @@
 #ifndef __EDITDLGTEXTEDIT_H__
 #define __EDITDLGTEXTEDIT_H__
 
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 
 class CDrawingObject;
 
@@ -33,7 +33,7 @@ class CEditDlgTextEdit: public CEditDlg
 public:
 
 	CEditDlgTextEdit();
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	void Create();
 	void ReFocus();
 

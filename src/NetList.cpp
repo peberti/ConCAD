@@ -21,15 +21,15 @@
 #include <set>
 #include <map>
 
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "special.h"
 #include "library.h"
 #include "net.h"
 #include "registry.h"
 #include "diag.h"
 #include "LineUtils.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCadMultiDoc.h"
 #include "MainFrm.h"
 
 #include <iostream>
@@ -132,7 +132,7 @@ void CNetList::createErrorFile(const TCHAR *filename)
 	m_errors = 0;
 	if (!m_err_file)
 	{
-		if (static_cast<CMainFrame*>((static_cast<CTinyCadApp*>(AfxGetApp())->m_pMainWnd))->runAsConsoleApp)
+		if (static_cast<CMainFrame*>((static_cast<CConCadApp*>(AfxGetApp())->m_pMainWnd))->runAsConsoleApp)
 		{	//in console mode, also output the error message to stderr, wherever that might be pointed
 			_ftprintf(stderr, _T("ConCAD command error:  Cannot open file %s for writing.  Make sure volume is not write protected or full and that sufficient permission is present for writing to this location.\n"), (LPCTSTR)m_err_filename);
 		}
@@ -154,7 +154,7 @@ void CNetList::reopenErrorFile(bool force)
 	_ftprintf(m_err_file, _T("\n%d %s found\n"), m_errors, m_errors == 1 ? _T("error") : _T("errors"));
 	fclose(m_err_file);
 
-	if (static_cast<CMainFrame*>((static_cast<CTinyCadApp*>(AfxGetApp())->m_pMainWnd))->runAsConsoleApp)
+	if (static_cast<CMainFrame*>((static_cast<CConCadApp*>(AfxGetApp())->m_pMainWnd))->runAsConsoleApp)
 	{	//in console mode, also output the error message to stderr, wherever that might be pointed
 		if (m_errors != 0) 
 		{
@@ -165,7 +165,7 @@ void CNetList::reopenErrorFile(bool force)
 	{
 		if (force || (m_errors > 0))
 		{
-			CTinyCadApp::EditTextFile(m_err_filename);
+			CConCadApp::EditTextFile(m_err_filename);
 		}
 	}
 }
@@ -1020,12 +1020,12 @@ void CNetList::Link(linkCollection& nets)
  * 
  * @param pDesign
  */
-void CNetList::MakeNet(CTinyCadMultiDoc *pDesign)
+void CNetList::MakeNet(CConCadMultiDoc *pDesign)
 {
 	linkCollection nets;
 	Counter file_counter;
 
-	//CTinyCadMultiDoc*	aDesign = pDesign;
+	//CConCadMultiDoc*	aDesign = pDesign;
 	CollectionMemberReference<CImportFile *> impref;
 
 	CImportFile *f = new CImportFile(pDesign);
@@ -1100,7 +1100,7 @@ void CNetList::MakeNet(CTinyCadMultiDoc *pDesign)
  * @param file_counter -- a counter used to set the file index of any new design files
  */
 void CNetList::MakeNetForSheet(fileCollection &imports, int import_index, int sheetZeroIndexed, Counter& file_counter)
-//( fileCollection &imports, int file_index_id, int &file_name_index, int sheet, CTinyCadDoc *pDesign )
+//( fileCollection &imports, int file_index_id, int &file_name_index, int sheet, CConCadDoc *pDesign )
 //  m_imports[ip]->m_file_name_index, file_name_index, i+1, m_imports[ip]->m_pDesign->GetSheet( i ) );
 {
 	int sheetOneIndexed = sheetZeroIndexed + 1;
@@ -1108,7 +1108,7 @@ void CNetList::MakeNetForSheet(fileCollection &imports, int import_index, int sh
 
 	// lookup these values from the imports list
 	int file_index_id = imports[import_index]->getFileNameIndex();
-	CTinyCadDoc *pDesign = imports[import_index]->getDesign()->GetSheet(sheetZeroIndexed);
+	CConCadDoc *pDesign = imports[import_index]->getDesign()->GetSheet(sheetZeroIndexed);
 	// sheet is 1-indexed
 	CollectionMemberReference<CImportFile *> referenceToMe(imports, import_index);
 
@@ -1457,7 +1457,7 @@ void CNetList::MakeNetForSheet(fileCollection &imports, int import_index, int sh
  * @param pDesign
  * @param filename
  */
-void CNetList::WriteNetListFile(int type, CTinyCadMultiDoc *pDesign, const TCHAR *filename)
+void CNetList::WriteNetListFile(int type, CConCadMultiDoc *pDesign, const TCHAR *filename)
 {
 	switch (type)
 	{
@@ -1491,7 +1491,7 @@ void CNetList::WriteNetListFile(int type, CTinyCadMultiDoc *pDesign, const TCHAR
  * @param pDesign
  * @param filename
  */
-void CNetList::WriteNetListFileProtel(CTinyCadMultiDoc *pDesign, const TCHAR *filename)
+void CNetList::WriteNetListFileProtel(CConCadMultiDoc *pDesign, const TCHAR *filename)
 {
 	FILE *theFile;
 	errno_t err;
@@ -1515,11 +1515,11 @@ void CNetList::WriteNetListFileProtel(CTinyCadMultiDoc *pDesign, const TCHAR *fi
 	fileCollection::iterator fi = m_imports.begin();
 	for (; fi != m_imports.end(); ++fi)
 	{
-		CTinyCadMultiDoc *dsn = pDesign;
+		CConCadMultiDoc *dsn = pDesign;
 
 		if ( (*fi)->getFileNameIndex() != 0)
 		{
-			dsn = static_cast<CTinyCadMultiDoc *> ( (*fi)->getDesign());
+			dsn = static_cast<CConCadMultiDoc *> ( (*fi)->getDesign());
 		}
 
 		/// Generate a component for every sheet in this design
@@ -1639,7 +1639,7 @@ void CNetList::WriteNetListFileProtel(CTinyCadMultiDoc *pDesign, const TCHAR *fi
  * @param pDesign
  * @param filename
  */
-void CNetList::WriteNetListFilePADS(CTinyCadMultiDoc *pDesign, const TCHAR *filename, bool withValue)
+void CNetList::WriteNetListFilePADS(CConCadMultiDoc *pDesign, const TCHAR *filename, bool withValue)
 {
 	FILE *theFile;
 	errno_t err;
@@ -1667,11 +1667,11 @@ void CNetList::WriteNetListFilePADS(CTinyCadMultiDoc *pDesign, const TCHAR *file
 	fileCollection::iterator fi = m_imports.begin();
 	for (; fi != m_imports.end(); ++fi)
 	{
-		CTinyCadMultiDoc *dsn = pDesign;
+		CConCadMultiDoc *dsn = pDesign;
 
 		if ( (*fi)->getFileNameIndex() != 0)
 		{
-			dsn = static_cast<CTinyCadMultiDoc *> ( (*fi)->getDesign());
+			dsn = static_cast<CConCadMultiDoc *> ( (*fi)->getDesign());
 		}
 
 		/// Generate a component for every sheet in this design
@@ -1811,7 +1811,7 @@ void CNetList::WriteNetListFilePADS(CTinyCadMultiDoc *pDesign, const TCHAR *file
  * @param pDesign
  * @param filename
  */
-void CNetList::WriteNetListFileTinyCAD(CTinyCadMultiDoc *pDesign, const TCHAR *filename)
+void CNetList::WriteNetListFileTinyCAD(CConCadMultiDoc *pDesign, const TCHAR *filename)
 {
 	FILE *theFile;
 	errno_t err;
@@ -1841,11 +1841,11 @@ void CNetList::WriteNetListFileTinyCAD(CTinyCadMultiDoc *pDesign, const TCHAR *f
 	fileCollection::iterator fi = m_imports.begin();
 	for (; fi != m_imports.end(); ++fi)
 	{
-		CTinyCadMultiDoc *dsn = pDesign;
+		CConCadMultiDoc *dsn = pDesign;
 
 		if ( (*fi)->getFileNameIndex() != 0)
 		{
-			dsn = static_cast<CTinyCadMultiDoc *> ( (*fi)->getDesign());
+			dsn = static_cast<CConCadMultiDoc *> ( (*fi)->getDesign());
 		}
 
 		/// Generate a component for every sheet in this design
@@ -1958,7 +1958,7 @@ void CNetList::WriteNetListFileTinyCAD(CTinyCadMultiDoc *pDesign, const TCHAR *f
  * @param pDesign
  * @param filename
  */
-void CNetList::WriteNetListFileEagle(CTinyCadMultiDoc *pDesign, const TCHAR *filename)
+void CNetList::WriteNetListFileEagle(CConCadMultiDoc *pDesign, const TCHAR *filename)
 {
 	FILE *theFile;
 	errno_t err;
@@ -1985,11 +1985,11 @@ void CNetList::WriteNetListFileEagle(CTinyCadMultiDoc *pDesign, const TCHAR *fil
 	fileCollection::iterator fi = m_imports.begin();
 	for (; fi != m_imports.end(); ++fi)
 	{
-		CTinyCadMultiDoc *dsn = pDesign;
+		CConCadMultiDoc *dsn = pDesign;
 
 		if ( (*fi)->getFileNameIndex() != 0)
 		{
-			dsn = static_cast<CTinyCadMultiDoc *> ( (*fi)->getDesign());
+			dsn = static_cast<CConCadMultiDoc *> ( (*fi)->getDesign());
 		}
 
 		/// Generate a component for every sheet in this design
@@ -2139,7 +2139,7 @@ namespace RXML {
 	typedef rapidxml::xml_attribute<TCHAR> attribute;
 	typedef rapidxml::xml_document<TCHAR> document;
 }
-void CNetList::WriteNetListFileXML(CTinyCadMultiDoc *pDesign, const TCHAR *filename)
+void CNetList::WriteNetListFileXML(CConCadMultiDoc *pDesign, const TCHAR *filename)
 {
 	std::ofstream outfile;
 	outfile.open(filename);
@@ -2154,7 +2154,7 @@ void CNetList::WriteNetListFileXML(CTinyCadMultiDoc *pDesign, const TCHAR *filen
 	outfile.close();
 }
 
-void CNetList::rawWriteNetListFileXML(CTinyCadMultiDoc *pDesign, std::ofstream& outfile)
+void CNetList::rawWriteNetListFileXML(CConCadMultiDoc *pDesign, std::ofstream& outfile)
 {
 	RXML::document doc;
 
@@ -2184,11 +2184,11 @@ void CNetList::rawWriteNetListFileXML(CTinyCadMultiDoc *pDesign, std::ofstream& 
 	fileCollection::iterator fi = m_imports.begin();
 	for (; fi != m_imports.end(); ++fi)
 	{
-		CTinyCadMultiDoc *dsn = pDesign;
+		CConCadMultiDoc *dsn = pDesign;
 
 		if ( (*fi)->getFileNameIndex() != 0)
 		{
-			dsn = static_cast<CTinyCadMultiDoc *> ( (*fi)->getDesign());
+			dsn = static_cast<CConCadMultiDoc *> ( (*fi)->getDesign());
 		}
 
 		/// Generate a component for every sheet in this design
@@ -2323,7 +2323,7 @@ void CNetList::rawWriteNetListFileXML(CTinyCadMultiDoc *pDesign, std::ofstream& 
  * @param filename
  * @param unixOutputFile - a flag indicating whether this file should be written using wide byte characters (for Unix systems) or wide characters (for Windows/DOS systems)
  */
-void CNetList::WriteNetListFilePCB(CTinyCadMultiDoc *pDesign, const TCHAR *filename)
+void CNetList::WriteNetListFilePCB(CConCadMultiDoc *pDesign, const TCHAR *filename)
 {
 	FILE *theFile;
 	errno_t err;
@@ -2438,7 +2438,7 @@ void getFileNameFromPath(const TCHAR *path, TCHAR *filename, int max_size){
 	filename[size] = 0;
 }
 
-void CNetList::componentsBegin(CTinyCadMultiDoc *p)
+void CNetList::componentsBegin(CConCadMultiDoc *p)
 {
 	m_ComponentIterator.end = false;
 	m_ComponentIterator.pDesign = p;
@@ -2447,7 +2447,7 @@ void CNetList::componentsBegin(CTinyCadMultiDoc *p)
 	m_ComponentIterator.dsn = m_ComponentIterator.pDesign;
 	if ((*m_ComponentIterator.fi)->getFileNameIndex() != 0)
 	{
-		m_ComponentIterator.dsn = static_cast<CTinyCadMultiDoc *> ((*m_ComponentIterator.fi)->getDesign());
+		m_ComponentIterator.dsn = static_cast<CConCadMultiDoc *> ((*m_ComponentIterator.fi)->getDesign());
 	}
 
 	m_ComponentIterator.sheet = 0;
@@ -2483,7 +2483,7 @@ void CNetList::componentsNext()
 						m_ComponentIterator.dsn = m_ComponentIterator.pDesign;
 					else
 					{
-						m_ComponentIterator.dsn = static_cast<CTinyCadMultiDoc *> ((*m_ComponentIterator.fi)->getDesign());
+						m_ComponentIterator.dsn = static_cast<CConCadMultiDoc *> ((*m_ComponentIterator.fi)->getDesign());
 					}
 				}
 			}
@@ -2619,7 +2619,7 @@ public:
 * @param pDesign
 * @param filename
 */
-void CNetList::WriteVHDLFile(CTinyCadMultiDoc *pDesign, const TCHAR *path)
+void CNetList::WriteVHDLFile(CConCadMultiDoc *pDesign, const TCHAR *path)
 {
 	FILE *theFile;
 	errno_t err;
@@ -2654,7 +2654,7 @@ void CNetList::WriteVHDLFile(CTinyCadMultiDoc *pDesign, const TCHAR *path)
 	// To write the signals
 
 	typedef std::map<int, CString> t_signal_labels;
-	t_signal_labels signal_labels;		// Maps the TinyCad net index to the net label
+	t_signal_labels signal_labels;		// Maps the ConCad net index to the net label
 
 	// To write the port maps
 
@@ -2680,7 +2680,7 @@ void CNetList::WriteVHDLFile(CTinyCadMultiDoc *pDesign, const TCHAR *path)
 
 	getFileNameFromPath(path, short_filename, 255);
 
-	_ftprintf(theFile, _T("-- File Created by TinyCad VHDL\n"));
+	_ftprintf(theFile, _T("-- File Created by ConCad VHDL\n"));
 	_ftprintf(theFile, _T("library ieee;\n"));
 	_ftprintf(theFile, _T("use ieee.std_logic_1164.all;\n\n"));
 	_ftprintf(theFile, _T("entity %s is\n"), short_filename);
@@ -2950,7 +2950,7 @@ void CNetList::WriteVHDLFile(CTinyCadMultiDoc *pDesign, const TCHAR *path)
  * @param pDesign
  * @param filename
  */
-void CNetList::WriteSpiceFile(CTinyCadMultiDoc *pDesign, const TCHAR *filename)
+void CNetList::WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename)
 {
 	/// Open the filename for the spice file
 	FILE *theFile;
@@ -3103,11 +3103,11 @@ void CNetList::WriteSpiceFile(CTinyCadMultiDoc *pDesign, const TCHAR *filename)
 	fileCollection::iterator fi = m_imports.begin();
 	for (; fi != m_imports.end(); ++fi)
 	{
-		CTinyCadMultiDoc *dsn = pDesign;
+		CConCadMultiDoc *dsn = pDesign;
 
 		if ( (*fi)->getFileNameIndex() != 0)
 		{
-			dsn = static_cast<CTinyCadMultiDoc *> ( (*fi)->getDesign());
+			dsn = static_cast<CConCadMultiDoc *> ( (*fi)->getDesign());
 		}
 
 		/// Generate a component for every sheet in this design
@@ -3967,7 +3967,7 @@ BOOL CImportFile::Load(const TCHAR *filename)
 		return FALSE;
 	}
 	CArchive ar(&f, CArchive::load);
-	m_pDesign = new CTinyCadMultiDoc;
+	m_pDesign = new CConCadMultiDoc;
 	m_pDesign->Serialize(ar);
 
 	return TRUE;

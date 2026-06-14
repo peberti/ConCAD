@@ -19,19 +19,19 @@
 
 // This handles the actual drawing of objects
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
 #include "LineUtils.h"
 #include <math.h>
 #include "JunctionUtils.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCadMultiDoc.h"
 
 ////// The Line Class //////
 
 
-CDrawLine::CDrawLine(CTinyCadDoc *pDesign, ObjType NewType) :
+CDrawLine::CDrawLine(CConCadDoc *pDesign, ObjType NewType) :
 	CDrawingObject(pDesign), m_drag_utils_a(pDesign), m_drag_utils_b(pDesign)
 {
 	has_placed = FALSE;
@@ -303,7 +303,7 @@ void CDrawLine::NewOptions()
 			{
 				// We must make the latest network..
 				CNetList n;
-				n.MakeNet(static_cast<CTinyCadMultiDoc*> (m_pDesign->GetParent()));
+				n.MakeNet(static_cast<CConCadMultiDoc*> (m_pDesign->GetParent()));
 
 				// Yep, so better update it...
 				drawingIterator i = m_pDesign->GetDrawingBegin();

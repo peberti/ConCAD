@@ -17,25 +17,25 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if !defined(AFX_TINYCADMULTISYMBOLDOC_H__0E0AA344_4EE5_4EA5_9A11_05B0033DC1C0__INCLUDED_)
-#define AFX_TINYCADMULTISYMBOLDOC_H__0E0AA344_4EE5_4EA5_9A11_05B0033DC1C0__INCLUDED_
+#if !defined(AFX_CONCADMULTISYMBOLDOC_H__0E0AA344_4EE5_4EA5_9A11_05B0033DC1C0__INCLUDED_)
+#define AFX_CONCADMULTISYMBOLDOC_H__0E0AA344_4EE5_4EA5_9A11_05B0033DC1C0__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-// TinyCadMultiSymbolDoc.h : header file
+// ConCadMultiSymbolDoc.h : header file
 //
 
 #include "MultiSheetDoc.h"
-#include "TinyCadSymbolDoc.h"
+#include "ConCadSymbolDoc.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiSymbolDoc document
+// CConCadMultiSymbolDoc document
 
-class CTinyCadMultiSymbolDoc: public CMultiSheetDoc
+class CConCadMultiSymbolDoc: public CMultiSheetDoc
 {
 protected:
-	DECLARE_DYNCREATE( CTinyCadMultiSymbolDoc)
+	DECLARE_DYNCREATE( CConCadMultiSymbolDoc)
 	/*
 	 Homogeneous parts are those in which all the parts in the package
 	 have identical symbols. Heterogeneous parts have different symbols
@@ -50,7 +50,7 @@ protected:
 
 	 */
 	bool m_heterogeneous;
-	typedef std::vector<CTinyCadSymbolDoc*> sheetCollection;
+	typedef std::vector<CConCadSymbolDoc*> sheetCollection;
 	sheetCollection m_symbols;
 
 	// The library currently being edited
@@ -67,8 +67,8 @@ protected:
 
 public:
 
-	CTinyCadMultiSymbolDoc();
-	CTinyCadMultiSymbolDoc(CLibraryStore* pLib, CLibraryStoreNameSet &symbol);
+	CConCadMultiSymbolDoc();
+	CConCadMultiSymbolDoc(CLibraryStore* pLib, CLibraryStoreNameSet &symbol);
 
 	// Is this document editing a library?
 	virtual bool IsLibInUse(CLibraryStore *lib);
@@ -78,7 +78,7 @@ public:
 	virtual void SetActiveSheetIndex(int i);
 	virtual int GetActiveSheetIndex();
 	virtual CString GetSheetName(int i);
-	CTinyCadDoc* GetActiveSheet();
+	CConCadDoc* GetActiveSheet();
 
 	CLibraryStoreNameSet *getSymbol()
 	{
@@ -86,7 +86,7 @@ public:
 	}
 
 	// Get the currently active sheet to work with
-	virtual CTinyCadDoc* GetSheet(int i);
+	virtual CConCadDoc* GetSheet(int i);
 
 	virtual void OnFolderContextMenu();
 
@@ -100,7 +100,7 @@ public:
 
 	// Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTinyCadMultiSymbolDoc)
+	//{{AFX_VIRTUAL(CConCadMultiSymbolDoc)
 public:
 	virtual void Serialize(CArchive& ar); // overridden for document i/o
 protected:
@@ -109,7 +109,7 @@ protected:
 
 	// Implementation
 public:
-	virtual ~CTinyCadMultiSymbolDoc();
+	virtual ~CConCadMultiSymbolDoc();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -117,7 +117,7 @@ public:
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CTinyCadMultiSymbolDoc)
+	//{{AFX_MSG(CConCadMultiSymbolDoc)
 	afx_msg void OnLibraryAddpin();
 	afx_msg void OnFileSave();
 	afx_msg void OnFileSaveAs();
@@ -134,4 +134,4 @@ public:
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_TINYCADMULTISYMBOLDOC_H__0E0AA344_4EE5_4EA5_9A11_05B0033DC1C0__INCLUDED_)
+#endif // !defined(AFX_CONCADMULTISYMBOLDOC_H__0E0AA344_4EE5_4EA5_9A11_05B0033DC1C0__INCLUDED_)

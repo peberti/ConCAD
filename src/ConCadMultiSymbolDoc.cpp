@@ -17,31 +17,31 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-// TinyCadMultiSymbolDoc.cpp : implementation file
+// ConCadMultiSymbolDoc.cpp : implementation file
 //
 
 #include "stdafx.h"
-#include "tinycad.h"
-#include "TinyCadMultiSymbolDoc.h"
+#include "concad.h"
+#include "ConCadMultiSymbolDoc.h"
 #include "DlgPartsInPackage.h"
-#include ".\tinycadmultisymboldoc.h"
+#include ".\ConCadMultiSymbolDoc.h"
 #include "DlgUpdateBox.h"
 #include "HeaderStamp.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiSymbolDoc
-IMPLEMENT_DYNCREATE(CTinyCadMultiSymbolDoc, CMultiSheetDoc)
+// CConCadMultiSymbolDoc
+IMPLEMENT_DYNCREATE(CConCadMultiSymbolDoc, CMultiSheetDoc)
 
-CTinyCadMultiSymbolDoc::CTinyCadMultiSymbolDoc()
+CConCadMultiSymbolDoc::CConCadMultiSymbolDoc()
 {
 	m_symbols.resize(1);
-	m_symbols[0] = new CTinyCadSymbolDoc(this);
+	m_symbols[0] = new CConCadSymbolDoc(this);
 	m_ppp = 1;
 	m_heterogeneous = false;
 	m_current_index = 0;
 }
 
-CTinyCadMultiSymbolDoc::CTinyCadMultiSymbolDoc(CLibraryStore* pLib, CLibraryStoreNameSet &symbol)
+CConCadMultiSymbolDoc::CConCadMultiSymbolDoc(CLibraryStore* pLib, CLibraryStoreNameSet &symbol)
 {
 	m_symboledit = symbol;
 	m_libedit = pLib;
@@ -59,7 +59,7 @@ CTinyCadMultiSymbolDoc::CTinyCadMultiSymbolDoc(CLibraryStore* pLib, CLibraryStor
 	{
 		// Create a blank symbol, this must a new one!
 		m_symbols.resize(1);
-		m_symbols[0] = new CTinyCadSymbolDoc(this);
+		m_symbols[0] = new CConCadSymbolDoc(this);
 		m_ppp = 1;
 		m_heterogeneous = false;
 		m_current_index = 0;
@@ -77,7 +77,7 @@ CTinyCadMultiSymbolDoc::CTinyCadMultiSymbolDoc(CLibraryStore* pLib, CLibraryStor
 	if (oHeader.IsChecked(false))
 	{
 		m_symbols.resize(1);
-		m_symbols[0] = new CTinyCadSymbolDoc(this);
+		m_symbols[0] = new CConCadSymbolDoc(this);
 		m_symbols[0]->ReadFile(*s);
 		m_symbols[0]->setSymbol();
 		m_ppp = m_symbols[0]->GetPartsPerPackage();
@@ -104,13 +104,13 @@ CTinyCadMultiSymbolDoc::CTinyCadMultiSymbolDoc(CLibraryStore* pLib, CLibraryStor
 	delete s;
 }
 
-BOOL CTinyCadMultiSymbolDoc::OnNewDocument()
+BOOL CConCadMultiSymbolDoc::OnNewDocument()
 {
 	if (!CMultiSheetDoc::OnNewDocument()) return FALSE;
 	return TRUE;
 }
 
-CTinyCadMultiSymbolDoc::~CTinyCadMultiSymbolDoc()
+CConCadMultiSymbolDoc::~CConCadMultiSymbolDoc()
 {
 	sheetCollection::iterator i = m_symbols.begin();
 	while (i != m_symbols.end())
@@ -120,8 +120,8 @@ CTinyCadMultiSymbolDoc::~CTinyCadMultiSymbolDoc()
 	}
 }
 
-BEGIN_MESSAGE_MAP(CTinyCadMultiSymbolDoc, CMultiSheetDoc)
-	//{{AFX_MSG_MAP(CTinyCadMultiSymbolDoc)
+BEGIN_MESSAGE_MAP(CConCadMultiSymbolDoc, CMultiSheetDoc)
+	//{{AFX_MSG_MAP(CConCadMultiSymbolDoc)
 	ON_COMMAND(ID_LIBRARY_ADDPIN, OnLibraryAddpin)
 	ON_COMMAND(ID_FILE_SAVE, OnFileSave)
 	ON_COMMAND(ID_FILE_SAVE_AS, OnFileSaveAs)
@@ -134,23 +134,23 @@ BEGIN_MESSAGE_MAP(CTinyCadMultiSymbolDoc, CMultiSheetDoc)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiSymbolDoc diagnostics
+// CConCadMultiSymbolDoc diagnostics
 
 #ifdef _DEBUG
-void CTinyCadMultiSymbolDoc::AssertValid() const
+void CConCadMultiSymbolDoc::AssertValid() const
 {
 	CMultiSheetDoc::AssertValid();
 }
 
-void CTinyCadMultiSymbolDoc::Dump(CDumpContext& dc) const
+void CConCadMultiSymbolDoc::Dump(CDumpContext& dc) const
 {
 	CMultiSheetDoc::Dump(dc);
 }
 #endif //_DEBUG
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiSymbolDoc serialization
+// CConCadMultiSymbolDoc serialization
 
-void CTinyCadMultiSymbolDoc::Serialize(CArchive& ar)
+void CConCadMultiSymbolDoc::Serialize(CArchive& ar)
 {
 	if (ar.IsStoring())
 	{
@@ -163,21 +163,21 @@ void CTinyCadMultiSymbolDoc::Serialize(CArchive& ar)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadMultiSymbolDoc commands
+// CConCadMultiSymbolDoc commands
 
 // Is this document editing a library?
-bool CTinyCadMultiSymbolDoc::IsLibInUse(CLibraryStore *lib)
+bool CConCadMultiSymbolDoc::IsLibInUse(CLibraryStore *lib)
 {
 	return lib == m_libedit;
 }
 
 // get the number of documents in this multi-doc
-int CTinyCadMultiSymbolDoc::GetNumberOfSheets()
+int CConCadMultiSymbolDoc::GetNumberOfSheets()
 {
 	return m_ppp;
 }
 
-void CTinyCadMultiSymbolDoc::SetActiveSheetIndex(int i)
+void CConCadMultiSymbolDoc::SetActiveSheetIndex(int i)
 {
 	if (m_heterogeneous)
 	{
@@ -189,7 +189,7 @@ void CTinyCadMultiSymbolDoc::SetActiveSheetIndex(int i)
 	}
 }
 
-int CTinyCadMultiSymbolDoc::GetActiveSheetIndex()
+int CConCadMultiSymbolDoc::GetActiveSheetIndex()
 {
 	if (m_heterogeneous)
 	{
@@ -201,7 +201,7 @@ int CTinyCadMultiSymbolDoc::GetActiveSheetIndex()
 	}
 }
 
-CString CTinyCadMultiSymbolDoc::GetSheetName(int i)
+CString CConCadMultiSymbolDoc::GetSheetName(int i)
 {
 	CString r;
 	r.Format(_T("Part %c"), 'A' + i);
@@ -209,7 +209,7 @@ CString CTinyCadMultiSymbolDoc::GetSheetName(int i)
 }
 
 // Get the currently active sheet to work with
-CTinyCadDoc* CTinyCadMultiSymbolDoc::GetSheet(int i)
+CConCadDoc* CConCadMultiSymbolDoc::GetSheet(int i)
 {
 	if (m_heterogeneous)
 	{
@@ -221,7 +221,7 @@ CTinyCadDoc* CTinyCadMultiSymbolDoc::GetSheet(int i)
 	}
 }
 
-void CTinyCadMultiSymbolDoc::OnFolderContextMenu()
+void CConCadMultiSymbolDoc::OnFolderContextMenu()
 {
 	// Get the current location of the mouse
 	CPoint pt;
@@ -233,27 +233,27 @@ void CTinyCadMultiSymbolDoc::OnFolderContextMenu()
 	menu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, AfxGetMainWnd(), NULL);
 }
 
-CTinyCadDoc* CTinyCadMultiSymbolDoc::GetActiveSheet()
+CConCadDoc* CConCadMultiSymbolDoc::GetActiveSheet()
 {
 	return GetSheet(GetActiveSheetIndex());
 }
 
-void CTinyCadMultiSymbolDoc::OnLibraryAddpin()
+void CConCadMultiSymbolDoc::OnLibraryAddpin()
 {
 	GetActiveSheet()->SelectObject(new CDrawPin(GetActiveSheet()));
 }
 
-void CTinyCadMultiSymbolDoc::OnFileSave()
+void CConCadMultiSymbolDoc::OnFileSave()
 {
 	Store();
 }
 
-void CTinyCadMultiSymbolDoc::OnFileSaveAs()
+void CConCadMultiSymbolDoc::OnFileSaveAs()
 {
 	Store();
 }
 
-BOOL CTinyCadMultiSymbolDoc::CanCloseFrame(CFrameWnd* pFrameArg)
+BOOL CConCadMultiSymbolDoc::CanCloseFrame(CFrameWnd* pFrameArg)
 {
 	if (IsModified())
 	{
@@ -273,7 +273,7 @@ BOOL CTinyCadMultiSymbolDoc::CanCloseFrame(CFrameWnd* pFrameArg)
 	return TRUE;
 }
 
-void CTinyCadMultiSymbolDoc::OnLibrarySetpartsperpackage()
+void CConCadMultiSymbolDoc::OnLibrarySetpartsperpackage()
 {
 	CDlgPartsInPackage dialog;
 	dialog.m_Parts = m_ppp;
@@ -297,7 +297,7 @@ void CTinyCadMultiSymbolDoc::OnLibrarySetpartsperpackage()
 				{
 					if (!m_symbols[i])
 					{
-						m_symbols[i] = new CTinyCadSymbolDoc(this);
+						m_symbols[i] = new CConCadSymbolDoc(this);
 					}
 				}
 
@@ -314,7 +314,7 @@ void CTinyCadMultiSymbolDoc::OnLibrarySetpartsperpackage()
 
 }
 
-void CTinyCadMultiSymbolDoc::OnLibraryHeterogeneous()
+void CConCadMultiSymbolDoc::OnLibraryHeterogeneous()
 {
 	// If we are already hetrogeneous then ignore this click
 	if (m_heterogeneous)
@@ -333,13 +333,13 @@ void CTinyCadMultiSymbolDoc::OnLibraryHeterogeneous()
 	}
 }
 
-void CTinyCadMultiSymbolDoc::OnUpdateLibraryHeterogeneous(CCmdUI *pCmdUI)
+void CConCadMultiSymbolDoc::OnUpdateLibraryHeterogeneous(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
 	pCmdUI->SetCheck(m_heterogeneous ? 1 : 0);
 }
 
-void CTinyCadMultiSymbolDoc::OnLibraryHomogeneous()
+void CConCadMultiSymbolDoc::OnLibraryHomogeneous()
 {
 	// If we are already homogeneous then ignore this click
 	if (!m_heterogeneous)
@@ -358,14 +358,14 @@ void CTinyCadMultiSymbolDoc::OnLibraryHomogeneous()
 	}
 }
 
-void CTinyCadMultiSymbolDoc::OnUpdateLibraryHomogeneous(CCmdUI *pCmdUI)
+void CConCadMultiSymbolDoc::OnUpdateLibraryHomogeneous(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
 	pCmdUI->SetCheck(m_heterogeneous ? 0 : 1);
 }
 
 // Write this symbol back to the library
-BOOL CTinyCadMultiSymbolDoc::Store()
+BOOL CConCadMultiSymbolDoc::Store()
 {
 	m_symboledit.ppp = (BYTE) m_ppp;
 
@@ -385,7 +385,7 @@ BOOL CTinyCadMultiSymbolDoc::Store()
 
 }
 
-void CTinyCadMultiSymbolDoc::SaveXML(CXMLWriter &xml)
+void CConCadMultiSymbolDoc::SaveXML(CXMLWriter &xml)
 {
 	if (m_heterogeneous)
 	{
@@ -406,7 +406,7 @@ void CTinyCadMultiSymbolDoc::SaveXML(CXMLWriter &xml)
 	}
 }
 
-void CTinyCadMultiSymbolDoc::LoadXML(CXMLReader &xml, bool heterogeneous)
+void CConCadMultiSymbolDoc::LoadXML(CXMLReader &xml, bool heterogeneous)
 {
 	m_heterogeneous = heterogeneous;
 
@@ -429,7 +429,7 @@ void CTinyCadMultiSymbolDoc::LoadXML(CXMLReader &xml, bool heterogeneous)
 		{
 			if (tag == "TinyCAD")
 			{
-				CTinyCadSymbolDoc *pDesign = new CTinyCadSymbolDoc(this);
+				CConCadSymbolDoc *pDesign = new CConCadSymbolDoc(this);
 				pDesign->ReadFileXML(xml, TRUE);
 				pDesign->setSymbol();
 				m_symbols.push_back(pDesign);
@@ -440,7 +440,7 @@ void CTinyCadMultiSymbolDoc::LoadXML(CXMLReader &xml, bool heterogeneous)
 	}
 	else
 	{
-		CTinyCadSymbolDoc *pDesign = new CTinyCadSymbolDoc(this);
+		CConCadSymbolDoc *pDesign = new CConCadSymbolDoc(this);
 		pDesign->ReadFileXML(xml, TRUE);
 		pDesign->setSymbol();
 		m_ppp = pDesign->GetPartsPerPackage();

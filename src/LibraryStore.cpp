@@ -18,10 +18,10 @@
  */
 
 #include "stdafx.h"
-#include "TinyCAD.h"
+#include "ConCad.h"
 #include "LibraryStore.h"
-#include "TinyCadDoc.h"
-#include "TinyCadMultiSymbolDoc.h"
+#include "ConCadDoc.h"
+#include "ConCadMultiSymbolDoc.h"
 
 // The constructor
 CLibraryStore::CLibraryStore()
@@ -158,7 +158,7 @@ void CLibraryStore::ReRead()
 	Attach(m_name);
 
 	// Inform the document views
-	static_cast<CTinyCadApp*> (AfxGetApp())->ResetAllSymbols();
+	static_cast<CConCadApp*> (AfxGetApp())->ResetAllSymbols();
 }
 
 // Write this library to an XML file
@@ -180,8 +180,8 @@ void CLibraryStore::SaveXML(const TCHAR *filename, int id)
 		comment.Format( _T("This file was written by ConCAD (a fork of TinyCAD) %s %s\n")
 						_T("ConCAD files are compatible with TinyCAD; see https://www.tinycad.net\n")
 						_T("for the upstream TinyCAD project."),
-			(LPCTSTR)CTinyCadApp::GetVersion(),
-			(LPCTSTR)CTinyCadApp::GetReleaseType());
+			(LPCTSTR)CConCadApp::GetVersion(),
+			(LPCTSTR)CConCadApp::GetReleaseType());
 
 		xml.addComment(comment);
 
@@ -195,7 +195,7 @@ void CLibraryStore::SaveXML(const TCHAR *filename, int id)
 			if (id == -1 || id == it->first)
 			{
 				CLibraryStoreNameSet &symbol = it->second;
-				CTinyCadMultiSymbolDoc temp_doc(this, symbol);
+				CConCadMultiSymbolDoc temp_doc(this, symbol);
 
 				xml.addTag(_T("SYMBOL"));
 
@@ -242,7 +242,7 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 		}
 		xml.intoTag();
 
-		CTinyCadApp::SetLockOutSymbolRedraw(true);
+		CConCadApp::SetLockOutSymbolRedraw(true);
 		while (xml.nextTag(name))
 		{
 			// Is this a symbol?
@@ -250,7 +250,7 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 			{
 				// Load in the details
 				xml.intoTag();
-				CTinyCadMultiSymbolDoc temp_doc;
+				CConCadMultiSymbolDoc temp_doc;
 				drawingCollection drawing;
 				CLibraryStoreNameSet s;
 				s.LoadXML(&temp_doc, xml);
@@ -262,7 +262,7 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 		}
 		xml.outofTag();
 
-		CTinyCadApp::SetLockOutSymbolRedraw(false);
+		CConCadApp::SetLockOutSymbolRedraw(false);
 
 	}
 }

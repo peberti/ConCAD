@@ -20,7 +20,7 @@
 // This handles the actual drawing of objects
 #include "stdafx.h"
 #include <stdlib.h>
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -28,7 +28,7 @@
 
 #include "DSize.h"
 
-#include "TinyCadSymbolDoc.h"
+#include "ConCadSymbolDoc.h"
 #define TP_EDIT 1	//Feature contributed by Thomas Petersson.  This turns on auto-pin numbering.  The old code is left intact only in case there is an unforeseen problem.
 
 ////// The Pin Class //////
@@ -245,7 +245,7 @@ CString CDrawPin::Find(const TCHAR *theSearchm_string)
 }
 
 // Construct a pin
-CDrawPin::CDrawPin(CTinyCadDoc *pDesign) :
+CDrawPin::CDrawPin(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_segment = 1;
@@ -257,7 +257,7 @@ CDrawPin::CDrawPin(CTinyCadDoc *pDesign) :
 	m_str = "";
 	m_show = 3;
 	m_length = (WORD) pDesign->GetOptions()->GetPinLength();
-	m_part = (BYTE) (m_pDesign->IsEditLibrary() ? static_cast<CTinyCadSymbolDoc*> (m_pDesign)->GetPart() : 0);
+	m_part = (BYTE) (m_pDesign->IsEditLibrary() ? static_cast<CConCadSymbolDoc*> (m_pDesign)->GetPart() : 0);
 	m_number_pos = pDesign->GetOptions()->GetPinNumberPos();
 	m_centre_name = FALSE;
 }
@@ -301,7 +301,7 @@ int CDrawPin::IsInvisible()
 	{
 		// When in a library symbol edit window, only show pins that are part of this
 		// drawing
-		return m_part != static_cast<CTinyCadSymbolDoc*> (m_pDesign)->GetPart();
+		return m_part != static_cast<CConCadSymbolDoc*> (m_pDesign)->GetPart();
 	}
 	else
 	{

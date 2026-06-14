@@ -25,7 +25,7 @@
 #include <fstream>
 
 class CMultiSheetDoc;
-class CTinyCadMultiDoc;
+class CConCadMultiDoc;
 class CDrawMethod;
 
 #define AttrSpiceProlog		_T("$$SPICE_PROLOG")
@@ -408,22 +408,22 @@ protected:
 	void reopenErrorFile(bool force);
 
 	// Create netlist and output as a PCB file (TinyCAD v1.xx)
-	void WriteNetListFileTinyCAD(CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteNetListFileTinyCAD(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Create netlist and output as a PCB file (PADS-PCB)
-	void WriteNetListFilePADS(CTinyCadMultiDoc *pDesign, const TCHAR *filename, bool withValue);
+	void WriteNetListFilePADS(CConCadMultiDoc *pDesign, const TCHAR *filename, bool withValue);
 
 	// Create netlist and output as a Eagle PCB script
-	void WriteNetListFileEagle(CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteNetListFileEagle(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Create netlist and output as a Protel PCB script
-	void WriteNetListFileProtel(CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteNetListFileProtel(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Create netlist and output as a PCB GPLEDA PCB script
-	void WriteNetListFilePCB(CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteNetListFilePCB(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Create netlist and output as an XML file)
-	void WriteNetListFileXML(CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteNetListFileXML(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Perform the work of making a netlist from a single sheet in this design...
 	void MakeNetForSheet(fileCollection &imports, int import_index, int sheet, Counter& file_counter);
@@ -453,7 +453,7 @@ private:
 	typedef std::vector<intCollection> linkMap;
 
 	// worker function for low-level stuff (NO GUI elements)
-	void rawWriteNetListFileXML(CTinyCadMultiDoc *pDesign, std::ofstream& outfile);
+	void rawWriteNetListFileXML(CConCadMultiDoc *pDesign, std::ofstream& outfile);
 
 	// Worker function used to debug the netlist linker
 	void dumpNetListObjects();
@@ -461,15 +461,15 @@ private:
 	// For iterating over the library components of the design
 	class ComponentIterator {
 	public:
-		CTinyCadMultiDoc *pDesign;
+		CConCadMultiDoc *pDesign;
 		fileCollection::iterator fi;
 		int sheet;
-		CTinyCadMultiDoc *dsn;
+		CConCadMultiDoc *dsn;
 		drawingIterator drawing;
 		bool end;
 	} m_ComponentIterator;
 
-	void componentsBegin(CTinyCadMultiDoc *pDesign);
+	void componentsBegin(CConCadMultiDoc *pDesign);
 	void componentsNext();
 	CDrawMethod *currentComponent();
 	bool componentsEnd();
@@ -489,7 +489,7 @@ public:
 	virtual ~CNetList();
 
 	// Perform the work of making a netlist from this design...
-	void MakeNet(CTinyCadMultiDoc *pDesign);
+	void MakeNet(CConCadMultiDoc *pDesign);
 
 	// Link together several netlists
 	void Link(linkCollection& nets);
@@ -501,13 +501,13 @@ public:
 	void WriteWires();
 
 	// Create netlist and output as a PCB file
-	void WriteNetListFile(int type, CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteNetListFile(int type, CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Create netlist and output as a VHDL file
-	void WriteVHDLFile(CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteVHDLFile(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Create netlist and output as a SPICE file
-	void WriteSpiceFile(CTinyCadMultiDoc *pDesign, const TCHAR *filename);
+	void WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename);
 };
 
 // The structure which defines which errors/warnings are in use

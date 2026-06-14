@@ -18,32 +18,32 @@
  */
 
 #include "stdafx.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "SpecialPrintDlg.h"
-#include "TinyCadDoc.h"
-#include "TinyCadView.h"
+#include "ConCadDoc.h"
+#include "ConCadView.h"
 #include "OptionsPropertySheet.h"
 #include "DlgExportPng.h"
 #include "DlgColours.h"
 #include "MainFrm.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 #include "diag.h"
 #include "EditToolbar.h"
 #include "DlgPositionBox.h"
-#include ".\tinycadview.h"
+#include ".\ConCadView.h"
 
 #include <winspool.h>
 
 extern CDlgERCListBox theERCListBox;
 
-CTinyCadView* g_currentview = NULL;
+CConCadView* g_currentview = NULL;
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadView
-IMPLEMENT_DYNCREATE(CTinyCadView, CFolderView)
+// CConCadView
+IMPLEMENT_DYNCREATE(CConCadView, CFolderView)
 
-BEGIN_MESSAGE_MAP(CTinyCadView, CFolderView)
-	//{{AFX_MSG_MAP(CTinyCadView)
+BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
+	//{{AFX_MSG_MAP(CConCadView)
 	ON_UPDATE_COMMAND_UI(IDM_EDITEDIT, OnUpdateEditedit)
 	ON_UPDATE_COMMAND_UI(IDM_BUSBACK, OnUpdateBusback)
 	ON_UPDATE_COMMAND_UI(IDM_BUSSLASH, OnUpdateBusslash)
@@ -220,9 +220,9 @@ BEGIN_MESSAGE_MAP(CTinyCadView, CFolderView)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadView construction/destruction
+// CConCadView construction/destruction
 
-CTinyCadView::CTinyCadView()
+CConCadView::CConCadView()
 {
 	vRuler = NULL;
 	hRuler = NULL;
@@ -238,12 +238,12 @@ CTinyCadView::CTinyCadView()
 	m_Printing = FALSE;
 }
 
-CTinyCadView::~CTinyCadView()
+CConCadView::~CConCadView()
 {
 	g_currentview = NULL;
 }
 
-BOOL CTinyCadView::PreCreateWindow(CREATESTRUCT& cs)
+BOOL CConCadView::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
@@ -256,11 +256,11 @@ BOOL CTinyCadView::PreCreateWindow(CREATESTRUCT& cs)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadView printing
+// CConCadView printing
 
 // Our own version of this function, so that we
 // can set portrait/landscape mode automatically
-BOOL CTinyCadView::DoPreparePrinting(CPrintInfo* pInfo)
+BOOL CConCadView::DoPreparePrinting(CPrintInfo* pInfo)
 {
 	ASSERT(pInfo != NULL);
 	ASSERT(pInfo->m_pPD != NULL);
@@ -270,7 +270,7 @@ BOOL CTinyCadView::DoPreparePrinting(CPrintInfo* pInfo)
 	// don't prompt the user if we're doing print preview, printing directly,
 	// or printing via IPrint and have been instructed not to ask
 
-	CTinyCadApp* pApp = static_cast<CTinyCadApp*> (AfxGetApp());
+	CConCadApp* pApp = static_cast<CConCadApp*> (AfxGetApp());
 	if (pInfo->m_bPreview || pInfo->m_bDirect || (pInfo->m_bDocObject && ! (pInfo->m_dwFlags & PRINTFLAG_PROMPTUSER)))
 	{
 		if (pInfo->m_pPD->m_pd.hDC == NULL)
@@ -374,7 +374,7 @@ BOOL CTinyCadView::DoPreparePrinting(CPrintInfo* pInfo)
 	return TRUE;
 }
 
-BOOL CTinyCadView::OnPreparePrinting(CPrintInfo* pInfo)
+BOOL CConCadView::OnPreparePrinting(CPrintInfo* pInfo)
 {
 
 	// Get rid of any drawing tool
@@ -385,7 +385,7 @@ BOOL CTinyCadView::OnPreparePrinting(CPrintInfo* pInfo)
 	return DoPreparePrinting(pInfo);
 }
 
-void CTinyCadView::OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo)
+void CConCadView::OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo)
 {
 	// Calculate how many cols and rows of pages to use
 	double width;
@@ -394,7 +394,7 @@ void CTinyCadView::OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo)
 	width = max( pDC->GetDeviceCaps(HORZSIZE), pDC->GetDeviceCaps(VERTSIZE) ) * PIXELSPERMM;
 	height = min( pDC->GetDeviceCaps(HORZSIZE), pDC->GetDeviceCaps(VERTSIZE) ) * PIXELSPERMM;
 
-	double scale = CTinyCadRegistry::GetPrintScale();
+	double scale = CConCadRegistry::GetPrintScale();
 	double scale_x, scale_y;
 
 	if (GetCurrentDocument()->GetDetails().IsPortrait())
@@ -466,7 +466,7 @@ void CTinyCadView::OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo)
 	GetTransform().SetZoomFactor(NewZoom / 100.0);
 }
 
-void CTinyCadView::OnPrepareDC(CDC* pDC, CPrintInfo* pInfo)
+void CConCadView::OnPrepareDC(CDC* pDC, CPrintInfo* pInfo)
 {
 
 	if (pInfo)
@@ -493,7 +493,7 @@ void CTinyCadView::OnPrepareDC(CDC* pDC, CPrintInfo* pInfo)
 			row = (pInfo->m_nCurPage - 1) % m_rows;
 		}
 
-		double scale = CTinyCadRegistry::GetPrintScale();
+		double scale = CConCadRegistry::GetPrintScale();
 		int x = static_cast<int> ( (col * width / scale) * 100);
 		int y = static_cast<int> ( (row * height / scale) * 100);
 		GetTransform().SetOriginX(x);
@@ -503,7 +503,7 @@ void CTinyCadView::OnPrepareDC(CDC* pDC, CPrintInfo* pInfo)
 	CView::OnPrepareDC(pDC, pInfo);
 }
 
-void CTinyCadView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+void CConCadView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 {
 	GetDocument()->SetActiveSheetIndex(current_Sheet);
 	m_Printing = FALSE;
@@ -511,27 +511,27 @@ void CTinyCadView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadView diagnostics
+// CConCadView diagnostics
 
 #ifdef _DEBUG
-void CTinyCadView::AssertValid() const
+void CConCadView::AssertValid() const
 {
 	CView::AssertValid();
 }
 
-void CTinyCadView::Dump(CDumpContext& dc) const
+void CConCadView::Dump(CDumpContext& dc) const
 {
 	CView::Dump(dc);
 }
 #endif //_DEBUG
 
-CTinyCadDoc* CTinyCadView::GetCurrentDocument() // non-debug version is inline
+CConCadDoc* CConCadView::GetCurrentDocument() // non-debug version is inline
 {
 	return GetDocument()->GetCurrentSheet();
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadView message handlers
+// CConCadView message handlers
 
 class CDlgPositionBox;
 
@@ -550,7 +550,7 @@ static UINT BASED_CODE indicators[] =
 };
 
 // The OnCreate function, called when the window is created
-int CTinyCadView::OnCreate(LPCREATESTRUCT q)
+int CConCadView::OnCreate(LPCREATESTRUCT q)
 {
 	CView::OnCreate(q);
 
@@ -587,13 +587,13 @@ int CTinyCadView::OnCreate(LPCREATESTRUCT q)
 	return 0;
 }
 
-// CTinyCadView constructor:
+// CConCadView constructor:
 // Create the window with the appropriate style, size, menu, etc.
 //
 
 
 // Called when the window is about to be destroyed
-void CTinyCadView::OnDestroy()
+void CConCadView::OnDestroy()
 {
 	// Close the ERC list box
 	theERCListBox.Close();
@@ -625,7 +625,7 @@ int Message(int Resource, int Type, const TCHAR *NameString)
 
 ////// The mouse movement operators //////
 
-void CTinyCadView::OnMouseMove(UINT nFlags, CPoint p)
+void CConCadView::OnMouseMove(UINT nFlags, CPoint p)
 {
 
 	CContext theContext(this, GetTransform());
@@ -692,7 +692,7 @@ void CTinyCadView::OnMouseMove(UINT nFlags, CPoint p)
 	}
 }
 
-void CTinyCadView::OnLButtonDown(UINT nFlags, CPoint p)
+void CConCadView::OnLButtonDown(UINT nFlags, CPoint p)
 {
 	CContext theContext(this, GetTransform());
 
@@ -709,7 +709,7 @@ void CTinyCadView::OnLButtonDown(UINT nFlags, CPoint p)
 	SetCapture();
 }
 
-void CTinyCadView::OnLButtonDblClk(UINT nFlags, CPoint p)
+void CConCadView::OnLButtonDblClk(UINT nFlags, CPoint p)
 {
 	CContext theContext(this, GetTransform());
 
@@ -723,7 +723,7 @@ void CTinyCadView::OnLButtonDblClk(UINT nFlags, CPoint p)
 	CView::OnLButtonDblClk(nFlags, p);
 }
 
-void CTinyCadView::OnLButtonUp(UINT nFlags, CPoint p)
+void CConCadView::OnLButtonUp(UINT nFlags, CPoint p)
 {
 	if (m_captured != 0)
 	{
@@ -744,13 +744,13 @@ void CTinyCadView::OnLButtonUp(UINT nFlags, CPoint p)
 	CView::OnLButtonUp(nFlags, p);
 }
 
-void CTinyCadView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CConCadView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	// Check for single-key commands.
 	// Don't use the Accelerator key table for this
 	// because that will hog all key handling in TinyCAD.
-	// By handling the single-key commands here (CTinyCadView::OnKeyDown)
-	// they will correctly respond only when CTinyCadView has the keyboard focus.
+	// By handling the single-key commands here (CConCadView::OnKeyDown)
+	// they will correctly respond only when CConCadView has the keyboard focus.
 
 	// Shift-key not pressed (=high-order bit not set)
 	// Ctrl-key not pressed 
@@ -782,13 +782,13 @@ void CTinyCadView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	}
 }
 
-void CTinyCadView::OnSysKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CConCadView::OnSysKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	// Change cursor to 'block select' cursor
 	OnSetCursor(this, HTCLIENT, WM_SYSKEYDOWN);
 }
 
-void CTinyCadView::OnSysKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CConCadView::OnSysKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	if (!OnSetCursor(this, HTCLIENT, WM_SYSKEYUP))
 	{
@@ -797,7 +797,7 @@ void CTinyCadView::OnSysKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 	}
 }
 
-BOOL CTinyCadView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+BOOL CConCadView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
 	// trackers should only be in client area
 	if (nHitTest == HTCLIENT)
@@ -822,7 +822,7 @@ BOOL CTinyCadView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 	return CView::OnSetCursor(pWnd, nHitTest, message);
 }
 
-void CTinyCadView::OnRButtonDown(UINT nFlags, CPoint p)
+void CConCadView::OnRButtonDown(UINT nFlags, CPoint p)
 {
 	// Create a Context for this Click
 	CContext theContext(this, GetTransform());
@@ -841,7 +841,7 @@ void CTinyCadView::OnRButtonDown(UINT nFlags, CPoint p)
 	// This is because the right-mouse button is also used for panning.
 }
 
-void CTinyCadView::OnRButtonUp(UINT nFlags, CPoint p)
+void CConCadView::OnRButtonUp(UINT nFlags, CPoint p)
 {
 	CContext theContext(this, GetTransform());
 	CDPoint snapped_p = GetTransform().DeScale(GetCurrentDocument()->m_snap, p);
@@ -871,14 +871,14 @@ void CTinyCadView::OnRButtonUp(UINT nFlags, CPoint p)
 	//m_captured = 0;
 }
 
-void CTinyCadView::OnMButtonDown(UINT nFlags, CPoint point)
+void CConCadView::OnMButtonDown(UINT nFlags, CPoint point)
 {
 	// Panning is active instantly
 	m_panning = 1;
 	SetCapture();
 }
 
-void CTinyCadView::OnMButtonUp(UINT nFlags, CPoint point)
+void CConCadView::OnMButtonUp(UINT nFlags, CPoint point)
 {
 	// Panning is not active
 	m_panning = 0;
@@ -902,7 +902,7 @@ CString NameLength(const TCHAR *s, int MaxLen)
 	return (in.Left( (len + diff) / 2 - 2) + "..." + in.Mid( (len - diff) / 2 + 1));
 }
 
-void CTinyCadView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CConCadView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	switch (lHint)
 	{
@@ -945,13 +945,13 @@ void CTinyCadView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 }
 
-void CTinyCadView::OnRulerVert()
+void CConCadView::OnRulerVert()
 {
 	GetCurrentDocument()->SelectObject(new CDrawRuler(GetCurrentDocument(), FALSE));
 
 }
 
-void CTinyCadView::OnUpdateRulerVert(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateRulerVert(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -961,12 +961,12 @@ void CTinyCadView::OnUpdateRulerVert(CCmdUI* pCmdUI)
 
 }
 
-void CTinyCadView::OnRulerHoriz()
+void CConCadView::OnRulerHoriz()
 {
 	GetCurrentDocument()->SelectObject(new CDrawRuler(GetCurrentDocument(), TRUE));
 }
 
-void CTinyCadView::OnUpdateRulerHoriz(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateRulerHoriz(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -975,7 +975,7 @@ void CTinyCadView::OnUpdateRulerHoriz(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateEditedit(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditedit(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -984,7 +984,7 @@ void CTinyCadView::OnUpdateEditedit(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateBusback(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateBusback(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -993,7 +993,7 @@ void CTinyCadView::OnUpdateBusback(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateBusslash(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateBusslash(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1002,7 +1002,7 @@ void CTinyCadView::OnUpdateBusslash(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolarc(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolarc(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1011,7 +1011,7 @@ void CTinyCadView::OnUpdateToolarc(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolbus(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolbus(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1020,7 +1020,7 @@ void CTinyCadView::OnUpdateToolbus(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolbusname(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolbusname(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1029,7 +1029,7 @@ void CTinyCadView::OnUpdateToolbusname(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolcircle(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolcircle(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1038,7 +1038,7 @@ void CTinyCadView::OnUpdateToolcircle(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolconnect(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolconnect(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1048,7 +1048,7 @@ void CTinyCadView::OnUpdateToolconnect(CCmdUI* pCmdUI)
 	pCmdUI->Enable(!GetCurrentDocument()->IsEditLibrary());
 }
 
-void CTinyCadView::OnUpdateToolorigin(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolorigin(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1058,7 +1058,7 @@ void CTinyCadView::OnUpdateToolorigin(CCmdUI* pCmdUI)
 	pCmdUI->Enable(GetCurrentDocument()->IsEditLibrary());
 }
 
-void CTinyCadView::OnUpdateToolget(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolget(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1067,7 +1067,7 @@ void CTinyCadView::OnUpdateToolget(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateTooljunc(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateTooljunc(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1076,7 +1076,7 @@ void CTinyCadView::OnUpdateTooljunc(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToollabel(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToollabel(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1085,7 +1085,7 @@ void CTinyCadView::OnUpdateToollabel(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolHierarchical(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolHierarchical(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1095,7 +1095,7 @@ void CTinyCadView::OnUpdateToolHierarchical(CCmdUI* pCmdUI)
 	pCmdUI->Enable(!GetCurrentDocument()->IsHierarchicalSymbol());
 }
 
-void CTinyCadView::OnUpdateToolpolygon(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolpolygon(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1104,7 +1104,7 @@ void CTinyCadView::OnUpdateToolpolygon(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolpower(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolpower(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1113,7 +1113,7 @@ void CTinyCadView::OnUpdateToolpower(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolsquare(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolsquare(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1122,7 +1122,7 @@ void CTinyCadView::OnUpdateToolsquare(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateNoteTextText(CCmdUI* pCmdUI) 
+void CConCadView::OnUpdateNoteTextText(CCmdUI* pCmdUI) 
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)	
@@ -1131,7 +1131,7 @@ void CTinyCadView::OnUpdateNoteTextText(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateTooltext(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateTooltext(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1140,7 +1140,7 @@ void CTinyCadView::OnUpdateTooltext(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateToolwire(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateToolwire(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1149,7 +1149,7 @@ void CTinyCadView::OnUpdateToolwire(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateViewcentre(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateViewcentre(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1158,7 +1158,7 @@ void CTinyCadView::OnUpdateViewcentre(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateEditdrag(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditdrag(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1167,7 +1167,7 @@ void CTinyCadView::OnUpdateEditdrag(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateEditdup(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditdup(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1177,7 +1177,7 @@ void CTinyCadView::OnUpdateEditdup(CCmdUI* pCmdUI)
 
 }
 
-void CTinyCadView::OnUpdateEditrotate(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditrotate(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1186,7 +1186,7 @@ void CTinyCadView::OnUpdateEditrotate(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnUpdateEditmove(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditmove(CCmdUI* pCmdUI)
 {
 	CDrawingObject *q = GetCurrentDocument()->GetEdit();
 	if (q)
@@ -1195,7 +1195,7 @@ void CTinyCadView::OnUpdateEditmove(CCmdUI* pCmdUI)
 	}
 }
 
-void CTinyCadView::OnInitialUpdate()
+void CConCadView::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
 
@@ -1204,7 +1204,7 @@ void CTinyCadView::OnInitialUpdate()
 
 	SetTabsFromDocument();
 
-	if (CTinyCadRegistry::GetMDIMaximize())
+	if (CConCadRegistry::GetMDIMaximize())
 	{
 		((CMDIChildWndEx *) GetParentFrame())->MDIMaximize();
 	}
@@ -1257,7 +1257,7 @@ void CTinyCadView::OnInitialUpdate()
 
 }
 
-void CTinyCadView::SetTabsFromDocument()
+void CConCadView::SetTabsFromDocument()
 {
 	CFolderTabCtrl& ftc = GetFolderFrame()->GetFolderTabCtrl();
 	CMultiSheetDoc *pDoc = GetDocument();
@@ -1285,19 +1285,19 @@ void CTinyCadView::SetTabsFromDocument()
 
 ////// The Snap to Grid menu //////
 
-void CTinyCadView::OnSnaptogrid()
+void CConCadView::OnSnaptogrid()
 {
 	GetCurrentDocument()->SetSnapToGrid(!GetCurrentDocument()->GetSnapToGrid());
 }
 
-void CTinyCadView::OnUpdateSnaptogrid(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateSnaptogrid(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCurrentDocument()->GetSnapToGrid() ? 1 : 0);
 }
 
 ////// The Toggle Grid Size //////
 
-void CTinyCadView::OnToggleGridSize()
+void CConCadView::OnToggleGridSize()
 {
 	double grid = GetCurrentDocument()->m_snap.GetAccurateGrid();
 	if (grid == NormalGrid)
@@ -1314,7 +1314,7 @@ void CTinyCadView::OnToggleGridSize()
 	RedrawWindow();
 }
 
-void CTinyCadView::OnUpdateGridSize(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateGridSize(CCmdUI* pCmdUI)
 {
 	double grid = GetCurrentDocument()->m_snap.GetAccurateGrid();
 	int units = GetCurrentDocument()->GetOptions()->GetUnits(); 
@@ -1323,47 +1323,47 @@ void CTinyCadView::OnUpdateGridSize(CCmdUI* pCmdUI)
 }
 ////// The REPEAT menu //////
 
-void CTinyCadView::OnRepeatNameUp()
+void CConCadView::OnRepeatNameUp()
 {
 	GetCurrentDocument()->SetNameDir(1);
 }
 
-void CTinyCadView::OnUpdateRepeatnameup(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateRepeatnameup(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCurrentDocument()->GetNameDir() == 1 ? 1 : 0);
 }
 
-void CTinyCadView::OnRepeatNameDown()
+void CConCadView::OnRepeatNameDown()
 {
 	GetCurrentDocument()->SetNameDir(-1);
 }
 
-void CTinyCadView::OnUpdateRepeatnamedown(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateRepeatnamedown(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCurrentDocument()->GetNameDir() == -1 ? 1 : 0);
 }
 
-void CTinyCadView::OnRepeatPinUp()
+void CConCadView::OnRepeatPinUp()
 {
 	GetCurrentDocument()->SetPinDir(1);
 }
 
-void CTinyCadView::OnUpdateRepeatpinup(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateRepeatpinup(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCurrentDocument()->GetPinDir() == 1 ? 1 : 0);
 }
 
-void CTinyCadView::OnRepeatPinDown()
+void CConCadView::OnRepeatPinDown()
 {
 	GetCurrentDocument()->SetPinDir(-1);
 }
 
-void CTinyCadView::OnUpdateRepeatpindown(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateRepeatpindown(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(GetCurrentDocument()->GetPinDir() == -1 ? 1 : 0);
 }
 
-void CTinyCadView::OnUpdateEditpaste(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditpaste(CCmdUI* pCmdUI)
 {
 	BOOL r = IsClipboardAvailable() 
 		|| ::IsClipboardFormatAvailable( CF_ENHMETAFILE )
@@ -1372,27 +1372,27 @@ void CTinyCadView::OnUpdateEditpaste(CCmdUI* pCmdUI)
 	pCmdUI->Enable(r);
 }
 
-void CTinyCadView::OnUpdateEditcut(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditcut(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
-void CTinyCadView::OnUpdateEditcopy(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditcopy(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
-void CTinyCadView::OnUpdateEditDelete(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditDelete(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
-void CTinyCadView::OnUpdateEditSelectAll(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditSelectAll(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(TRUE);
 }
 
-void CTinyCadView::OnUpdateEditRotateLRF(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditRotateLRF(CCmdUI* pCmdUI)
 {
 	ObjType type = GetCurrentDocument()->GetEdit()->GetType();
 	BOOL r = ( type == xEditItem && GetCurrentDocument()->IsSelected())
@@ -1409,17 +1409,17 @@ void CTinyCadView::OnUpdateEditRotateLRF(CCmdUI* pCmdUI)
 	pCmdUI->Enable(r);
 }
 
-void CTinyCadView::OnUpdateEditduplicate(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditduplicate(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
-void CTinyCadView::OnUpdateEditCopyto(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateEditCopyto(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
-BOOL CTinyCadView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+BOOL CConCadView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	if (zDelta > 0)
 	{
@@ -1433,9 +1433,9 @@ BOOL CTinyCadView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	return TRUE;
 }
 
-void CTinyCadView::OnActivateView(BOOL bActivate, CView* pActivateView, CView* pDeactiveView)
+void CConCadView::OnActivateView(BOOL bActivate, CView* pActivateView, CView* pDeactiveView)
 {
-	//ATLTRACE2("CTinyCadView::OnActivateView() - bActivate:%d, %x, %x\n", bActivate, pActivateView, g_currentview);
+	//ATLTRACE2("CConCadView::OnActivateView() - bActivate:%d, %x, %x\n", bActivate, pActivateView, g_currentview);
 	if (bActivate)
 	{	//Activate this view
 		// When switching to a different view then
@@ -1451,7 +1451,7 @@ void CTinyCadView::OnActivateView(BOOL bActivate, CView* pActivateView, CView* p
 	{	//Deactivate this view
 		CDrawingObject* obj;
 		obj = GetCurrentDocument()->GetEdit();
-		//ATLTRACE2("CTinyCadView::OnActivateView() - de-activating this View.  obj is %s, obj->GetType() = %d\n", 
+		//ATLTRACE2("CConCadView::OnActivateView() - de-activating this View.  obj is %s, obj->GetType() = %d\n", 
 		//	(obj ? "valid":"NULL"),
 		//	(obj ? obj->GetType() : -1));
 
@@ -1459,7 +1459,7 @@ void CTinyCadView::OnActivateView(BOOL bActivate, CView* pActivateView, CView* p
 		if (obj && obj->GetType() != xEditItem)
 		{
 			// Get rid of any drawing tool at this moment
-			ATLTRACE2("CTinyCadView::OnActivateView() - de-activating this View.  Getting rid of any active drawing tools.\n");
+			ATLTRACE2("CConCadView::OnActivateView() - de-activating this View.  Getting rid of any active drawing tools.\n");
 
 			GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
 		}
@@ -1468,7 +1468,7 @@ void CTinyCadView::OnActivateView(BOOL bActivate, CView* pActivateView, CView* p
 	CView::OnActivateView(bActivate, pActivateView, pDeactiveView);
 }
 
-void CTinyCadView::OnViewOptions()
+void CConCadView::OnViewOptions()
 {
 	COptionsPropertySheet propSheet;
 
@@ -1481,98 +1481,98 @@ void CTinyCadView::OnViewOptions()
 	Invalidate();
 }
 
-void CTinyCadView::OnEditDelete()
+void CConCadView::OnEditDelete()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, IDM_EDITDELITEM);
 }
 
-void CTinyCadView::OnContextMakehorizontal()
+void CConCadView::OnContextMakehorizontal()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_MAKEHORIZONTAL);
 }
 
-void CTinyCadView::OnContextMakevertical()
+void CConCadView::OnContextMakevertical()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_MAKEVERTICAL);
 }
 
-void CTinyCadView::OnContextArcin()
+void CConCadView::OnContextArcin()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_ARCIN);
 }
 
-void CTinyCadView::OnContextArcout()
+void CConCadView::OnContextArcout()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_ARCOUT);
 }
 
-void CTinyCadView::OnContextCurve()
+void CConCadView::OnContextCurve()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_CURVE);
 }
 
-void CTinyCadView::OnContextFreeline()
+void CConCadView::OnContextFreeline()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_FREELINE);
 }
 
-void CTinyCadView::OnContextAddhandle()
+void CConCadView::OnContextAddhandle()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_ADDHANDLE);
 }
 
-void CTinyCadView::OnContextDeletehandle()
+void CConCadView::OnContextDeletehandle()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_DELETEHANDLE);
 }
 
-void CTinyCadView::OnContextCanceldrawing()
+void CConCadView::OnContextCanceldrawing()
 {
 	// switch back to the Edit tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
 }
 
-void CTinyCadView::OnContextFinishdrawing()
+void CConCadView::OnContextFinishdrawing()
 {
 	GetCurrentDocument()->GetEdit()->FinishDrawing(MousePosition);
 }
 
-void CTinyCadView::OnContextReplacesymbol()
+void CConCadView::OnContextReplacesymbol()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_REPLACESYMBOL);
 }
 
-void CTinyCadView::OnContextOpendesign()
+void CConCadView::OnContextOpendesign()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_OPENDESIGN);
 }
 
-void CTinyCadView::OnContextReloadsymbolfromdesign()
+void CConCadView::OnContextReloadsymbolfromdesign()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, ID_CONTEXT_RELOADSYMBOLFROMDESIGN);
 }
 
-void CTinyCadView::OnContextZorderBringtofront()
+void CConCadView::OnContextZorderBringtofront()
 {
 	GetCurrentDocument()->BringToFront();
 }
 
-void CTinyCadView::OnContextZorderSendtoback()
+void CConCadView::OnContextZorderSendtoback()
 {
 	GetCurrentDocument()->SendToBack();
 }
 
-void CTinyCadView::OnUpdateContextZorderBringtofront(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateContextZorderBringtofront(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
-void CTinyCadView::OnUpdateContextZorderSendtoback(CCmdUI* pCmdUI)
+void CConCadView::OnUpdateContextZorderSendtoback(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
-void CTinyCadView::OnFileSaveasbitmap()
+void CConCadView::OnFileSaveasbitmap()
 {
 
 	// Get the file in which to save the network
@@ -1625,7 +1625,7 @@ void CTinyCadView::OnFileSaveasbitmap()
 // round-trip reliably, so we match the page to a standard size and use its
 // code wherever possible, only attempting a custom size for non-standard
 // pages (e.g. A1/A0) as a best effort.
-static void SetDevModePageSize(DEVMODE *pDevMode, HANDLE hPrinter, LPCTSTR printerName, CTinyCadDoc *pSheet)
+static void SetDevModePageSize(DEVMODE *pDevMode, HANDLE hPrinter, LPCTSTR printerName, CConCadDoc *pSheet)
 {
 	CPoint page = pSheet->GetDetails().GetPageBoundsAsPoint();
 
@@ -1690,7 +1690,7 @@ static void SetDevModePageSize(DEVMODE *pDevMode, HANDLE hPrinter, LPCTSTR print
 // built-in "Microsoft Print to PDF" printer driver (Windows 10 and later).
 // Each sheet is scaled to fit a page, so no third-party PDF library is needed
 // and the output stays fully vectorised (lines and text remain selectable).
-void CTinyCadView::OnFileExportpdf()
+void CConCadView::OnFileExportpdf()
 {
 	static const TCHAR *kPdfPrinter = _T("Microsoft Print to PDF");
 
@@ -1755,7 +1755,7 @@ void CTinyCadView::OnFileExportpdf()
 
 	// Size the first page to match its sheet's page setup before creating the DC
 	int sheets = GetDocument()->GetNumberOfSheets();
-	CTinyCadDoc *pFirstSheet = (sheets > 0) ? GetDocument()->GetSheet(0) : NULL;
+	CConCadDoc *pFirstSheet = (sheets > 0) ? GetDocument()->GetSheet(0) : NULL;
 	if (pFirstSheet != NULL)
 	{
 		SetDevModePageSize(pDevMode, hPrinter, kPdfPrinter, pFirstSheet);
@@ -1793,7 +1793,7 @@ void CTinyCadView::OnFileExportpdf()
 		ok = true;
 		for (int sheet = 0; sheet < sheets; ++sheet)
 		{
-			CTinyCadDoc *pSheet = GetDocument()->GetSheet(sheet);
+			CConCadDoc *pSheet = GetDocument()->GetSheet(sheet);
 			if (pSheet == NULL)
 			{
 				continue;
@@ -1839,7 +1839,7 @@ void CTinyCadView::OnFileExportpdf()
 	}
 }
 //-------------------------------------------------------------------------
-void CTinyCadView::OnOptionsColours()
+void CConCadView::OnOptionsColours()
 {
 	CDlgColours(GetCurrentDocument()->GetOptions()->GetUserColor()).DoModal();
 
@@ -1847,7 +1847,7 @@ void CTinyCadView::OnOptionsColours()
 }
 //-------------------------------------------------------------------------
 // The user has changed the current folder
-void CTinyCadView::OnChangedFolder(int iPage)
+void CConCadView::OnChangedFolder(int iPage)
 {
 	// switch back to the Edit tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -1859,13 +1859,13 @@ void CTinyCadView::OnChangedFolder(int iPage)
 }
 //-------------------------------------------------------------------------
 
-void CTinyCadView::OnFolderContextMenu()
+void CConCadView::OnFolderContextMenu()
 {
 	GetDocument()->OnFolderContextMenu();
 }
 
 #define ALL_IMAGE_FILES _T("*.png;*.emf;*.bmp;*.jpeg;*.jpe;*.jpg")
-void CTinyCadView::OnEditInsertpicture()
+void CConCadView::OnEditInsertpicture()
 {
 	// switch back to the Edit tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -1893,14 +1893,14 @@ void CTinyCadView::OnEditInsertpicture()
 	}
 }
 
-void CTinyCadView::SelectSheet(int sheet)
+void CConCadView::SelectSheet(int sheet)
 {
 	CFolderTabCtrl& ftc = GetFolderFrame()->GetFolderTabCtrl();
 	GetDocument()->SetActiveSheetIndex(sheet);
 	ftc.SelectItem(GetDocument()->GetActiveSheetIndex());
 }
 
-void CTinyCadView::ChangeDir(int dir)
+void CConCadView::ChangeDir(int dir)
 {
 	ObjType type = GetCurrentDocument()->GetEdit()->GetType();
 	// Rotate selection

@@ -370,28 +370,28 @@
     <ClCompile Include="TextEditView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCad.cpp">
+    <ClCompile Include="ConCad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCadDoc.cpp">
+    <ClCompile Include="ConCadDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCadHierarchicalDoc.cpp">
+    <ClCompile Include="ConCadHierarchicalDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCadMultiDoc.cpp">
+    <ClCompile Include="ConCadMultiDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCadMultiSymbolDoc.cpp">
+    <ClCompile Include="ConCadMultiSymbolDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCadRegistry.cpp">
+    <ClCompile Include="ConCadRegistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCadSymbolDoc.cpp">
+    <ClCompile Include="ConCadSymbolDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyCadView.cpp">
+    <ClCompile Include="ConCadView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Transform.cpp">
@@ -714,28 +714,28 @@
     <ClInclude Include="TextEditView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCad.h">
+    <ClInclude Include="ConCad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCadDoc.h">
+    <ClInclude Include="ConCadDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCadHierarchicalDoc.h">
+    <ClInclude Include="ConCadHierarchicalDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCadMultiDoc.h">
+    <ClInclude Include="ConCadMultiDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCadMultiSymbolDoc.h">
+    <ClInclude Include="ConCadMultiSymbolDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCadRegistry.h">
+    <ClInclude Include="ConCadRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCadSymbolDoc.h">
+    <ClInclude Include="ConCadSymbolDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyCadView.h">
+    <ClInclude Include="ConCadView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UserColor.h">
@@ -881,10 +881,10 @@
     <None Include="..\docs\Symbol menu.html">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\TinyCad.ico">
+    <None Include="res\ConCad.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\TinyCad.rc2">
+    <None Include="res\ConCad.rc2">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="res\selected.ico">
@@ -893,7 +893,7 @@
     <None Include="..\docs\special menu.html">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\TinyCadDoc.ico">
+    <None Include="res\ConCadDoc.ico">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="res\Toolbar.bmp">
@@ -947,12 +947,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="TinyCAD.manifest">
+    <Manifest Include="ConCAD.manifest">
       <Filter>Resource Files</Filter>
     </Manifest>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="TinyCad.rc">
+    <ResourceCompile Include="ConCad.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

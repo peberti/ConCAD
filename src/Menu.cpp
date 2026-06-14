@@ -7,8 +7,8 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "StreamClipboard.h"
 #include "DlgAbout.h"
@@ -21,7 +21,7 @@
 //////// the FILE menu ////////
 
 
-void CTinyCadView::OnFileDesign()
+void CConCadView::OnFileDesign()
 {
 	CDetailsPropertySheet theDialog(GetDocument(), this);
 
@@ -32,14 +32,14 @@ void CTinyCadView::OnFileDesign()
 	}
 }
 
-void CTinyCadView::OnFileImport()
+void CConCadView::OnFileImport()
 {
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
 	GetCurrentDocument()->UnSelect();
 	GetCurrentDocument()->Import(TRUE);
 }
 
-void CTinyCadView::OnFilePageSet()
+void CConCadView::OnFilePageSet()
 {
 	// Get rid of any drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -57,7 +57,7 @@ void CTinyCadView::OnFilePageSet()
 extern CDlgERCListBox theERCListBox;
 
 // Find a string in this design
-void CTinyCadView::OnFindFind()
+void CConCadView::OnFindFind()
 {
 	// Get rid of any drawing tool at this moment
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -117,7 +117,7 @@ void CTinyCadView::OnFindFind()
 
 //////// The VIEW menu ////////
 
-void CTinyCadView::OnViewZoomIn()
+void CConCadView::OnViewZoomIn()
 {
 	//CMenu *pMenu = GetMenu();
 	double NewZoom = GetTransform().doubleScale(1.0) * 1.3;
@@ -139,7 +139,7 @@ void CTinyCadView::OnViewZoomIn()
 	}
 }
 
-void CTinyCadView::OnViewZoomOut()
+void CConCadView::OnViewZoomOut()
 {
 	double NewZoom = GetTransform().doubleScale(1.0) / 1.3;
 	CPoint p = GetTransform().Scale(MousePosition);
@@ -161,7 +161,7 @@ void CTinyCadView::OnViewZoomOut()
 
 
 // Get an object
-void CTinyCadView::OnSelectGet()
+void CConCadView::OnSelectGet()
 {
 	CLibraryStoreSymbol *theSymbol = static_cast<CMainFrame*> (AfxGetMainWnd())->GetSelectSymbol();
 	if (theSymbol == NULL)
@@ -177,7 +177,7 @@ void CTinyCadView::OnSelectGet()
 
 //////// The Help Menu ////////
 
-void CTinyCadView::OnAbout()
+void CConCadView::OnAbout()
 {
 	CDlgAbout().DoModal();
 }
@@ -185,7 +185,7 @@ void CTinyCadView::OnAbout()
 ////// The EDIT Menu //////
 
 
-void CTinyCadView::OnEditCut()
+void CConCadView::OnEditCut()
 {
 	if (GetCurrentDocument()->GetEdit()->GetType() != xEditItem) return;
 
@@ -197,7 +197,7 @@ void CTinyCadView::OnEditCut()
 }
 
 // Paste...
-void CTinyCadView::OnEditPaste()
+void CConCadView::OnEditPaste()
 {
 	OpenClipboard();
 	if (IsClipboardAvailable())
@@ -282,24 +282,24 @@ void CTinyCadView::OnEditPaste()
 	CloseClipboard();
 }
 
-void CTinyCadView::OnDestroyClipboard()
+void CConCadView::OnDestroyClipboard()
 {
 	CWnd::OnDestroyClipboard();
 }
 
-BOOL CTinyCadView::IsClipboardAvailable()
+BOOL CConCadView::IsClipboardAvailable()
 {
 	return ::IsClipboardFormatAvailable(ClipboardFormat);
 }
 
-void CTinyCadView::OnEditDuplicate()
+void CConCadView::OnEditDuplicate()
 {
 	if (GetCurrentDocument()->GetEdit()->GetType() != xEditItem) return;
 	OnEditCopy();
 	OnEditPaste();
 }
 
-void CTinyCadView::OnEditCopy()
+void CConCadView::OnEditCopy()
 {
 	if (GetCurrentDocument()->GetEdit()->GetType() != xEditItem) return;
 
@@ -327,7 +327,7 @@ void CTinyCadView::OnEditCopy()
 	CloseClipboard();
 }
 
-void CTinyCadView::OnEditCopyto()
+void CConCadView::OnEditCopyto()
 {
 	if (GetCurrentDocument()->IsSelected())
 	{
@@ -335,7 +335,7 @@ void CTinyCadView::OnEditCopyto()
 	}
 }
 
-void CTinyCadView::OnEditSelectAll()
+void CConCadView::OnEditSelectAll()
 {
 	// Get rid of the current editing object
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -344,34 +344,34 @@ void CTinyCadView::OnEditSelectAll()
 	GetCurrentDocument()->SelectAll();
 }
 
-void CTinyCadView::OnEditRotateLeft()
+void CConCadView::OnEditRotateLeft()
 {
 	ChangeDir(2);
 }
 
-void CTinyCadView::OnEditRotateRight()
+void CConCadView::OnEditRotateRight()
 {
 	ChangeDir(3);
 }
 
-void CTinyCadView::OnEditFlip()
+void CConCadView::OnEditFlip()
 {
 	ChangeDir(4);
 }
 
-void CTinyCadView::OnSelectArc()
+void CConCadView::OnSelectArc()
 {
 	g_EditToolBar.m_DrawPolyEdit.SetArcAngle();
 	GetCurrentDocument()->SelectObject(new CDrawPolygon(GetCurrentDocument()));
 }
 
-void CTinyCadView::OnSelectPolygon()
+void CConCadView::OnSelectPolygon()
 {
 	g_EditToolBar.m_DrawPolyEdit.SetLineAngle();
 	GetCurrentDocument()->SelectObject(new CDrawPolygon(GetCurrentDocument()));
 }
 
-void CTinyCadView::OnSelectHierarchical()
+void CConCadView::OnSelectHierarchical()
 {
 	// Drop the current drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -389,7 +389,7 @@ void CTinyCadView::OnSelectHierarchical()
 	}
 }
 
-void CTinyCadView::OnSelectJunction()
+void CConCadView::OnSelectJunction()
 {
 	if (!GetCurrentDocument()->GetOptions()->GetAutoJunc())
 	{

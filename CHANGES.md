@@ -6,7 +6,7 @@ directory of the ConCAD project. The XML `.dsn` file format is the only
 serialization format affected; the legacy binary format is unchanged.
 
 Build with Visual Studio (Community 2019/2022 with the MFC component
-installed). Open `TinyCad.sln` at the repo root, then Build → Build
+installed). Open `ConCad.sln` at the repo root, then Build → Build
 Solution (Ctrl+Shift+B).
 
 ---
@@ -132,7 +132,7 @@ exact-name collisions — the Add dialog refuses reserved names like
 - `src/DetailsPropertySheet.cpp` (drops the separate Variables page)
 - `src/DrawText.cpp`, `src/DrawNoteText.cpp`, `src/Object.h` (token
   substitution in free Text / Note objects)
-- `src/TinyCad.rc` (Design page hosts the Variables editor; Design
+- `src/ConCad.rc` (Design page hosts the Variables editor; Design
   Details moved to the Edit menu), `src/resource.h` (new control IDs)
 
 ---
@@ -173,12 +173,12 @@ value is what the `{Sheets}` built-in token resolves to.
 
 - `src/Details.h`, `src/Details.cpp` (new `SetSheetContext`,
   `GetSheetsDisplay`)
-- `src/TinyCadDoc.cpp` (compute index/total before
+- `src/ConCadDoc.cpp` (compute index/total before
   `GetDetails().Display`)
 - `src/Io.cpp` (compute index/total before `WriteXML`)
 - `src/DetailsPropertyPages.cpp` (read-only field, no longer written
   on Apply)
-- `src/TinyCad.rc` (label change, `ES_READONLY` on the edit field)
+- `src/ConCad.rc` (label change, `ES_READONLY` on the edit field)
 
 ---
 
@@ -216,7 +216,7 @@ When you click OK on `File → Design Details…`:
   the propagation).
 
 When you **add a new sheet**, the existing copy-on-add logic in
-`CTinyCadMultiDoc` already initializes the new sheet's `CDetails` from
+`CConCadMultiDoc` already initializes the new sheet's `CDetails` from
 the current sheet's. So tokens and design fields are inherited.
 
 ### Files changed
@@ -275,12 +275,12 @@ internal signal wires in a schematic.
 - `src/Io.cpp` (factory dispatch on `<CABLE>` tag)
 - `src/NetList.cpp` (cables routed through xWire net-tracing,
   junction-crossing, and label-binding logic)
-- `src/DragUtils.cpp`, `src/JunctionUtils.cpp`, `src/TinyCadDoc.cpp`
+- `src/DragUtils.cpp`, `src/JunctionUtils.cpp`, `src/ConCadDoc.cpp`
   (drag/junction/snap paths include xCable alongside xWire)
-- `src/TinyCadView.h`, `src/TinyCadView.cpp` (new `OnSelectCable`
+- `src/ConCadView.h`, `src/ConCadView.cpp` (new `OnSelectCable`
   handler, message-map entry)
 - `src/resource.h` (new `IDM_TOOLCABLE = 32908`)
-- `src/TinyCad.rc` (Shift+F2 accelerator, status-bar string)
+- `src/ConCad.rc` (Shift+F2 accelerator, status-bar string)
 
 ---
 
@@ -351,7 +351,7 @@ If you want a "Default color" button added to the edit dialog, ask.
   `SelectBrush`, `SetTextColor`)
 - `src/EditDlgMethodEdit.h`, `src/EditDlgMethodEdit.cpp` (new
   `OnPickColor` handler, Color button enable/disable logic)
-- `src/TinyCad.rc` (new "Co&lor…" button in `IDD_METHOD`, new
+- `src/ConCad.rc` (new "Co&lor…" button in `IDD_METHOD`, new
   "This symbol is a connector…" checkbox in `IDD_UPDATE`)
 - `src/resource.h` (new `METHODBOX_COLOR = 40012`,
   `IDC_IS_CONNECTOR = 40011`)
@@ -433,7 +433,7 @@ built-ins and the user variables of §1) are substituted at paint time.
   `src/nanosvg/nanosvg.h` (vendored)
 - `src/Details.{h,cpp}` (`m_sTitleBlockName` / embedded copy /
   `m_sEffectiveSvg`, `ResolveTitleBlock`, `DisplayBox` SVG branch)
-- `src/DetailsPropertyPages.*`, `src/TinyCad.rc` (the Title Block tab)
+- `src/DetailsPropertyPages.*`, `src/ConCad.rc` (the Title Block tab)
 
 ---
 
@@ -462,7 +462,7 @@ A new **Drawing** tab in `Options → Settings` collects drawing defaults
   `src/DrawNoteText.cpp` (note defaults), `src/DrawMethod.cpp` (label
   font)
 - `src/UserColor.{h,cpp}` (`CABLE` colour),
-  `src/TinyCad.rc` + `src/resource.h` (`IDD_OPTIONS_DRAWING`)
+  `src/ConCad.rc` + `src/resource.h` (`IDD_OPTIONS_DRAWING`)
 
 ---
 
@@ -504,10 +504,10 @@ whole design to a single PDF, **one page per sheet**.
 
 ### Files changed
 
-- `src/TinyCadView.{h,cpp}` (`OnFileExportpdf`, `SetDevModePageSize`,
+- `src/ConCadView.{h,cpp}` (`OnFileExportpdf`, `SetDevModePageSize`,
   menu/toolbar/message-map wiring, `#include <winspool.h>`)
-- `src/TinyCadDoc.{h,cpp}` (`SavePDFPage` — fit-to-page render of one sheet)
-- `src/TinyCad.rc` + `src/resource.h` (`ID_FILE_EXPORTPDF`, menu item,
+- `src/ConCadDoc.{h,cpp}` (`SavePDFPage` — fit-to-page render of one sheet)
+- `src/ConCad.rc` + `src/resource.h` (`ID_FILE_EXPORTPDF`, menu item,
   `IDR_MAINFRAME` toolbar button + tooltip/status string)
 - `src/res/Toolbar.bmp` (extended 112→128 px: a PDF tile inserted at
   index 3, after Save)

@@ -19,21 +19,21 @@
 
 // This handles the update of the main window
 #include "stdafx.h"
-#include "TinyCad.h"
-#include "TinyCadView.h"
+#include "ConCad.h"
+#include "ConCadView.h"
 #include "colour.h"
 #include "revision.h"
 #include "option.h"
 #include "ruler.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 #include "UserColor.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CTinyCadView drawing
+// CConCadView drawing
 
-void CTinyCadView::OnDraw(CDC* pDC)
+void CConCadView::OnDraw(CDC* pDC)
 {
-	//CTinyCadDoc* pDoc = GetCurrentDocument();
+	//CConCadDoc* pDoc = GetCurrentDocument();
 	CDC BitmapDC;
 	CBitmap *old_bitmap = NULL;
 
@@ -71,7 +71,7 @@ void CTinyCadView::OnDraw(CDC* pDC)
 
 		if (pDC->IsPrinting())
 		{
-			dc.SetBlack(CTinyCadRegistry::GetPrintBandW());
+			dc.SetBlack(CConCadRegistry::GetPrintBandW());
 		}
 
 		CDPoint Start, End;
@@ -170,7 +170,7 @@ void CTinyCadView::OnDraw(CDC* pDC)
 
 		// if necessary turn back on the current object to be edited
 		if (GetCurrentDocument()->GetEdit() != NULL) {
-			//ATLTRACE2("TinyCadView::GetCurrentDocument->GetEdit->Paint(dc, draw_selected=%d)\n",draw_selected);
+			//ATLTRACE2("ConCadView::GetCurrentDocument->GetEdit->Paint(dc, draw_selected=%d)\n",draw_selected);
 			GetCurrentDocument()->GetEdit()->Paint(dc, draw_selected);
 		}
 
@@ -189,13 +189,13 @@ void CTinyCadView::OnDraw(CDC* pDC)
 //
 // We share one bitmap with all views, we can get away with static members
 // because we are not multi-thread
-CBitmap CTinyCadView::m_bitmap;
-int CTinyCadView::m_bitmap_width = 0;
-int CTinyCadView::m_bitmap_height = 0;
-int CTinyCadView::m_max_bitmap_size = 2048 * 2048;
+CBitmap CConCadView::m_bitmap;
+int CConCadView::m_bitmap_width = 0;
+int CConCadView::m_bitmap_height = 0;
+int CConCadView::m_max_bitmap_size = 2048 * 2048;
 
 // Create a bitmap for off-screen drawing...
-bool CTinyCadView::CreateBitmap(CDC &dc, int width, int height)
+bool CConCadView::CreateBitmap(CDC &dc, int width, int height)
 {
 	// Is there already a suitable bitmap?
 	if (m_bitmap_width >= width && m_bitmap_height >= height)
@@ -271,7 +271,7 @@ bool CTinyCadView::CreateBitmap(CDC &dc, int width, int height)
 	return true;
 }
 
-Transform &CTinyCadView::GetTransform()
+Transform &CConCadView::GetTransform()
 {
 	return m_Printing ? m_Printing_Transform : GetCurrentDocument()->GetTransform();
 }
@@ -279,12 +279,12 @@ Transform &CTinyCadView::GetTransform()
 // The Zoom function
 // OnSetZoom:
 // Sets the zoom from a menu selection
-void CTinyCadView::ChangeZoomFactor(double NewZoom)
+void CConCadView::ChangeZoomFactor(double NewZoom)
 {
 	GetTransform().SetZoomFactor(NewZoom);
 }
 
-void CTinyCadView::SetZoomFactor(double NewZoom)
+void CConCadView::SetZoomFactor(double NewZoom)
 {
 	ChangeZoomFactor(NewZoom);
 	SetScroll(GetTransform().GetOrigin().x, GetTransform().GetOrigin().y);
@@ -292,13 +292,13 @@ void CTinyCadView::SetZoomFactor(double NewZoom)
 }
 
 // Track the size of the window
-void CTinyCadView::OnSize(UINT a, int cx, int cy)
+void CConCadView::OnSize(UINT a, int cx, int cy)
 {
 	CView::OnSize(a, cx, cy);
 
 	if (IsWindowVisible())
 	{
-		CTinyCadRegistry::SetMDIMaximize(GetParentFrame()->IsZoomed() != 0);
+		CConCadRegistry::SetMDIMaximize(GetParentFrame()->IsZoomed() != 0);
 	}
 
 	if (m_pDocument == NULL) return;
@@ -318,7 +318,7 @@ void CTinyCadView::OnSize(UINT a, int cx, int cy)
 // The scroll bar functions:
 // These control the horizontal and vertical scrolling of the window
 // (uses OnSize to track the window's size to stop the user being able to place text off the max size)
-void CTinyCadView::SetScroll(double NewX, double NewY, bool first)
+void CConCadView::SetScroll(double NewX, double NewY, bool first)
 {
 	CRect rect;
 	int px, py;
@@ -371,7 +371,7 @@ void CTinyCadView::SetScroll(double NewX, double NewY, bool first)
 	m_old_zoom_factor = GetTransform().GetZoomFactor();
 }
 
-void CTinyCadView::SetScrollCentre(CDPoint c)
+void CConCadView::SetScrollCentre(CDPoint c)
 {
 	CRect rect;
 	CDPoint p;
@@ -381,7 +381,7 @@ void CTinyCadView::SetScrollCentre(CDPoint c)
 	SetScroll(GetTransform().GetOrigin().x + c.x - p.x, GetTransform().GetOrigin().y + c.y - p.y);
 }
 
-void CTinyCadView::SetScrollPoint(CDPoint c, CPoint p)
+void CConCadView::SetScrollPoint(CDPoint c, CPoint p)
 {
 	CRect rect;
 	CDPoint p2;
@@ -393,7 +393,7 @@ void CTinyCadView::SetScrollPoint(CDPoint c, CPoint p)
 }
 
 // The message handlers for the VScroll and HScroll messages
-void CTinyCadView::OnHScroll(UINT wParam, UINT pos, CScrollBar*)
+void CConCadView::OnHScroll(UINT wParam, UINT pos, CScrollBar*)
 {
 	CRect rect;
 	int moveFast, moveSlow;
@@ -430,7 +430,7 @@ void CTinyCadView::OnHScroll(UINT wParam, UINT pos, CScrollBar*)
 }
 
 // The message handlers for the VScroll and HScroll messages
-void CTinyCadView::OnVScroll(UINT wParam, UINT pos, CScrollBar*)
+void CConCadView::OnVScroll(UINT wParam, UINT pos, CScrollBar*)
 {
 	CRect rect;
 	int moveFast, moveSlow;

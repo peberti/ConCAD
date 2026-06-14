@@ -75,7 +75,7 @@ public:
 	CString m_sTitleBlockSvg;
 	CString m_sEffectiveSvg;
 	//-- Transient sheet context (this sheet's 1-based number / total sheets)
-	//-- set by the owning CTinyCadDoc just before rendering or saving. Not serialized.
+	//-- set by the owning CConCadDoc just before rendering or saving. Not serialized.
 	int m_iSheetNum;
 	int m_iSheetTotal;
 	CDetails();

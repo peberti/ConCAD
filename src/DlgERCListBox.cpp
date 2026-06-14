@@ -21,11 +21,11 @@
 #include "option.h"
 #include "revision.h"
 #include "registry.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "MainFrm.h"
 #include "diag.h"
-#include "TinyCadMultiDoc.h"
+#include "ConCadMultiDoc.h"
 
 ////// The ERC Box Dialog //////
 
@@ -45,7 +45,7 @@ CDlgERCListBox::CDlgERCListBox()
   stop=FALSE;
 }
 
-void CDlgERCListBox::Open(CMultiSheetDoc *pDesign, CTinyCadView *pView)
+void CDlgERCListBox::Open(CMultiSheetDoc *pDesign, CConCadView *pView)
 {
 	m_pDesign = pDesign;
 	m_pView = pView;

@@ -19,7 +19,7 @@
 
 // This handles the actual drawing of objects
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
@@ -29,7 +29,7 @@
 ////// The No Connect Class //////
 
 
-CDrawNoConnect::CDrawNoConnect(CTinyCadDoc *pDesign) :
+CDrawNoConnect::CDrawNoConnect(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_point_a = m_point_b = CDPoint(0, 0);

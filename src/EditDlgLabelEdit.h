@@ -20,7 +20,7 @@
 #ifndef __EditDlgLabelEdit_H__
 #define __EditDlgLabelEdit_H__
 
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 
 class CDrawingObject;
 
@@ -33,7 +33,7 @@ class CEditDlgLabelEdit: public CEditDlg
 public:
 
 	CEditDlgLabelEdit();
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	void Create();
 	void ReFocus();
 

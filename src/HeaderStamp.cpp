@@ -8,7 +8,7 @@
 
 #include "stdafx.h"
 #include "HeaderStamp.h"
-#include "TinyCad.h"		
+#include "ConCad.h"		
 
 //*************************************************************************
 //*                                                                       *
@@ -16,7 +16,7 @@
 //*                                                                       *
 //*************************************************************************
 
-const CString CHeaderStamp::M_SNAME = CTinyCadApp::GetName();
+const CString CHeaderStamp::M_SNAME = CConCadApp::GetName();
 const BYTE CHeaderStamp::M_NREVISION = 0x06;
 const short CHeaderStamp::M_NMAGIC = 0x0C5A;
 

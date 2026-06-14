@@ -21,7 +21,7 @@
 #include "resource.h"
 #include "OptionsSheets.h"
 #include "OptionsPropertySheet.h"
-#include "TinyCadDoc.h"
+#include "ConCadDoc.h"
 #include "Registry.h"
 #include "AutoSave.h"
 #include "UserColor.h"
@@ -62,7 +62,7 @@ BEGIN_MESSAGE_MAP(COptionsGrid, CPropertyPage)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
-CTinyCadDoc *COptionsGrid::GetDocument()
+CConCadDoc *COptionsGrid::GetDocument()
 {
 	return static_cast<COptionsPropertySheet*> (GetParent())->m_pDocument;
 }
@@ -217,7 +217,7 @@ BEGIN_MESSAGE_MAP(COptionsAutosnap, CPropertyPage)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
-CTinyCadDoc *COptionsAutosnap::GetDocument()
+CConCadDoc *COptionsAutosnap::GetDocument()
 {
 	return static_cast<COptionsPropertySheet*> (GetParent())->m_pDocument;
 }
@@ -366,7 +366,7 @@ COptionsDrawing::~COptionsDrawing()
 {
 }
 
-CTinyCadDoc *COptionsDrawing::GetDocument()
+CConCadDoc *COptionsDrawing::GetDocument()
 {
 	return static_cast<COptionsPropertySheet*> (GetParent())->m_pDocument;
 }

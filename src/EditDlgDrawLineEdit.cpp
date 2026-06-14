@@ -18,8 +18,8 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
-#include "TinyCad.h"
+#include "ConCadView.h"
+#include "ConCad.h"
 #include "EditDlgDrawLineEdit.h"
 
 ////// The Line editing Dialog //////
@@ -52,7 +52,7 @@ void CEditDlgDrawLineEdit::Create()
 	m_angle_wire = LINEBOX_90;
 }
 
-void CEditDlgDrawLineEdit::Open(CTinyCadDoc *pDesign, CDrawingObject *pObject)
+void CEditDlgDrawLineEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 {
 	Show(pDesign, pObject);
 

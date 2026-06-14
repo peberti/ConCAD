@@ -18,11 +18,11 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "special.h"
 #include "library.h"
-#include "TinyCad.h"
-#include "TinyCadRegistry.h"
+#include "ConCad.h"
+#include "ConCadRegistry.h"
 
 // The annotate box dialog
 
@@ -35,8 +35,8 @@ END_MESSAGE_MAP()
 BOOL CDlgAnnotateBox::OnInitDialog()
 {
 	//Some default values for this dialog are stored in the Registry
-	v.reference = (enum AnnotateSetup::WhichReferences) CTinyCadRegistry::GetInt("Annotate.type", (int) AnnotateSetup::UNNUMBERED);
-	v.all_sheets = CTinyCadRegistry::GetInt("Annotate.allsheets", (int) true) != 0;
+	v.reference = (enum AnnotateSetup::WhichReferences) CConCadRegistry::GetInt("Annotate.type", (int) AnnotateSetup::UNNUMBERED);
+	v.all_sheets = CConCadRegistry::GetInt("Annotate.allsheets", (int) true) != 0;
 
 	SetDlgItemText(ANNOTATEBOX_MATCHVAL, v.matchval);
 	SetDlgItemInt(ANNOTATEBOX_STARTVAL, v.startval);
@@ -145,8 +145,8 @@ void CDlgAnnotateBox::OnOK()
 {
 	ReadData();
 
-	CTinyCadRegistry::Set("Annotate.type", v.reference);
-	CTinyCadRegistry::Set("Annotate.allsheets", v.all_sheets);
+	CConCadRegistry::Set("Annotate.type", v.reference);
+	CConCadRegistry::Set("Annotate.allsheets", v.all_sheets);
 	EndDialog(IDOK);
 }
 

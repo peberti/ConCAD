@@ -18,7 +18,7 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "diag.h"
 #include "colour.h"
 
@@ -47,7 +47,7 @@ void CDrawBlockDup::Paint(CContext &dc, paint_options options)
 	dc.Rectangle(theArea);
 }
 
-CDrawBlockDup::CDrawBlockDup(CTinyCadDoc *pDesign) :
+CDrawBlockDup::CDrawBlockDup(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign)
 {
 	m_segment = 1;

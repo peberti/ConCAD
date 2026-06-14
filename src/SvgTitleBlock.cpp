@@ -3,7 +3,7 @@
 #include "Context.h"
 #include "Details.h"
 #include "DPoint.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include <shlobj.h>
 #include <algorithm>
 #include <wincrypt.h>
@@ -792,7 +792,7 @@ std::vector<STitleBlockTemplate> CTitleBlockTemplateStore::Enumerate()
 	std::vector<STitleBlockTemplate> result;
 
 	// Bundled, next to the executable
-	const CString mainDir = CTinyCadApp::GetMainDir();
+	const CString mainDir = CConCadApp::GetMainDir();
 	AddTemplatesFromFolder(mainDir + _T("templates\\title-blocks"), false, result);
 
 	// Dev-build fallback: one level up from exe (Debug/.. -> repo root)

@@ -24,7 +24,7 @@
 #include "stdafx.h"
 #include <string>
 
-#include "tinycad.h"
+#include "concad.h"
 #include "XMLReader.h"
 #include "XMLException.h"
 

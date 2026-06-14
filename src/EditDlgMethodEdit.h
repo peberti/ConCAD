@@ -73,7 +73,7 @@ public:
 	void HideShow(int index);
 	CDrawMethod::CField &GetField(int index);
 
-	void Open(CTinyCadDoc *pDesign, CDrawingObject *pObject);
+	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
 	void Create();
 
 	int GetDir();

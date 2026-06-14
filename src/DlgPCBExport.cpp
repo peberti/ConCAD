@@ -20,9 +20,9 @@
 // DlgPCBExport.cpp : implementation file
 
 #include "stdafx.h"
-#include "tinycad.h"
+#include "concad.h"
 #include "DlgPCBExport.h"
-#include "TinyCadRegistry.h"
+#include "ConCadRegistry.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CDlgPCBExport dialog
@@ -36,8 +36,8 @@ CDlgPCBExport::CDlgPCBExport(CWnd* pParent /*=NULL*/) :
 	m_Prefix = FALSE;
 	//}}AFX_DATA_INIT
 
-	m_type = CTinyCadRegistry::GetInt("Netlist", 0);
-	m_Prefix = CTinyCadRegistry::GetBool("PrefixNetlist", 0);
+	m_type = CConCadRegistry::GetInt("Netlist", 0);
+	m_Prefix = CConCadRegistry::GetBool("PrefixNetlist", 0);
 }
 
 void CDlgPCBExport::DoDataExchange(CDataExchange* pDX)
@@ -106,8 +106,8 @@ void CDlgPCBExport::OnOK()
 	UpdateData(TRUE);
 
 	m_type = m_Filetype.GetCurSel();
-	CTinyCadRegistry::Set("Netlist", m_type);
-	CTinyCadRegistry::Set("PrefixNetlist", m_Prefix);
+	CConCadRegistry::Set("Netlist", m_type);
+	CConCadRegistry::Set("PrefixNetlist", m_Prefix);
 
 	CDialog::OnOK();
 }

@@ -23,7 +23,7 @@
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-#include "tinycaddoc.h"
+#include "ConCadDoc.h"
 #include "object.h"
 #include "diag.h"
 #include "DlgPositionBox.h"

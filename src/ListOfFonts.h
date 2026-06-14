@@ -86,11 +86,11 @@ public:
 	virtual void Write(CXMLWriter& xml) const;
 
 public:
-	virtual void LoadItem(CTinyCadDoc* pDesign, CStream&, hRESOURCE);
+	virtual void LoadItem(CConCadDoc* pDesign, CStream&, hRESOURCE);
 public:
-	virtual void SaveItemXML(CTinyCadDoc *pDesign, CXMLWriter& xml);
+	virtual void SaveItemXML(CConCadDoc *pDesign, CXMLWriter& xml);
 public:
-	virtual void LoadItemXML(CTinyCadDoc *pDesign, CXMLReader& xml);
+	virtual void LoadItemXML(CConCadDoc *pDesign, CXMLReader& xml);
 
 	//=====================================================================
 	//== Comparison                                                      ==

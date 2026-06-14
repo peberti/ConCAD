@@ -17,7 +17,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6863E1AC-68C2-4F3D-B8DE-82F6F3F3A929}</ProjectGuid>
-    <RootNamespace>TinyCad</RootNamespace>
+    <RootNamespace>ConCad</RootNamespace>
     <Keyword>MFCProj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -94,7 +94,7 @@
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetEnvironment>Win32</TargetEnvironment>
-      <TypeLibraryName>.\Debug/TinyCad.tlb</TypeLibraryName>
+      <TypeLibraryName>.\Debug/ConCad.tlb</TypeLibraryName>
       <HeaderFileName>
       </HeaderFileName>
     </Midl>
@@ -108,7 +108,7 @@
       <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\Debug/TinyCad.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>.\Debug/ConCad.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
@@ -1340,7 +1340,7 @@
     </ClCompile>
     <ClCompile Include="TextEditDoc.cpp" />
     <ClCompile Include="TextEditView.cpp" />
-    <ClCompile Include="TinyCad.cpp">
+    <ClCompile Include="ConCad.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1350,7 +1350,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="TinyCadDoc.cpp">
+    <ClCompile Include="ConCadDoc.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1360,8 +1360,8 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="TinyCadHierarchicalDoc.cpp" />
-    <ClCompile Include="TinyCadMultiDoc.cpp">
+    <ClCompile Include="ConCadHierarchicalDoc.cpp" />
+    <ClCompile Include="ConCadMultiDoc.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1371,7 +1371,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="TinyCadMultiSymbolDoc.cpp">
+    <ClCompile Include="ConCadMultiSymbolDoc.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1381,7 +1381,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="TinyCadRegistry.cpp">
+    <ClCompile Include="ConCadRegistry.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1391,7 +1391,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="TinyCadSymbolDoc.cpp">
+    <ClCompile Include="ConCadSymbolDoc.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1401,7 +1401,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="TinyCadView.cpp">
+    <ClCompile Include="ConCadView.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1493,7 +1493,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="TinyCad.rc" />
+    <ResourceCompile Include="ConCad.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArcPoint.h" />
@@ -1592,14 +1592,14 @@
     <ClInclude Include="Symbol.h" />
     <ClInclude Include="TextEditDoc.h" />
     <ClInclude Include="TextEditView.h" />
-    <ClInclude Include="TinyCad.h" />
-    <ClInclude Include="TinyCadDoc.h" />
-    <ClInclude Include="TinyCadHierarchicalDoc.h" />
-    <ClInclude Include="TinyCadMultiDoc.h" />
-    <ClInclude Include="TinyCadMultiSymbolDoc.h" />
-    <ClInclude Include="TinyCadRegistry.h" />
-    <ClInclude Include="TinyCadSymbolDoc.h" />
-    <ClInclude Include="TinyCadView.h" />
+    <ClInclude Include="ConCad.h" />
+    <ClInclude Include="ConCadDoc.h" />
+    <ClInclude Include="ConCadHierarchicalDoc.h" />
+    <ClInclude Include="ConCadMultiDoc.h" />
+    <ClInclude Include="ConCadMultiSymbolDoc.h" />
+    <ClInclude Include="ConCadRegistry.h" />
+    <ClInclude Include="ConCadSymbolDoc.h" />
+    <ClInclude Include="ConCadView.h" />
     <ClInclude Include="UserColor.h" />
     <ClInclude Include="WinMgr.h" />
     <ClInclude Include="xml_parse_tag.h" />
@@ -1628,9 +1628,9 @@
     <None Include="res\idr_main.ico" />
     <None Include="res\selected.ico" />
     <None Include="STARTUP.BMP" />
-    <None Include="res\TinyCad.ico" />
-    <None Include="res\TinyCad.rc2" />
-    <None Include="res\TinyCadDoc.ico" />
+    <None Include="res\ConCad.ico" />
+    <None Include="res\ConCad.rc2" />
+    <None Include="res\ConCadDoc.ico" />
     <None Include="res\Toolbar.bmp" />
     <None Include="res\toolbar1.bmp" />
     <None Include="res\toolbar2.bmp" />
@@ -1667,7 +1667,7 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="TinyCAD.manifest" />
+    <Manifest Include="ConCAD.manifest" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\gridset.bmp" />
@@ -1692,7 +1692,7 @@
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties RESOURCE_FILE="TinyCad.rc" />
+      <UserProperties RESOURCE_FILE="ConCad.rc" />
     </VisualStudio>
   </ProjectExtensions>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

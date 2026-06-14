@@ -19,8 +19,8 @@
 
 #include "stdafx.h"
 #include <wincrypt.h>
-#include "TinyCadView.h"
-#include "TinyCadMultiSymbolDoc.h"
+#include "ConCadView.h"
+#include "ConCadMultiSymbolDoc.h"
 #include "HeaderStamp.h"
 #include "StreamMemory.h"
 
@@ -218,7 +218,7 @@ void CLibraryStoreNameSet::SaveXML(CXMLWriter &xml)
 }
 
 // Load this NameSet as an XML export
-void CLibraryStoreNameSet::LoadXML(CTinyCadMultiSymbolDoc *pDesign, CXMLReader &xml)
+void CLibraryStoreNameSet::LoadXML(CConCadMultiSymbolDoc *pDesign, CXMLReader &xml)
 {
 	//int nt = 0;
 	//int rt = 0;
@@ -310,7 +310,7 @@ CStream *CLibraryStoreNameSet::GetMethodArchive()
 	return lib->GetMethodArchive(this);
 }
 
-CDesignFileSymbol *CLibraryStoreNameSet::GetDesignSymbol(CTinyCadDoc *pDesign, int index)
+CDesignFileSymbol *CLibraryStoreNameSet::GetDesignSymbol(CConCadDoc *pDesign, int index)
 {
 	CDesignFileSymbol *psymbol = new CDesignFileSymbol;
 	CSymbolRecord &r = GetRecord(index);
@@ -409,7 +409,7 @@ CLibraryStoreSymbol::~CLibraryStoreSymbol()
 	m_pParent = NULL;
 }
 
-CDesignFileSymbol *CLibraryStoreSymbol::GetDesignSymbol(CTinyCadDoc *pDesign)
+CDesignFileSymbol *CLibraryStoreSymbol::GetDesignSymbol(CConCadDoc *pDesign)
 {
 	return m_pParent->GetDesignSymbol(pDesign, (int) m_index);
 }
@@ -468,7 +468,7 @@ CDesignFileSymbol::~CDesignFileSymbol()
 }
 
 // Create default blank symbol
-void CDesignFileSymbol::CreateNoSymbol(CTinyCadDoc *pDesign)
+void CDesignFileSymbol::CreateNoSymbol(CConCadDoc *pDesign)
 {
 	// Create the no symbol object
 	CDrawSquare *Sq = new CDrawSquare(pDesign, xSquareEx3);
@@ -547,7 +547,7 @@ void CDesignFileSymbol::SaveXML(CXMLWriter &xml, bool refpoints)
 }
 
 // Load this symbol from an archive
-void CDesignFileSymbol::LoadXML(CTinyCadDoc *pDesign, CXMLReader &xml)
+void CDesignFileSymbol::LoadXML(CConCadDoc *pDesign, CXMLReader &xml)
 {
 	CString tag;
 	m_pDesign = pDesign;
@@ -628,7 +628,7 @@ void CDesignFileSymbol::LoadXML(CTinyCadDoc *pDesign, CXMLReader &xml)
 }
 
 // Load this symbol from an archive
-void CDesignFileSymbol::Load(CTinyCadDoc *pDesign, CStream &theArchive)
+void CDesignFileSymbol::Load(CConCadDoc *pDesign, CStream &theArchive)
 {
 	CString dummy;
 	theArchive >> name >> description >> reference >> ppp >> dummy;
@@ -655,7 +655,7 @@ void CDesignFileSymbol::Load(CTinyCadDoc *pDesign, CStream &theArchive)
 	LoadSymbol(pDesign, theArchive);
 }
 
-BOOL CDesignFileSymbol::LoadSymbol(CTinyCadDoc *pDesign, CStream &theArchive)
+BOOL CDesignFileSymbol::LoadSymbol(CConCadDoc *pDesign, CStream &theArchive)
 {
 	try
 	{
@@ -719,7 +719,7 @@ BOOL CDesignFileSymbol::LoadSymbol(CTinyCadDoc *pDesign, CStream &theArchive)
 	return TRUE;
 }
 
-void CDesignFileSymbol::CreateSymbol(CTinyCadDoc *pDesign, drawingCollection &drawing, const CDesignFileSymbolFilter& filter)
+void CDesignFileSymbol::CreateSymbol(CConCadDoc *pDesign, drawingCollection &drawing, const CDesignFileSymbolFilter& filter)
 {
 	// Find the co-ords of the bounding box of this symbol
 	CDPoint a = CDPoint(0, 0);
@@ -919,7 +919,7 @@ CDPoint CDesignFileSymbol::GetTr(int part, bool include_power_pins)
  *  the top right point, relocate the origin so that it is located at the top left point.
  *  This is accomplished by actually returning the width and height of the symbol's pins.
  */
-CDPoint CDesignFileSymbol::GetTr(CTinyCadDoc *pDesign, drawingCollection &drawing)
+CDPoint CDesignFileSymbol::GetTr(CConCadDoc *pDesign, drawingCollection &drawing)
 {
 	// Find the co-ords of the bounding box of this symbol
 

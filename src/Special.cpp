@@ -18,10 +18,10 @@
  */
 
 #include "stdafx.h"
-#include "TinyCadView.h"
+#include "ConCadView.h"
 #include "special.h"
 #include "library.h"
-#include "TinyCad.h"
+#include "ConCad.h"
 #include "DlgBOMExport.h"
 #include "BOMGenerator.h"
 
@@ -44,7 +44,7 @@ static bool DORefComp(CDrawingObject* o1, CDrawingObject* o2)
 }
 
 // Auto annotate the design
-void CTinyCadView::OnSpecialAnnotate()
+void CConCadView::OnSpecialAnnotate()
 {
 	CDlgAnnotateBox theDialog(this, theASetup);
 
@@ -196,7 +196,7 @@ AnnotateSetup::AnnotateSetup()
 ////// The Parts List (Bill of Materials) special function //////
 
 
-void CTinyCadView::OnSpecialBom()
+void CConCadView::OnSpecialBom()
 {
 	// Get rid of any drawing tool
 	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
@@ -263,6 +263,6 @@ void CTinyCadView::OnSpecialBom()
 	// Where there any errors?
 	if (bom.GetMissingRef()) Message(IDS_MISSREF);
 
-	CTinyCadApp::EditTextFile(dlg.m_Filename);
+	CConCadApp::EditTextFile(dlg.m_Filename);
 }
 
