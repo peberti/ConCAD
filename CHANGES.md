@@ -11,6 +11,50 @@ Solution (Ctrl+Shift+B).
 
 ---
 
+## Release 3.01.00 (2026-06-14)
+
+First numbered ConCAD release. It collects the schematic-documentation
+features this fork adds over upstream TinyCAD, plus SQLite-library
+robustness fixes and packaging changes. Each item below is documented in
+full in the correspondingly numbered section.
+
+**Schematic / title-block features**
+
+- **User-defined title-block tokens** — `{TokenName}` substitution in
+  title-block fields, free Text, and Note objects, edited under
+  `Edit → Design Details…` (Ctrl+D). (§1)
+- **Automatic "Sheets X of Y"** — the `{Sheets}` built-in token,
+  recomputed on every paint and save. (§2)
+- **Shared design details + tokens across all sheets** — title-block
+  fields and tokens propagate to every sheet on Apply. (§3)
+- **Cable tool** (Shift+F2) — a wire-like object, electrically
+  equivalent to a wire in the netlist. (§4)
+- **Connector library type + per-instance color** — symbols flagged as
+  connectors can carry a per-instance color override. (§5)
+- **SVG title blocks** — pick an SVG title block per design, with bundled
+  templates. (§7)
+- **`Options → Settings` "Drawing" defaults page**. (§8)
+- **Export as PDF** — export the active sheet to PDF, with toolbar
+  button. (§9)
+
+**Robustness**
+
+- **SQLite library open/delete robustness** — no longer crashes or
+  aborts when opening read-only or deleting SQLite-backed libraries. (§6)
+
+**Packaging**
+
+- Versioning unified at **3.01.00**: installer `PRODUCT_VERSION` and the
+  EXE resource version (`3.1.0.0`) now match.
+- Installer renamed to `installer/ConCAD.nsi`; it no longer bundles
+  symbol libraries or example circuits — a fresh install starts with no
+  libraries.
+
+All schematic changes affect the XML `.dsn` format only; the legacy
+binary format is unchanged, and older `.dsn` files still load.
+
+---
+
 ## 1. Design Details: user-defined tokens
 
 You can use named text variables (tokens) and reference them with
