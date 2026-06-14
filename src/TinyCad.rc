@@ -932,8 +932,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,4,0
- PRODUCTVERSION 3,0,4,0
+ FILEVERSION 3,1,0,0
+ PRODUCTVERSION 3,1,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -951,12 +951,12 @@ BEGIN
             VALUE "Comments", "ConCAD - a fork of TinyCAD (https://www.tinycad.net)"
             VALUE "CompanyName", "ConCAD"
             VALUE "FileDescription", "ConCAD"
-            VALUE "FileVersion", "3.0.4.0"
+            VALUE "FileVersion", "3.1.0.0"
             VALUE "InternalName", "ConCAD"
             VALUE "LegalCopyright", "Copyright (C) 2002 - 2021 Matt Pyne"
             VALUE "OriginalFilename", "ConCAD.EXE"
             VALUE "ProductName", "ConCAD"
-            VALUE "ProductVersion", "3.0.4.0"
+            VALUE "ProductVersion", "3.1.0.0"
         END
     END
     BLOCK "VarFileInfo"
