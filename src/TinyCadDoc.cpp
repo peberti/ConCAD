@@ -350,6 +350,47 @@ HENHMETAFILE CTinyCadDoc::CreateMetafile(CDC &ref_dc, const TCHAR *file_name, bo
 	return CloseEnhMetaFile(hdcMeta);
 }
 
+// Render this sheet onto a printer/PDF DC page.
+// The DC must already be inside a StartPage()/EndPage() pair.
+// The whole design page is scaled to fit the printable area,
+// preserving the aspect ratio and centred on the page.
+void CTinyCadDoc::SavePDFPage(CDC &dc)
+{
+	// The printable area of the page in device pixels
+	double devW = dc.GetDeviceCaps(HORZRES);
+	double devH = dc.GetDeviceCaps(VERTRES);
+
+	// The design page size in TinyCAD units
+	CPoint page = GetDetails().GetPageBoundsAsPoint();
+	double pageW = page.x;
+	double pageH = page.y;
+
+	if (pageW <= 0 || pageH <= 0 || devW <= 0 || devH <= 0)
+	{
+		return;
+	}
+
+	// Scale so the whole page fits, keeping the aspect ratio
+	double zoom = min(devW / pageW, devH / pageH);
+
+	// Centre the design on the page
+	Transform newTransform;
+	newTransform.SetZoomFactor(zoom);
+	newTransform.SetOriginX(-((devW - pageW * zoom) / 2.0) / zoom);
+	newTransform.SetOriginY(-((devH - pageH * zoom) / 2.0) / zoom);
+
+	// Render the whole design and the title block into the page
+	CContext dc_context(&dc, newTransform);
+
+	for (drawingIterator i = GetDrawingBegin(); i != GetDrawingEnd(); ++i)
+	{
+		(*i)->Paint(dc_context, draw_normal);
+	}
+
+	// Show the design details (title block); this also refreshes "Sheets N of M"
+	Display(dc_context);
+}
+
 // Tag all the resources being used by this design
 void CTinyCadDoc::TagAllResources()
 {

@@ -235,6 +235,7 @@ protected:
 	afx_msg void OnContextMakehorizontal();
 	afx_msg void OnContextMakevertical();
 	afx_msg void OnFileSaveasbitmap();
+	afx_msg void OnFileExportpdf();
 	afx_msg void OnOptionsColours();
 	afx_msg void OnContextReplacesymbol();
 	afx_msg void OnEditInsertpicture();

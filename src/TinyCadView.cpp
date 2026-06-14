@@ -32,6 +32,8 @@
 #include "DlgPositionBox.h"
 #include ".\tinycadview.h"
 
+#include <winspool.h>
+
 extern CDlgERCListBox theERCListBox;
 
 CTinyCadView* g_currentview = NULL;
@@ -114,6 +116,7 @@ BEGIN_MESSAGE_MAP(CTinyCadView, CFolderView)
 	ON_COMMAND(ID_CONTEXT_MAKEHORIZONTAL, OnContextMakehorizontal)
 	ON_COMMAND(ID_CONTEXT_MAKEVERTICAL, OnContextMakevertical)
 	ON_COMMAND(ID_FILE_SAVEASBITMAP, OnFileSaveasbitmap)
+	ON_COMMAND(ID_FILE_EXPORTPDF, OnFileExportpdf)
 	ON_COMMAND(ID_OPTIONS_COLOURS, OnOptionsColours)
 	ON_COMMAND(ID_CONTEXT_REPLACESYMBOL, OnContextReplacesymbol)
 	ON_COMMAND(ID_EDIT_INSERTPICTURE, OnEditInsertpicture)
@@ -1611,6 +1614,228 @@ void CTinyCadView::OnFileSaveasbitmap()
 		case 3: // B&W EMF
 			GetCurrentDocument()->CreateMetafile(dc, dlg.m_Filename, true);
 			break;
+	}
+}
+// Fill in a DEVMODE so the PDF page matches this sheet's page-setup size
+// (e.g. A3) and orientation.
+//
+// The "Microsoft Print to PDF" driver is a v4 driver that ignores custom
+// dmPaperWidth/dmPaperLength values at print time and falls back to its
+// default paper (Letter). Standard paper-size *codes* (DMPAPER_A3, ...) do
+// round-trip reliably, so we match the page to a standard size and use its
+// code wherever possible, only attempting a custom size for non-standard
+// pages (e.g. A1/A0) as a best effort.
+static void SetDevModePageSize(DEVMODE *pDevMode, HANDLE hPrinter, LPCTSTR printerName, CTinyCadDoc *pSheet)
+{
+	CPoint page = pSheet->GetDetails().GetPageBoundsAsPoint();
+
+	// Page dimensions in mm (PIXELSPERMM TinyCAD units per mm)
+	double wmm = static_cast<double> (page.x) / PIXELSPERMM;
+	double hmm = static_cast<double> (page.y) / PIXELSPERMM;
+	double shortMM = min(wmm, hmm);
+	double longMM = max(wmm, hmm);
+
+	pDevMode->dmFields |= DM_ORIENTATION;
+	pDevMode->dmOrientation = (page.x > page.y) ? DMORIENT_LANDSCAPE : DMORIENT_PORTRAIT;
+
+	// Standard sizes, in portrait terms (short edge x long edge, mm)
+	struct StdSize { double s; double l; short code; };
+	static const StdSize kSizes[] = {
+		{105.0, 148.0, DMPAPER_A6},
+		{148.0, 210.0, DMPAPER_A5},
+		{210.0, 297.0, DMPAPER_A4},
+		{297.0, 420.0, DMPAPER_A3},
+		{420.0, 594.0, DMPAPER_A2},
+		{215.9, 279.4, DMPAPER_LETTER},
+		{215.9, 355.6, DMPAPER_LEGAL},
+		{279.4, 431.8, DMPAPER_TABLOID},  // 11 x 17 (Ledger)
+	};
+
+	const double tol = 3.0;  // mm
+	short paperCode = 0;
+	for (int i = 0; i < sizeof(kSizes) / sizeof(kSizes[0]); ++i)
+	{
+		if (fabs(shortMM - kSizes[i].s) <= tol && fabs(longMM - kSizes[i].l) <= tol)
+		{
+			paperCode = kSizes[i].code;
+			break;
+		}
+	}
+
+	if (paperCode != 0)
+	{
+		// Standard size: let the driver own the exact dimensions
+		pDevMode->dmFields |= DM_PAPERSIZE;
+		pDevMode->dmFields &= ~(DM_PAPERWIDTH | DM_PAPERLENGTH);
+		pDevMode->dmPaperSize = paperCode;
+
+		// Validate / normalise against the driver (standard codes survive this)
+		::DocumentProperties(NULL, hPrinter, (LPTSTR) printerName, pDevMode, pDevMode, DM_IN_BUFFER | DM_OUT_BUFFER);
+	}
+	else
+	{
+		// Non-standard size (e.g. A1/A0): best-effort custom paper. Dimensions
+		// in portrait terms (short = width, long = length), in 0.1 mm units.
+		// Per Microsoft guidance, dmPaperSize must be 0 for a custom size.
+		// NB: not re-validated; the v4 driver tends to discard custom sizes
+		// during validation, so this may still come out at the default size.
+		pDevMode->dmFields |= DM_PAPERSIZE | DM_PAPERWIDTH | DM_PAPERLENGTH;
+		pDevMode->dmPaperSize = 0;
+		pDevMode->dmPaperWidth = static_cast<short> (shortMM * 10.0 + 0.5);
+		pDevMode->dmPaperLength = static_cast<short> (longMM * 10.0 + 0.5);
+	}
+}
+
+// Export the whole design to a PDF file, one page per sheet, using the
+// built-in "Microsoft Print to PDF" printer driver (Windows 10 and later).
+// Each sheet is scaled to fit a page, so no third-party PDF library is needed
+// and the output stays fully vectorised (lines and text remain selectable).
+void CTinyCadView::OnFileExportpdf()
+{
+	static const TCHAR *kPdfPrinter = _T("Microsoft Print to PDF");
+
+	// Get rid of any drawing tool so a half-finished object isn't rendered
+	GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument()));
+
+	// Build a default output filename from the design's path
+	TCHAR szFile[MAX_PATH];
+	szFile[0] = '\0';
+	_tcscpy_s(szFile, GetDocument()->GetPathName());
+	TCHAR* ext = _tcsrchr(szFile, '.');
+	if (!ext)
+	{
+		_tcscpy_s(szFile, _T("output.pdf"));
+	}
+	else
+	{
+		size_t remaining_space = &szFile[MAX_PATH - 1] - ext + 1;
+		_tcscpy_s(ext, remaining_space, _T(".pdf"));
+	}
+
+	// Let the user choose where to save the PDF
+	CFileDialog dlg(FALSE, _T("pdf"), szFile,
+					OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+					_T("PDF Files (*.pdf)|*.pdf|All Files (*.*)|*.*||"), this);
+	if (dlg.DoModal() != IDOK)
+	{
+		return;
+	}
+	CString filename = dlg.GetPathName();
+
+	// Make sure the "Microsoft Print to PDF" driver is available
+	HANDLE hPrinter = NULL;
+	if (!::OpenPrinter((LPTSTR) kPdfPrinter, &hPrinter, NULL))
+	{
+		AfxMessageBox(_T("The \"Microsoft Print to PDF\" printer is not available.\n")
+					  _T("It is included with Windows 10 and later; it can be enabled\n")
+					  _T("under \"Turn Windows features on or off\"."), MB_ICONEXCLAMATION);
+		return;
+	}
+
+	// Fetch a correctly-sized DEVMODE for the driver
+	LONG cbNeeded = ::DocumentProperties(NULL, hPrinter, (LPTSTR) kPdfPrinter, NULL, NULL, 0);
+	if (cbNeeded <= 0)
+	{
+		::ClosePrinter(hPrinter);
+		AfxMessageBox(_T("Could not query the PDF printer settings."), MB_ICONEXCLAMATION);
+		return;
+	}
+
+	BYTE *pDevModeBuffer = new BYTE[cbNeeded];
+	DEVMODE *pDevMode = reinterpret_cast<DEVMODE *> (pDevModeBuffer);
+	if (::DocumentProperties(NULL, hPrinter, (LPTSTR) kPdfPrinter, pDevMode, NULL, DM_OUT_BUFFER) != IDOK)
+	{
+		delete[] pDevModeBuffer;
+		::ClosePrinter(hPrinter);
+		AfxMessageBox(_T("Could not read the PDF printer settings."), MB_ICONEXCLAMATION);
+		return;
+	}
+	// Keep the printer handle open so DocumentProperties can validate the
+	// custom page sizes we set per sheet below.
+
+	// Size the first page to match its sheet's page setup before creating the DC
+	int sheets = GetDocument()->GetNumberOfSheets();
+	CTinyCadDoc *pFirstSheet = (sheets > 0) ? GetDocument()->GetSheet(0) : NULL;
+	if (pFirstSheet != NULL)
+	{
+		SetDevModePageSize(pDevMode, hPrinter, kPdfPrinter, pFirstSheet);
+	}
+
+	// Create a DC bound to the PDF "printer"
+	HDC hdcPdf = ::CreateDC(_T("WINSPOOL"), kPdfPrinter, NULL, pDevMode);
+	if (!hdcPdf)
+	{
+		::ClosePrinter(hPrinter);
+		delete[] pDevModeBuffer;
+		AfxMessageBox(_T("Could not create the PDF output device."), MB_ICONEXCLAMATION);
+		return;
+	}
+
+	// Remove any stale output so the driver writes a fresh file rather than failing
+	::DeleteFile(filename);
+
+	CDC dc;
+	dc.Attach(hdcPdf);
+
+	// Pass the output path in DOCINFO so the driver writes straight to the file
+	// instead of prompting with a "Save Print Output As" dialog.
+	CString docName = GetDocument()->GetTitle();
+	DOCINFO di;
+	memset(&di, 0, sizeof(di));
+	di.cbSize = sizeof(di);
+	di.lpszDocName = docName;
+	di.lpszOutput = filename;
+
+	bool ok = false;
+
+	if (dc.StartDoc(&di) > 0)
+	{
+		ok = true;
+		for (int sheet = 0; sheet < sheets; ++sheet)
+		{
+			CTinyCadDoc *pSheet = GetDocument()->GetSheet(sheet);
+			if (pSheet == NULL)
+			{
+				continue;
+			}
+
+			// Size this page to match the sheet's page setup (size + orientation)
+			SetDevModePageSize(pDevMode, hPrinter, kPdfPrinter, pSheet);
+			dc.ResetDC(pDevMode);
+
+			if (dc.StartPage() <= 0)
+			{
+				ok = false;
+				break;
+			}
+
+			pSheet->SavePDFPage(dc);
+
+			if (dc.EndPage() <= 0)
+			{
+				ok = false;
+				break;
+			}
+		}
+
+		if (ok)
+		{
+			dc.EndDoc();
+		}
+		else
+		{
+			dc.AbortDoc();
+		}
+	}
+
+	dc.Detach();
+	::DeleteDC(hdcPdf);
+	::ClosePrinter(hPrinter);
+	delete[] pDevModeBuffer;
+
+	if (!ok)
+	{
+		AfxMessageBox(_T("Failed to write the PDF file."), MB_ICONEXCLAMATION);
 	}
 }
 //-------------------------------------------------------------------------

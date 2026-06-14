@@ -349,6 +349,11 @@ public:
 	// Create an enhanced metafile from this function
 	HENHMETAFILE CreateMetafile(CDC &ref_dc, const TCHAR *file_name, bool bw);
 
+	// Render this sheet onto a printer/PDF DC page (must already be inside a
+	// StartPage()/EndPage() pair). The whole page is scaled to fit the printable
+	// area, preserving aspect ratio and centred. Used by PDF export.
+	void SavePDFPage(CDC &dc);
+
 	// Format a filename for display
 	CString formatFilename(const TCHAR *filename);
 

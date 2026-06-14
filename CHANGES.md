@@ -422,6 +422,54 @@ A new **Drawing** tab in `Options → Settings` collects drawing defaults
 
 ---
 
+## 9. Export as PDF
+
+A new **File → Export as PDF…** command (`ID_FILE_EXPORTPDF`) writes the
+whole design to a single PDF, **one page per sheet**.
+
+### How it works
+
+- Renders through the existing `CContext` pipeline onto a device context
+  created for the built-in **"Microsoft Print to PDF"** printer driver, so
+  the output is true vector graphics (lines and text stay crisp and
+  selectable) with no third-party PDF library.
+- Each PDF page is set to the **same physical size and orientation as the
+  sheet's page setup** (e.g. A3 landscape). The sheet's mm dimensions are
+  matched to a standard paper-size code (`DMPAPER_A4`/`A3`/`A2`/`Letter`/…)
+  written into the print `DEVMODE` with `dmOrientation`, applied per sheet
+  via `ResetDC`, so mixed-size designs export correctly. (The "Microsoft
+  Print to PDF" v4 driver ignores *custom* `dmPaperWidth/Length` at print
+  time and falls back to Letter, so standard codes are used; non-standard
+  pages such as A1/A0 fall back to a best-effort custom size.)
+- The drawing is scaled to fit that page (preserving aspect ratio, centred);
+  because the page matches the sheet, it fills the sheet with only the
+  driver's small unprintable margin around it.
+- The output path is passed in `DOCINFO.lpszOutput`, so the driver writes
+  straight to the chosen file instead of showing its own Save dialog.
+
+### Requirements / fallback
+
+- The "Microsoft Print to PDF" driver ships with **Windows 10 and later**
+  (an optional feature, normally on). If it is missing, the command shows a
+  message explaining how to enable it and does nothing else.
+
+### Where it lives in the UI
+
+- **File → Export as PDF…**
+- A **PDF button on the main toolbar**, immediately to the right of Save.
+
+### Files changed
+
+- `src/TinyCadView.{h,cpp}` (`OnFileExportpdf`, `SetDevModePageSize`,
+  menu/toolbar/message-map wiring, `#include <winspool.h>`)
+- `src/TinyCadDoc.{h,cpp}` (`SavePDFPage` — fit-to-page render of one sheet)
+- `src/TinyCad.rc` + `src/resource.h` (`ID_FILE_EXPORTPDF`, menu item,
+  `IDR_MAINFRAME` toolbar button + tooltip/status string)
+- `src/res/Toolbar.bmp` (extended 112→128 px: a PDF tile inserted at
+  index 3, after Save)
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -465,3 +513,8 @@ XML-saved files.
    width and cable colour (live update); toggle the new-note Background
    fill / Rounded corners (affects newly placed notes); pick a Component
    label font (labels redraw, size unchanged).
+8. **Export as PDF** — set page setup to e.g. A3 Landscape, then
+   File → Export as PDF…, choose a path. The resulting PDF page measures
+   A3 (420×297 mm) in landscape — one page per sheet, each in its own
+   page size/orientation; title blocks resolve tokens and "Sheets N of M".
+   Zoom in to confirm lines/text are vector (not rasterised).

@@ -498,6 +498,7 @@
 #define ID_HELP_CHECKFORUPDATES         32905
 #define ID_CONTEXT_MOVESHEET            32906
 #define ID_CONTEXT_MOVESHEETRIGHT       32907
+#define ID_FILE_EXPORTPDF               32909
 #define IDC_SCALING                     40000
 #define IDS_NOCLEANUP                   40001
 #define POSITIONBOX_GRIDSIZE            40002
@@ -549,7 +550,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        179
-#define _APS_NEXT_COMMAND_VALUE         32909
+#define _APS_NEXT_COMMAND_VALUE         32910
 #define _APS_NEXT_CONTROL_VALUE         40050
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
