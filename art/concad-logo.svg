@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ConCAD logo: a bus (vehicle) riding a schematic bus bar, with wire "taps"
+     off the roof - fusing both meanings of "bus". Editable vector master;
+     art/make_icon.py renders the matching multi-size Windows icon. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- background -->
+  <rect x="2" y="2" width="252" height="252" rx="52" fill="#0F2040"/>
+
+  <!-- schematic bus bar (the road) + junction nodes -->
+  <line x1="26" y1="198" x2="230" y2="198" stroke="#F0F6FF" stroke-width="9" stroke-linecap="round"/>
+  <g fill="#82CDFF">
+    <circle cx="40" cy="198" r="8"/>
+    <circle cx="128" cy="198" r="8"/>
+    <circle cx="216" cy="198" r="8"/>
+  </g>
+
+  <!-- roof tap wires + junction dots (bus connections) -->
+  <g stroke="#82CDFF" stroke-width="4" stroke-linecap="round">
+    <line x1="84" y1="96" x2="84" y2="72"/>
+    <line x1="128" y1="96" x2="128" y2="72"/>
+    <line x1="172" y1="96" x2="172" y2="72"/>
+  </g>
+  <g fill="#82CDFF">
+    <circle cx="84" cy="70" r="6"/>
+    <circle cx="128" cy="70" r="6"/>
+    <circle cx="172" cy="70" r="6"/>
+  </g>
+
+  <!-- bus body (with lower shadow band) -->
+  <rect x="36" y="96" width="184" height="90" rx="22" fill="#F5B81C"/>
+  <rect x="36" y="168" width="184" height="18" rx="10" fill="#D2960A"/>
+  <rect x="36" y="96" width="184" height="76" rx="22" fill="#F5B81C"/>
+
+  <!-- windows -->
+  <g fill="#BEE4FF">
+    <rect x="48"  y="110" width="33" height="30" rx="6"/>
+    <rect x="89"  y="110" width="33" height="30" rx="6"/>
+    <rect x="130" y="110" width="33" height="30" rx="6"/>
+    <rect x="171" y="110" width="33" height="30" rx="6"/>
+  </g>
+
+  <!-- beltline stripe -->
+  <rect x="40" y="146" width="176" height="7" rx="4" fill="#0A162E"/>
+
+  <!-- front door glass -->
+  <rect x="196" y="110" width="16" height="58" rx="5" fill="#BEE4FF"/>
+
+  <!-- headlight drawn as a schematic node -->
+  <circle cx="210" cy="162" r="7" fill="#F0F6FF"/>
+  <circle cx="210" cy="162" r="3" fill="#0F2040"/>
+
+  <!-- wheels sitting on the bus bar -->
+  <g>
+    <circle cx="84"  cy="198" r="25" fill="#16161E"/>
+    <circle cx="84"  cy="198" r="10" fill="#F5B81C"/>
+    <circle cx="84"  cy="198" r="3"  fill="#0F2040"/>
+    <circle cx="172" cy="198" r="25" fill="#16161E"/>
+    <circle cx="172" cy="198" r="10" fill="#F5B81C"/>
+    <circle cx="172" cy="198" r="3"  fill="#0F2040"/>
+  </g>
+</svg>

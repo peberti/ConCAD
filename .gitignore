@@ -1,9 +1,22 @@
+# Visual Studio / MSBuild
 /src/.vs/*
 /src/Debug/*
+/src/Release/*
 /src/packages/*
 /src/BuildId.h
-/src/Release/*
 .vs/*
 /packages/*
 /Debug/*
 /Release/*
+*.aps
+*.vcxproj.user
+
+# TinyCAD autosave snapshots
+*.autosave
+
+# Loose scratch designs / exports at repo root
+# (real example designs live in examples/; shared art lives in art/)
+/*.dsn
+/*.png
+/*.svg
+/*.pdf
