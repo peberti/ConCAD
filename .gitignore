@@ -14,6 +14,10 @@
 # TinyCAD autosave snapshots
 *.autosave
 
+# Installer build inputs/outputs (not source)
+/installer/VC_redist.x86.exe
+/installer/*.exe
+
 # Loose scratch designs / exports at repo root
 # (real example designs live in examples/; shared art lives in art/)
 /*.dsn
