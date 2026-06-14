@@ -460,7 +460,16 @@ void CDrawText::Paint(CContext &dc, paint_options options)
 
 	dc.SelectFont(*m_pDesign->GetOptions()->GetFont(FontStyle), dir);
 	dc.SetTextColor(FontColour);
-	dc.TextOut(str, m_point_a, options, dir);
+
+	// Substitute {token} references for free-text annotations only.  Labels,
+	// bus names and other electrical text (handled by this same class) are
+	// left exactly as typed so the netlist is unaffected.
+	CString sDraw = str;
+	if (xtype == xText || xtype == xTextEx || xtype == xTextEx2)
+	{
+		sDraw = m_pDesign->GetDetails().Resolve(str);
+	}
+	dc.TextOut(sDraw, m_point_a, options, dir);
 
 	// Draw a little blob, so the user knows where it
 	// is stuck to

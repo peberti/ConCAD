@@ -25,6 +25,7 @@
 #include "MultiSheetDoc.h"
 #include "DetailsPropertyPages.h"
 #include "TinyCadDoc.h"
+#include "Object.h"
 
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage1, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage2, CPropertyPage)
@@ -78,6 +79,45 @@ static bool IsValidTokenName(const CString& sName)
 	return true;
 }
 
+// True if the vector already holds the name (case-insensitive).
+static bool VecContainsNoCase(const std::vector<CString>& v, const CString& s)
+{
+	for (size_t i = 0; i < v.size(); ++i)
+	{
+		if (v[i].CompareNoCase(s) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+// Scan a string for {name} references and append valid, non-built-in, not-yet-
+// seen names to both 'out' (the result, preserving discovery order) and
+// 'pending' (a worklist whose stored values are scanned next, so a token whose
+// value references another token keeps that one "used" too).
+static void AppendReferencedNames(const CString& text, std::vector<CString>& out, std::vector<CString>& pending)
+{
+	int pos = 0;
+	while ((pos = text.Find(_T('{'), pos)) >= 0)
+	{
+		int end = text.Find(_T('}'), pos + 1);
+		if (end < 0)
+		{
+			break;
+		}
+		CString name = text.Mid(pos + 1, end - pos - 1);
+		name.Trim();
+		pos = end + 1;
+
+		if (IsValidTokenName(name) && !IsReservedTokenName(name) && !VecContainsNoCase(out, name))
+		{
+			out.push_back(name);
+			pending.push_back(name);
+		}
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage1 property page
 
@@ -96,6 +136,8 @@ CDetailsPropertyPage1::CDetailsPropertyPage1(CMultiSheetDoc* pDesign) :
 	//}}AFX_DATA_INIT
 
 	m_pDesign = pDesign;
+	m_scrollTop = 0;
+	m_tokensDirty = false;
 }
 
 CDetailsPropertyPage1::~CDetailsPropertyPage1()
@@ -115,11 +157,13 @@ void CDetailsPropertyPage1::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, DESIGNBOX_TITLE, m_sTitle);
 	DDX_Check(pDX, DESIGNBOX_DISPLAY, m_bIsVisible);
 	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_TOK_SCROLL, m_tokenScroll);
 }
 
 BEGIN_MESSAGE_MAP(CDetailsPropertyPage1, CPropertyPage)
 //{{AFX_MSG_MAP(CDetailsPropertyPage1)
 //}}AFX_MSG_MAP
+	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -163,6 +207,35 @@ BOOL CDetailsPropertyPage1::OnApply()
 {
 	UpdateData(TRUE);
 
+	// Read the visible token rows and build the validated token map first, so a
+	// bad name aborts the Apply before any field is written.
+	CommitVisibleRows();
+	CDetailsTokenMap newTokens;
+	for (size_t r = 0; r < m_tokenRows.size(); ++r)
+	{
+		CString name = m_tokenRows[r].name;
+		name.Trim();
+		if (name.IsEmpty())
+		{
+			continue;   // blank row — silently dropped
+		}
+		if (!IsValidTokenName(name))
+		{
+			CString msg;
+			msg.Format(_T("\"%s\" is not a valid variable name.\n\nUse letters, digits and underscores only; it cannot start with a digit."), (LPCTSTR)name);
+			AfxMessageBox(msg, MB_ICONEXCLAMATION);
+			return FALSE;
+		}
+		if (IsReservedTokenName(name))
+		{
+			CString msg;
+			msg.Format(_T("\"%s\" is a built-in name and cannot be redefined as a variable."), (LPCTSTR)name);
+			AfxMessageBox(msg, MB_ICONEXCLAMATION);
+			return FALSE;
+		}
+		newTokens[name] = m_tokenRows[r].value;   // duplicate names collapse (last wins)
+	}
+
 	CDetails& current = m_pDesign->GetCurrentSheet()->GetDetails();
 	current.SetVisible(m_bIsVisible == TRUE);
 	current.SetTitle(m_sTitle);
@@ -170,12 +243,13 @@ BOOL CDetailsPropertyPage1::OnApply()
 	current.SetRevision(m_sRevision);
 	current.SetDocumentNumber(m_sDoc);
 	current.SetOrganisation(m_sOrg);
-	current.SetLastChange(m_sDate);
+	current.SetUserTokens(newTokens);
+	// Note: Date is NOT written back — it is set only by File → Create version.
 	// Note: m_sSheets is NOT written back — the title block's "N of M" is
 	// computed automatically from the multi-doc sheet count.
 
-	// Propagate the design-level fields to every other sheet so all sheets
-	// share the same title-block content.
+	// Propagate the design-level fields (incl. tokens, via CopyDesignFields) to
+	// every other sheet so all sheets share the same title-block content.
 	int total = m_pDesign->GetNumberOfSheets();
 	for (int i = 0; i < total; ++i)
 	{
@@ -190,6 +264,212 @@ BOOL CDetailsPropertyPage1::OnApply()
 	m_pDesign->GetCurrentSheet()->GetParent()->SetModifiedFlag();
 
 	return CPropertyPage::OnApply();
+}
+
+//-------------------------------------------------------------------------
+// Embedded variables (token) editor
+//-------------------------------------------------------------------------
+
+void CDetailsPropertyPage1::CollectReferencedTokenNames(std::vector<CString>& out)
+{
+	out.clear();
+	if (m_pDesign == NULL)
+	{
+		return;
+	}
+
+	const CDetails& d = m_pDesign->GetCurrentSheet()->GetDetails();
+	const CDetailsTokenMap& stored = d.GetUserTokens();
+
+	// Build a blob of everywhere a {token} actually gets substituted: the design
+	// fields, the SVG title block, and the free-text / note objects on every
+	// sheet.  (Labels and pin refs are excluded — tokens are not substituted
+	// there.)
+	CString blob;
+	blob += d.GetTitle();          blob += _T('\n');
+	blob += d.GetAuthor();         blob += _T('\n');
+	blob += d.GetRevision();       blob += _T('\n');
+	blob += d.GetDocumentNumber(); blob += _T('\n');
+	blob += d.GetOrganisation();   blob += _T('\n');
+	blob += d.GetTitleBlockSvg();
+
+	const int total = m_pDesign->GetNumberOfSheets();
+	for (int s = 0; s < total; ++s)
+	{
+		CTinyCadDoc* pSheet = m_pDesign->GetSheet(s);
+		if (pSheet == NULL)
+		{
+			continue;
+		}
+		for (drawingIterator dit = pSheet->GetDrawingBegin(); dit != pSheet->GetDrawingEnd(); ++dit)
+		{
+			CDrawingObject* pObj = *dit;
+			if (pObj == NULL)
+			{
+				continue;
+			}
+			switch (pObj->GetType())
+			{
+				case xText:
+				case xTextEx:
+				case xTextEx2:
+					blob += _T('\n');
+					blob += static_cast<CDrawText*>(pObj)->GetValue();
+					break;
+				case xNoteText:
+					blob += _T('\n');
+					blob += static_cast<CDrawNoteText*>(pObj)->GetValue();
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	// Names referenced directly in the content, then transitively through the
+	// stored values of those tokens (so {A} with value "{B}" keeps B used too).
+	std::vector<CString> pending;
+	AppendReferencedNames(blob, out, pending);
+	while (!pending.empty())
+	{
+		CString name = pending.back();
+		pending.pop_back();
+		CDetailsTokenMap::const_iterator it = stored.find(name);
+		if (it != stored.end())
+		{
+			AppendReferencedNames(it->second, out, pending);
+		}
+	}
+}
+
+void CDetailsPropertyPage1::LoadTokens()
+{
+	m_tokenRows.clear();
+	m_scrollTop = 0;
+	if (m_pDesign == NULL)
+	{
+		return;
+	}
+
+	// Only list tokens actually referenced in the design; pull each one's saved
+	// value from storage if it has one.  Stored-but-unreferenced tokens are
+	// dropped (and pruned from storage on the next OK).
+	const CDetailsTokenMap& stored = m_pDesign->GetCurrentSheet()->GetDetails().GetUserTokens();
+
+	std::vector<CString> referenced;
+	CollectReferencedTokenNames(referenced);
+
+	for (size_t i = 0; i < referenced.size(); ++i)
+	{
+		STokenRow row;
+		row.name = referenced[i];
+		CDetailsTokenMap::const_iterator it = stored.find(referenced[i]);
+		row.value = (it != stored.end()) ? it->second : CString();
+		m_tokenRows.push_back(row);
+	}
+}
+
+void CDetailsPropertyPage1::RefreshTokenView()
+{
+	const int count = (int)m_tokenRows.size();
+	for (int i = 0; i < kVisibleRows; ++i)
+	{
+		int idx = m_scrollTop + i;
+		CWnd* pName = GetDlgItem(IDC_TOK_NAME0 + i);
+		CWnd* pVal  = GetDlgItem(IDC_TOK_VAL0 + i);
+		if (pName == NULL || pVal == NULL)
+		{
+			continue;
+		}
+		if (idx < count)
+		{
+			pName->SetWindowText(m_tokenRows[idx].name);
+			pVal->SetWindowText(m_tokenRows[idx].value);
+			pName->EnableWindow(TRUE);
+			pVal->EnableWindow(TRUE);
+		}
+		else
+		{
+			pName->SetWindowText(_T(""));
+			pVal->SetWindowText(_T(""));
+			pName->EnableWindow(FALSE);
+			pVal->EnableWindow(FALSE);
+		}
+	}
+	UpdateTokenScrollBar();
+}
+
+void CDetailsPropertyPage1::CommitVisibleRows()
+{
+	const int count = (int)m_tokenRows.size();
+	for (int i = 0; i < kVisibleRows; ++i)
+	{
+		int idx = m_scrollTop + i;
+		if (idx >= count)
+		{
+			break;
+		}
+		CWnd* pName = GetDlgItem(IDC_TOK_NAME0 + i);
+		CWnd* pVal  = GetDlgItem(IDC_TOK_VAL0 + i);
+		if (pName == NULL || pVal == NULL)
+		{
+			continue;
+		}
+		CString n, v;
+		pName->GetWindowText(n);
+		pVal->GetWindowText(v);
+		n.Trim();
+		m_tokenRows[idx].name = n;
+		m_tokenRows[idx].value = v;
+	}
+}
+
+void CDetailsPropertyPage1::UpdateTokenScrollBar()
+{
+	if (m_tokenScroll.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+	const int count = (int)m_tokenRows.size();
+	SCROLLINFO si;
+	ZeroMemory(&si, sizeof(si));
+	si.cbSize = sizeof(si);
+	si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS;
+	si.nMin   = 0;
+	si.nMax   = (count > 0) ? count - 1 : 0;
+	si.nPage  = kVisibleRows;
+	si.nPos   = m_scrollTop;
+	m_tokenScroll.SetScrollInfo(&si, TRUE);
+	m_tokenScroll.EnableWindow(count > kVisibleRows);
+}
+
+void CDetailsPropertyPage1::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	if (pScrollBar != NULL && pScrollBar->GetSafeHwnd() == m_tokenScroll.GetSafeHwnd())
+	{
+		CommitVisibleRows();
+		const int count  = (int)m_tokenRows.size();
+		const int maxTop = (count > kVisibleRows) ? (count - kVisibleRows) : 0;
+		int top = m_scrollTop;
+		switch (nSBCode)
+		{
+			case SB_LINEUP:        top -= 1;            break;
+			case SB_LINEDOWN:      top += 1;            break;
+			case SB_PAGEUP:        top -= kVisibleRows; break;
+			case SB_PAGEDOWN:      top += kVisibleRows; break;
+			case SB_THUMBTRACK:
+			case SB_THUMBPOSITION: top = (int)nPos;     break;
+			case SB_TOP:           top = 0;             break;
+			case SB_BOTTOM:        top = maxTop;        break;
+			default: break;
+		}
+		if (top < 0)      top = 0;
+		if (top > maxTop) top = maxTop;
+		m_scrollTop = top;
+		RefreshTokenView();
+		return;
+	}
+	CPropertyPage::OnVScroll(nSBCode, nPos, pScrollBar);
 }
 
 BOOL CDetailsPropertyPage1::OnInitDialog()
@@ -233,6 +513,17 @@ BOOL CDetailsPropertyPage1::OnInitDialog()
 	{
 		pSheetsCtrl->EnableWindow(FALSE);
 	}
+
+	// Date field is read-only — it is set only by File → Create version.
+	CWnd* pDateCtrl = GetDlgItem(DESIGNBOX_DATE);
+	if (pDateCtrl != NULL)
+	{
+		pDateCtrl->EnableWindow(FALSE);
+	}
+
+	// Populate the embedded variables (token) editor.
+	LoadTokens();
+	RefreshTokenView();
 
 	return TRUE; // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -319,9 +610,91 @@ BOOL CDetailsPropertyPage3::OnInitDialog()
 	m_wndList.InsertColumn(0, _T("Name"), LVCFMT_LEFT, nameCol);
 	m_wndList.InsertColumn(1, _T("Value"), LVCFMT_LEFT, rcList.Width() - nameCol - 4);
 
+	MergeReferencedTokens();
 	RebuildList();
 
 	return TRUE;
+}
+
+void CDetailsPropertyPage3::MergeReferencedTokens()
+{
+	if (m_pDesign == NULL)
+	{
+		return;
+	}
+
+	const CDetails& d = m_pDesign->GetCurrentSheet()->GetDetails();
+
+	// Gather every place a {token} can be referenced: the design fields, the
+	// SVG title-block template, the values of already-defined tokens (a token
+	// value may itself reference another), and the free-text / note objects on
+	// every sheet (the only drawing objects whose text is token-substituted).
+	CString blob;
+	blob += d.GetTitle();          blob += _T('\n');
+	blob += d.GetAuthor();         blob += _T('\n');
+	blob += d.GetRevision();       blob += _T('\n');
+	blob += d.GetDocumentNumber(); blob += _T('\n');
+	blob += d.GetOrganisation();   blob += _T('\n');
+	blob += d.GetTitleBlockSvg();
+	for (CDetailsTokenMap::const_iterator it = m_oTokens.begin(); it != m_oTokens.end(); ++it)
+	{
+		blob += _T('\n');
+		blob += it->second;
+	}
+
+	const int total = m_pDesign->GetNumberOfSheets();
+	for (int s = 0; s < total; ++s)
+	{
+		CTinyCadDoc* pSheet = m_pDesign->GetSheet(s);
+		if (pSheet == NULL)
+		{
+			continue;
+		}
+		for (drawingIterator dit = pSheet->GetDrawingBegin(); dit != pSheet->GetDrawingEnd(); ++dit)
+		{
+			CDrawingObject* pObj = *dit;
+			if (pObj == NULL)
+			{
+				continue;
+			}
+			switch (pObj->GetType())
+			{
+				case xText:
+				case xTextEx:
+				case xTextEx2:
+					blob += _T('\n');
+					blob += static_cast<CDrawText*>(pObj)->GetValue();
+					break;
+				case xNoteText:
+					blob += _T('\n');
+					blob += static_cast<CDrawNoteText*>(pObj)->GetValue();
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	int pos = 0;
+	while ((pos = blob.Find(_T('{'), pos)) >= 0)
+	{
+		int end = blob.Find(_T('}'), pos + 1);
+		if (end < 0)
+		{
+			break;
+		}
+		CString name = blob.Mid(pos + 1, end - pos - 1);
+		name.Trim();
+		pos = end + 1;
+
+		if (IsValidTokenName(name)
+			&& !IsReservedTokenName(name)
+			&& m_oTokens.find(name) == m_oTokens.end())
+		{
+			m_oTokens[name] = _T("");
+			m_bDirty = true;
+		}
+	}
 }
 
 void CDetailsPropertyPage3::RebuildList(int selectIndex)
@@ -533,7 +906,9 @@ CDetailsPropertyPage4::CDetailsPropertyPage4(CMultiSheetDoc* pDesign)
 	m_bDirty = false;
 	if (m_pDesign != NULL)
 	{
-		m_sSvg = m_pDesign->GetCurrentSheet()->GetDetails().m_sTitleBlockSvg;
+		const CDetails& d = m_pDesign->GetCurrentSheet()->GetDetails();
+		m_sSvg  = d.m_sTitleBlockSvg;
+		m_sName = d.m_sTitleBlockName;
 	}
 }
 
@@ -557,6 +932,20 @@ BOOL CDetailsPropertyPage4::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
 	PopulateList();
+
+	// Preselect the currently-referenced template, if it is still installed.
+	if (!m_sName.IsEmpty())
+	{
+		for (size_t i = 0; i < m_templates.size(); ++i)
+		{
+			if (m_templates[i].name.CompareNoCase(m_sName) == 0)
+			{
+				m_wndList.SetCurSel((int)i);
+				break;
+			}
+		}
+	}
+
 	UpdateStateLabel();
 	return TRUE;
 }
@@ -583,6 +972,7 @@ void CDetailsPropertyPage4::OnListSelChange()
 		return;
 	}
 	m_sSvg    = svg;
+	m_sName   = m_templates[sel].name;
 	m_bDirty  = true;
 	UpdateStateLabel();
 	SetModified(TRUE);
@@ -618,6 +1008,7 @@ void CDetailsPropertyPage4::OnBrowse()
 	}
 
 	m_sSvg   = svg;
+	m_sName.Empty();           // one-off file — no store name, embed-only
 	m_bDirty = true;
 	m_wndList.SetCurSel(-1);   // no template selected — this is a custom file
 	UpdateStateLabel();
@@ -626,9 +1017,10 @@ void CDetailsPropertyPage4::OnBrowse()
 
 void CDetailsPropertyPage4::OnUseBuiltin()
 {
-	if (!m_sSvg.IsEmpty())
+	if (!m_sSvg.IsEmpty() || !m_sName.IsEmpty())
 	{
 		m_sSvg.Empty();
+		m_sName.Empty();
 		m_bDirty = true;
 		m_wndList.SetCurSel(-1);
 		UpdateStateLabel();
@@ -641,7 +1033,9 @@ BOOL CDetailsPropertyPage4::OnApply()
 	if (m_bDirty && m_pDesign != NULL)
 	{
 		CDetails& current = m_pDesign->GetCurrentSheet()->GetDetails();
-		current.m_sTitleBlockSvg = m_sSvg;
+		current.m_sTitleBlockName = m_sName;
+		current.m_sTitleBlockSvg  = m_sSvg;
+		current.ResolveTitleBlock();
 
 		// Title-block SVG is design-wide — propagate to every other sheet.
 		int total = m_pDesign->GetNumberOfSheets();

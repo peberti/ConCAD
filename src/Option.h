@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -60,6 +60,19 @@ private:
 	BOOL AutoJunc;
 	int AutoSnapRange;
 
+	// Drawing-default preferences (app-wide, registry-backed; edited on the
+	// Options -> Settings "Drawing" page).  Wire/cable widths are applied live
+	// at paint time; the note defaults seed newly created note boxes.
+	int  WireWidth;
+	int  CableWidth;
+	BOOL NoteDefaultFill;
+	BOOL NoteDefaultRounded;
+
+	// Font used for component (symbol-instance) reference/value labels.  Its
+	// height is kept at the built-in pin-font height (drawing scale); only the
+	// face / weight / italic are user-configurable.
+	LOGFONT ComponentLabelFont;
+
 	//=====================================================================
 	//== ctor/dtor/initializing                                          ==
 	//=====================================================================
@@ -76,6 +89,21 @@ public:
 
 	/** Get the styles for line drawing. */
 	ListOfStyles& GetLineStyles();
+
+	//-- Drawing-default preferences
+	int  GetWireWidth() const          { return WireWidth; }
+	int  GetCableWidth() const         { return CableWidth; }
+	BOOL GetNoteDefaultFill() const    { return NoteDefaultFill; }
+	BOOL GetNoteDefaultRounded() const { return NoteDefaultRounded; }
+	void SetWireWidth(int w);
+	void SetCableWidth(int w);
+	void SetNoteDefaultFill(BOOL b);
+	void SetNoteDefaultRounded(BOOL b);
+
+	//-- Component-label font.  GetComponentLabelFont() always returns a valid
+	//-- LOGFONT (pin-font height with the user's face/weight/italic applied).
+	LOGFONT* GetComponentLabelFont()   { return &ComponentLabelFont; }
+	void SetComponentLabelFont(const LOGFONT& lf);
 
 	//=====================================================================
 	//== Mutator                                                         ==

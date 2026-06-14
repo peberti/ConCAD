@@ -3,9 +3,9 @@
 <assemblyIdentity 
    version="1.0.0.0"
    processorArchitecture="x86"
-   name="TinyCAD"
-   type="win32" /> 
-   <description>TinyCAD for Windows</description> 
+   name="ConCAD"
+   type="win32" />
+   <description>ConCAD</description>
    <dependency> 
    <dependentAssembly> 
         <assemblyIdentity type="win32" 

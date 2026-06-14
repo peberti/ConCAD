@@ -283,13 +283,24 @@ CDrawNoteText::CDrawNoteText(CTinyCadDoc *pDesign, ObjType type) :
 	FontColour = m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::NOTETEXT_TEXT);
 
 	m_tab_width_in_avg_char_widths = 4;		//This sets the default tab width in average character width units.
-	m_border_style = BS_RoundedRectangle;	//This sets the default border style
+	//Default border style follows the user's drawing preference (Options -> Drawing).
+	m_border_style = m_pDesign->GetOptions()->GetNoteDefaultRounded() ? BS_RoundedRectangle : BS_Rectangle;
 
-	//There isn't a "UserFill", only "UserColor"'s so we must make a fill style that lets us specify the user's preferred default color choice for the background fill.
-	FillStyle tempFill;
-	tempFill.Index = 0;	//solid fill with a default color of black (taken from criminally cryptic comment in FillStyle)
-	tempFill.Colour = m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::NOTETEXT_FILL);	//get the user's preferred notetext background fill color
-	Fill = m_pDesign->GetOptions()->AddFillStyle(&tempFill);	//Add the newly created style, if it is unique and not already added
+	//Follow the user's "background fill" drawing preference.  "No fill" is
+	//represented by the fsNONE fill handle (matching the note editor and
+	//Paint(), which test Fill != fsNONE), not by a fill style of index -1.
+	if (m_pDesign->GetOptions()->GetNoteDefaultFill())
+	{
+		//There isn't a "UserFill", only "UserColor"'s so we make a solid fill style in the user's preferred background colour.
+		FillStyle tempFill;
+		tempFill.Index = 0;	//solid fill
+		tempFill.Colour = m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::NOTETEXT_FILL);
+		Fill = m_pDesign->GetOptions()->AddFillStyle(&tempFill);	//Add the newly created style, if it is unique and not already added
+	}
+	else
+	{
+		Fill = fsNONE;	//no background fill
+	}
 	m_pDesign->GetOptions()->SetCurrentFillStyle(GetType(), Fill);	//Set the current fill style to this new style
 
 	//Create a line style used to draw the note's enclosing rectangle
@@ -431,7 +442,8 @@ void CDrawNoteText::Paint(CContext &dc, paint_options options)
 	formatOptions.iTabLength = m_tab_width_in_avg_char_widths;
 	formatOptions.uiLengthDrawn = 0;
 
-	dc.DrawTextExW(str, textRectangle, &formatOptions);	//Now draw the note text on top of the border rectangle
+	CString sDraw = m_pDesign->GetDetails().Resolve(str);	//Substitute any {token} references before drawing
+	dc.DrawTextExW(sDraw, textRectangle, &formatOptions);	//Now draw the note text on top of the border rectangle
 }
 
 // Store the NoteText in the drawing

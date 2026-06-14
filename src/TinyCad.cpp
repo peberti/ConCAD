@@ -41,6 +41,8 @@
 #include <io.h>
 #include <iostream>
 #include <fstream>
+#include <shlwapi.h>		// for SHCopyKey (registry migration)
+#pragma comment(lib, "shlwapi.lib")
 
 
 // NOTE: This is never compiled in.  It is used to 
@@ -195,9 +197,9 @@ void CTinyCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL
 			if (!m_bConsoleAcquired) {
 				m_bConsoleAcquired = RedirectIOToConsole();
 			}
-			fwprintf(stderr, _T("\nTinyCAD Version %s copyright (c) 1994-2019 Matt Pyne.  Licensed under GNU LGPL 2.1 or newer\n"), (LPCTSTR) (CTinyCadApp::GetVersion()));
+			fwprintf(stderr, _T("\nConCAD (a fork of TinyCAD) Version %s copyright (c) 1994-2019 Matt Pyne.  Licensed under GNU LGPL 2.1 or newer\n"), (LPCTSTR) (CTinyCadApp::GetVersion()));
 			fwprintf(stderr, _T("Correct usage is:\n"));
-			fwprintf(stderr,_T("tinycad <design file name with optional path and mandatory file type extension (.dsn for design files)> [options]\n"));
+			fwprintf(stderr,_T("ConCAD <design file name with optional path and mandatory file type extension (.dsn for design files)> [options]\n"));
 			fwprintf(stderr,_T("Optional command line options:\n"));
 			fwprintf(stderr,_T("\t/s                         Generate Spice netlist file with same base name as the design file\n"));
 			fwprintf(stderr,_T("\t--gen_spice_netlist        Generate Spice netlist file with same base name as the design file\n"));
@@ -356,6 +358,36 @@ BOOL CTinyCadApp::InitInstance()
 		return FALSE;
 	}
 
+	// ConCAD is a fork of TinyCAD; on first run, migrate any existing user
+	// settings from the legacy hive to the ConCAD hive so that upgrading users
+	// keep their preferences, recent-file list, and library configuration.
+	// Both the MFC profile (MRU, window state) and the custom CTinyCadRegistry
+	// settings (see CTinyCadRegistry::M_SKEY) live under the shared profile
+	// subkey HKCU\Software\TinyCAD\TinyCAD, so copying that one subtree onto
+	// HKCU\Software\ConCAD\ConCAD migrates everything in one step.
+	{
+		HKEY hExisting = NULL;
+		if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\ConCAD\\ConCAD"), 0, KEY_READ, &hExisting) == ERROR_SUCCESS)
+		{
+			// Our settings already exist - nothing to migrate.
+			RegCloseKey(hExisting);
+		}
+		else
+		{
+			HKEY hSrc = NULL;
+			if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\TinyCAD\\TinyCAD"), 0, KEY_READ, &hSrc) == ERROR_SUCCESS)
+			{
+				HKEY hDest = NULL;
+				if (RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\ConCAD\\ConCAD"), 0, NULL, 0, KEY_WRITE, NULL, &hDest, NULL) == ERROR_SUCCESS)
+				{
+					SHCopyKey(hSrc, NULL, hDest, 0);	// recursively copy the legacy settings subtree
+					RegCloseKey(hDest);
+				}
+				RegCloseKey(hSrc);
+			}
+		}
+	}
+
 	// Change the registry key under which our settings are stored.
 	SetRegistryKey(CTinyCadApp::GetName());
 
@@ -412,7 +444,7 @@ BOOL CTinyCadApp::InitInstance()
 	free((void*) m_pszHelpFilePath);	//Free the string allocated by MFC at CWinAppEx startup to avoid a memory leak.  The string is allocated before InitInstance is called.
 	//Change the name of the .HLP file.
 	//The CWinAppEx destructor will free the memory.
-	m_pszHelpFilePath = _tcsdup(GetMainDir() + _T("TinyCAD.html"));	//Create the new help file path name
+	m_pszHelpFilePath = _tcsdup(GetMainDir() + _T("ConCAD.html"));	//Create the new help file path name
 	SetHelpMode(afxHTMLHelp);
 
 	// Enable drag/drop open
@@ -442,7 +474,7 @@ BOOL CTinyCadApp::InitInstance()
 				workingDirectory[0] = _T('\0');
 				GetCurrentDirectory(1024, workingDirectory);	//This may cause an error on systems older than WinXP
 
-				fprintf(stderr,"Error #1:  TinyCAD cannot find or navigate to the file named \"%s\" starting from location \"%s\"\n", (char *) cmdInfo.m_strFileName.GetBuffer(), (char *)workingDirectory);
+				fprintf(stderr,"Error #1:  ConCAD cannot find or navigate to the file named \"%s\" starting from location \"%s\"\n", (char *) cmdInfo.m_strFileName.GetBuffer(), (char *)workingDirectory);
 
 				ATLTRACE2(_T("TinyCAD cannot find or navigate to the file named \"%s\" starting from location \"%s\"\n"), cmdInfo.m_strFileName, (char *) workingDirectory);
 			}
@@ -558,7 +590,7 @@ CString CTinyCadApp::GetReleaseType()
 //-------------------------------------------------------------------------
 CString CTinyCadApp::GetName()
 {
-	return "TinyCAD";
+	return "ConCAD";
 }
 //-------------------------------------------------------------------------
 CString CTinyCadApp::GetMainDir()
@@ -593,8 +625,8 @@ CString CTinyCadApp::GetMyDocumentDir(CString subfolder)
 	 * This also has the benefit that if a user uninstalls TinyCAD then the user's libraries are not
 	 * also deleted.
 	 * The My Documents path is found by concatenating the environment variable "USERPROFILE" contents with 
-	 *		Windows XP:  "\My Documents\TinyCAD\libraries"
-	 *		Windows Vista/7/8:  "\documents\TinyCAD\libraries"
+	 *		Windows XP:  "\My Documents\ConCAD\libraries"
+	 *		Windows Vista/7/8:  "\documents\ConCAD\libraries"
 	*/
 	CString sReturn;
 	TCHAR szPath[MAX_PATH];
@@ -606,7 +638,7 @@ CString CTinyCadApp::GetMyDocumentDir(CString subfolder)
 								 szPath))) 
 	{
 		TRACE("CTinyCadApp::GetLibraryDir() - SHGetFolderPath(CSIDL_PERSONAL) returned \"%S\"\n", szPath);
-		PathAppend(szPath, TEXT("TinyCAD"));
+		PathAppend(szPath, TEXT("ConCAD"));
 		PathAppend(szPath, subfolder);
 		TRACE("CTinyCadApp::GetLibraryDir() - concatenated string = \"%S\"\n", szPath);
 	}
@@ -868,7 +900,7 @@ void CTinyCadApp::OnMyFileOpen()
 	//example code copied and modified taken from http://yourprosoft.blogspot.com/2012/01/mfc-encountered-improper-argument.html
 	
 	CFileDialog pDlg(TRUE, _T("*.dsn"), NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-					_T("TinyCAD file (*.dsn)|*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
+					_T("ConCAD file (*.dsn)|*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
 
 	if(pDlg.DoModal()==IDOK)
 	{

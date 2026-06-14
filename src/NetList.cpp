@@ -134,7 +134,7 @@ void CNetList::createErrorFile(const TCHAR *filename)
 	{
 		if (static_cast<CMainFrame*>((static_cast<CTinyCadApp*>(AfxGetApp())->m_pMainWnd))->runAsConsoleApp)
 		{	//in console mode, also output the error message to stderr, wherever that might be pointed
-			_ftprintf(stderr, _T("TinyCAD command error:  Cannot open file %s for writing.  Make sure volume is not write protected or full and that sufficient permission is present for writing to this location.\n"), (LPCTSTR)m_err_filename);
+			_ftprintf(stderr, _T("ConCAD command error:  Cannot open file %s for writing.  Make sure volume is not write protected or full and that sufficient permission is present for writing to this location.\n"), (LPCTSTR)m_err_filename);
 		}
 		else
 		{

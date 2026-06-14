@@ -831,6 +831,7 @@ public:
 	virtual BOOL IsInside(double left, double right, double top, double bottom);
 	CString Find(const TCHAR *); // Does this string match this text?
 	virtual CString GetName() const;
+	CString GetValue() const { return str; }	// The raw note text (for token discovery)
 	virtual void BeginEdit(BOOL re_edit);
 	virtual void EndEdit();
 	virtual BOOL CanEdit();

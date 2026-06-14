@@ -44,7 +44,7 @@ CDlgStartUpWindow::CDlgStartUpWindow(CWnd *Parent)
 	CString theClass = AfxRegisterWndClass(0);
 
 	// Now create the window
-	CreateEx(0, theClass, _T("TinyCAD"), WS_POPUP | WS_VISIBLE, ClientRect.left, ClientRect.top, ClientRect.Width(), ClientRect.Height(), Parent->m_hWnd, NULL);
+	CreateEx(0, theClass, _T("ConCAD"), WS_POPUP | WS_VISIBLE, ClientRect.left, ClientRect.top, ClientRect.Width(), ClientRect.Height(), Parent->m_hWnd, NULL);
 
 	// Set a timer to destroy this window in TIME_OUT miliseconds time
 	timerID = (int) SetTimer(1, TIME_OUT, NULL);

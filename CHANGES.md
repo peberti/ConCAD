@@ -13,29 +13,38 @@ Solution (Ctrl+Shift+B).
 
 ## 1. Design Details: user-defined tokens
 
-You can now define your own named text variables (tokens) in the design
-details dialog and reference them with `{TokenName}` syntax inside any
-title-block text field. They get substituted at render time.
+You can use named text variables (tokens) and reference them with
+`{TokenName}` syntax. Tokens are substituted at render time in the
+title-block fields, the SVG title block, **free Text objects, and Note
+objects**. They are deliberately **not** substituted in electrical
+labels or pin references, so the netlist is unaffected.
 
 ### Where it lives in the UI
 
-`File → Design Details…` (Ctrl+D) now has three tabs:
+`Edit → Design Details…` (Ctrl+D — moved from the File menu) has these
+tabs:
 
-- **Design** — the existing title-block fields (Title, Author,
-  Revision, Document, Organisation, Date) and the visibility checkbox.
-- **Guides** — the existing rulers configuration.
-- **Variables** — *new*. A list of user-defined name/value tokens with
-  Add / Edit / Remove buttons.
+- **Design** — the title-block fields (Title, Author, Revision,
+  Document, Organisation, Date), the visibility checkbox, **and the
+  Variables editor** (folded in from what used to be a separate tab).
+- **Guides** — the rulers configuration.
+- **Title Block** — the SVG title-block picker (see §7).
+
+The Variables editor on the Design tab lists each referenced token as a
+read-only **Name** label with an editable **Value** field (a scrollbar
+appears when there are more tokens than fit). There is no Add/Remove —
+a token appears automatically as soon as you type `{TokenName}`
+somewhere it is substituted, and drops off when no longer referenced.
 
 ### How to use
 
-1. Open `File → Design Details…` and switch to the **Variables** tab.
-2. Click **Add…** to define a token. Give it a name (letters, digits,
-   and underscores; cannot start with a digit) and a value.
-3. Reference the token inside any title-block field as `{TokenName}`.
-   Example: set Title to `Demo for {ProjectCode}` and define
-   `ProjectCode = PRJ-001`. The title block will render
-   `Demo for PRJ-001`.
+1. Type `{ProjectCode}` into any title-block field, free Text, or Note.
+2. Open `Edit → Design Details…` (Design tab). `ProjectCode` is listed
+   under Variables; type its value (e.g. `PRJ-001`) and click OK.
+3. Everywhere `{ProjectCode}` appears now renders `PRJ-001`.
+
+Token names use letters, digits and underscores and cannot start with a
+digit; reserved built-in names (below) are rejected.
 
 ### Built-in tokens
 
@@ -60,20 +69,27 @@ exact-name collisions — the Add dialog refuses reserved names like
 ### Notes
 
 - Tokens can reference other tokens. Resolution runs up to 8 passes,
-  which catches cycles safely.
+  which catches cycles safely. A token referenced only through another
+  token's value still counts as "used" and stays listed.
 - Unknown tokens are left as-is (literal `{XYZ}`).
 - Tokens are stored inside each sheet's `<DETAILS>` block as
-  `<USERTOKEN name="...">value</USERTOKEN>` entries. Old `.dsn` files
-  without tokens still load.
+  `<USERTOKEN name="...">value</USERTOKEN>` entries and are shared across
+  all sheets. Old `.dsn` files without tokens still load. Tokens that are
+  no longer referenced anywhere are pruned on the next save.
 
 ### Files changed
 
-- `src/Details.h`, `src/Details.cpp`
-- `src/DetailsPropertyPages.h`, `src/DetailsPropertyPages.cpp`
-- `src/DetailsPropertySheet.h`, `src/DetailsPropertySheet.cpp`
-- `src/TinyCad.rc` (new dialog templates `IDD_DETAILS_PAGE3`,
-  `IDD_EDIT_TOKEN`)
-- `src/resource.h` (new resource IDs)
+- `src/Details.h`, `src/Details.cpp` (`GetTitleBlockSvg`, `Resolve`
+  fast-path)
+- `src/DetailsPropertyPages.h`, `src/DetailsPropertyPages.cpp` (Variables
+  editor embedded on the Design page; reference discovery across all
+  sheets' Text/Note objects; old `IDD_DETAILS_PAGE3` "Variables" tab no
+  longer shown)
+- `src/DetailsPropertySheet.cpp` (drops the separate Variables page)
+- `src/DrawText.cpp`, `src/DrawNoteText.cpp`, `src/Object.h` (token
+  substitution in free Text / Note objects)
+- `src/TinyCad.rc` (Design page hosts the Variables editor; Design
+  Details moved to the Edit menu), `src/resource.h` (new control IDs)
 
 ---
 
@@ -136,12 +152,13 @@ sheet in a multi-sheet design.
 - Organisation
 - Date
 - User tokens (the Variables tab)
+- Title-block visibility checkbox
+- Title-block SVG template selection
 
 ### What is **not** shared (still per-sheet)
 
 - Page size
 - Ruler / guides configuration
-- Title-block visibility checkbox
 - Sheets X of Y (auto-computed per sheet)
 
 ### How the sync happens
@@ -338,15 +355,82 @@ auto-retarget the project to a newer toolset.
 
 ---
 
+## 7. SVG title blocks
+
+The title block can be drawn from an **SVG template** instead of the
+built-in procedural box. `Edit → Design Details… → Title Block` lists
+templates found in:
+
+- `<exe-dir>/templates/title-blocks/` (installer-bundled),
+- `<exe-dir>/../templates/title-blocks/` (dev-build fallback),
+- `%APPDATA%/ConCAD/templates/title-blocks/` (per-user; files here get a
+  ` (user)` suffix in the list).
+
+Pick a template, **Browse SVG…** for an arbitrary file, or **Use
+built-in** to revert. `{Token}` references inside the SVG (including the
+built-ins and the user variables of §1) are substituted at paint time.
+
+### On-disk format (hybrid, additive)
+
+```xml
+<TITLEBLOCK_SVG name="Simple-A4" enc="base64">PHN2Zy…</TITLEBLOCK_SVG>
+```
+
+- `name` — the template stem; re-resolved against the store on load so a
+  re-shipped/edited bundled template propagates. Absent for Browse… files.
+- `enc="base64"` — child data is base64 of the SVG's UTF-8 bytes. Legacy
+  files with no `enc` are read as raw and upgraded to base64 on next save.
+- If the named template is missing on a machine, the embedded copy is
+  used — so designs shared via SharePoint render everywhere.
+
+### Files changed
+
+- `src/SvgTitleBlock.{h,cpp}` (NanoSVG-based renderer + template store),
+  `src/nanosvg/nanosvg.h` (vendored)
+- `src/Details.{h,cpp}` (`m_sTitleBlockName` / embedded copy /
+  `m_sEffectiveSvg`, `ResolveTitleBlock`, `DisplayBox` SVG branch)
+- `src/DetailsPropertyPages.*`, `src/TinyCad.rc` (the Title Block tab)
+
+---
+
+## 8. Options → Settings: "Drawing" defaults page
+
+A new **Drawing** tab in `Options → Settings` collects drawing defaults
+(stored in the registry, applied to the current document immediately):
+
+- **Wire width** / **Cable width** (px) — applied live to all wires /
+  cables.
+- **Wire colour** / **Cable colour** — colour pickers. Cable now has its
+  own colour (`COLOR_CABLE`) instead of sharing the wire colour; wire
+  colour stays in sync with the `Options → Colours` dialog.
+- **New note boxes**: default **Background fill** and **Rounded corners**
+  for newly created Note objects.
+- **Components → Label font…** — face / weight / italic for component
+  reference/value labels (height kept at the pin-font scale).
+
+### Files changed
+
+- `src/OptionsSheets.{h,cpp}` (`COptionsDrawing` page),
+  `src/OptionsPropertySheet.{h,cpp}` (page registered)
+- `src/Option.{h,cpp}` (wire/cable width, note defaults, component-label
+  font; registry-backed)
+- `src/DrawLine.cpp` (wire/cable width + cable colour),
+  `src/DrawNoteText.cpp` (note defaults), `src/DrawMethod.cpp` (label
+  font)
+- `src/UserColor.{h,cpp}` (`CABLE` colour),
+  `src/TinyCad.rc` + `src/resource.h` (`IDD_OPTIONS_DRAWING`)
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
 the modified build remain compatible with prior versions in the
 following sense:
 
-- New elements (`<USERTOKEN>`, `<CABLE>`, `<CONNECTOR>`, the new
-  `use_color`/`color` attributes on `<SYMBOL>`) are emitted only when
-  the corresponding feature is in use.
+- New elements (`<USERTOKEN>`, `<CABLE>`, `<CONNECTOR>`,
+  `<TITLEBLOCK_SVG>`, the new `use_color`/`color` attributes on
+  `<SYMBOL>`) are emitted only when the corresponding feature is in use.
 - A pre-existing file with no new elements loads unchanged.
 - Saving a file with the new build, then loading it in the new build
   again, round-trips cleanly.
@@ -359,9 +443,11 @@ XML-saved files.
 
 ## Quick test plan after rebuild
 
-1. **Tokens** — Design Details → Variables → Add `Foo = bar`. Set
-   Title to `Hello {Foo}`. OK. Title block renders `Hello bar`. Save
-   and reopen; tokens persist.
+1. **Tokens** — set Title to `Hello {Foo}` (Design Details, Design
+   tab). `Foo` appears under Variables; give it `bar`, OK. Title block
+   (and any `{Foo}` in free Text / Notes) renders `Hello bar`. Save and
+   reopen; the value persists. Remove every `{Foo}` reference → it drops
+   off the list on next open.
 2. **Sheets X of Y** — open a multi-sheet design. Each sheet's title
    block shows `<N> of <total>`. Add a sheet; numbers update.
 3. **Shared fields** — set Title on sheet 1, OK; switch to sheet 2 —
@@ -372,3 +458,10 @@ XML-saved files.
 5. **Connector** — flag a library symbol as connector, place an
    instance, double-click → Color button enabled, pick a color. Other
    instances stay unchanged. Save, reopen — color persists.
+6. **SVG title block** — Design Details → Title Block → pick `Simple-A4`
+   → OK; the SVG title block renders bottom-right and resolves tokens.
+   Save/reopen — still there (inspect `.dsn` for `<TITLEBLOCK_SVG>`).
+7. **Drawing defaults** — Options → Settings → Drawing: change wire/cable
+   width and cable colour (live update); toggle the new-note Background
+   fill / Rounded corners (affects newly placed notes); pick a Component
+   label font (labels redraw, size unchanged).

@@ -1,13 +1,47 @@
-# Session handoff — SVG title-block feature
+# Session handoff — schematic feature work
 
-## Last commit on master
-`e3e66a6` — *Don't throw from ~CppSQLite3DB (fixes abort() on library delete)*
+## State
 
-Commits added this session (build bring-up on a fresh machine — see "Build & runtime bring-up" below):
-- `4c04216` — Fix crash and read-only failures when opening SQLite libraries
-- `e3e66a6` — Don't throw from ~CppSQLite3DB (fixes abort() on library delete)
+A single large commit on `master` now captures the whole fork-feature body
+that had accumulated uncommitted: the ConCAD rebrand + build bring-up, the
+SVG title-block feature (steps 1–4b), and this session's additions
+(below). `master` is ahead of `origin/master` and **unpushed** — pushing
+is the user's call.
 
-`master` is ahead of `origin/master` and unpushed — pushing is the user's call. The SVG title-block WIP (step 4/4b) is still **staged but uncommitted** in the working tree (alongside `HANDOFF.md`, `CHANGES.md`, `manual/ConCAD.html`, the `Details`/`SvgTitleBlock`/`DetailsPropertyPages` sources, and `src/TinyCad.vcxproj` which now also carries the v142 revert).
+**Repo hygiene note:** this is a WSL/DrvFs checkout, so git sees every file
+as mode-changed (100644→100755). `git config core.fileMode false` is set
+locally to ignore that; without it `git status` is unusable. Untracked
+working files left in the tree on purpose: `test_file.dsn`, `tCad1.dsn`,
+`*.svg`, `*.png`, `art/`, `src/TinyCad.aps`, `src/TinyCad.vcxproj.user`,
+and a junk file literally named `src/nul) do set ...` (a stray from a
+`gitbranch.bat` redirect — safe to delete).
+
+### Added this session (all committed)
+- **Tokens everywhere**: `{name}` now substitutes in free Text and Note
+  objects too (not labels/pins/netlist). Variables are edited inline on the
+  Design tab (the separate Variables tab is gone); only currently-referenced
+  tokens are listed (read-only name + editable value, scrollable), and
+  unreferenced ones are pruned on save. See CHANGES.md §1.
+- **Design Details moved to the Edit menu** (Ctrl+D unchanged).
+- **Date** field is read-only in the dialog (was going to be set by a
+  Create-version command — see "Deferred").
+- **Title-block visibility** is now design-wide (propagates to all sheets).
+- **Options → Settings → "Drawing"** page: wire/cable width, wire/cable
+  colour (new dedicated `COLOR_CABLE`), new-note fill/rounded-corner
+  defaults, component-label font. See CHANGES.md §8.
+
+### Deferred / skipped (by the user, this session)
+- **Create version / Edit file / write-protection** feature — designed but
+  **not started**. Intended behaviour: `File → Create version` prompts for a
+  version string (pre-filled from Revision), writes it to the Revision
+  field, stamps Date = today, saves as `Name_<ver>.dsn`, makes that the
+  open **write-protected** document (internal serialized flag, `[Write
+  protected]` in the title bar, edits gated); `File → Edit file` copies it
+  to `Name_<ver>_working.dsn` and clears protection. (The Date-read-only
+  change above was the first step of this.)
+- **Grid size on the Drawing page** — skipped (grid size already lives on
+  the Grid tab). Unused IDs `IDC_OPT_GRID` / `IDC_OPT_GRID_UNITS` remain
+  defined in `resource.h`, harmless.
 
 ## Build & runtime bring-up (fresh VS install, this session)
 
@@ -26,8 +60,8 @@ Commits added this session (build bring-up on a fresh machine — see "Build & r
 | 1 | NanoSVG vendored at `src/nanosvg/nanosvg.h` + `CSvgTitleBlock` renderer (`src/SvgTitleBlock.{h,cpp}`) | done |
 | 2 | `CDetails::DisplayBox` branches to SVG renderer when `m_sTitleBlockSvg` is set; rect anchored bottom-right at the SVG's natural mm dimensions | done |
 | 3 | "Title Block" tab in `File → Design Details` (`CDetailsPropertyPage4`) with Browse / Use built-in | done |
-| 4 | Bundled templates folder + `CTitleBlockTemplateStore` enumerator + listbox in the tab + installer hook | **done — user is testing** |
-| 4b | **Hybrid storage** (name reference + base64 embedded fallback) — see below | **done — build is now green; run the §"Hybrid storage" tests** |
+| 4 | Bundled templates folder + `CTitleBlockTemplateStore` enumerator + listbox in the tab + installer hook | done — tested OK |
+| 4b | **Hybrid storage** (name reference + base64 embedded fallback) — see below | done — tested OK |
 | 5 | `File → New` picker + registry default + "Don't ask again" | not started |
 | 6 | Polish: Save-as-template, preview pane, error toasts | not started |
 
@@ -67,7 +101,7 @@ Commits added this session (build bring-up on a fresh machine — see "Build & r
 2. Open any `.dsn`. `File → Design Details… → Title Block`.
 3. Listbox shows **Simple-A4** (the bundled starter at `templates/title-blocks/Simple-A4.svg`). Click → state label changes → OK → bottom-right title block renders Simple-A4.
 4. Set Title / Author / DocNo etc. on the **Design** tab — `{Title}`, `{Author}`, etc. inside the SVG resolve.
-5. **User folder** — drop any `.svg` into `%APPDATA%\TinyCAD\templates\title-blocks\` (create the path if missing). Reopen Design Details. The listbox should show it with a ` (user)` suffix, sorted alphabetically.
+5. **User folder** — drop any `.svg` into `%APPDATA%\ConCAD\templates\title-blocks\` (create the path if missing). Reopen Design Details. The listbox should show it with a ` (user)` suffix, sorted alphabetically.
 6. **Browse SVG…** still works for arbitrary paths; **Use built-in** clears the SVG and restores the procedural box.
 7. **Round-trip** — save the `.dsn`, reopen — the SVG is still in effect.
 

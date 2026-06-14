@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -59,6 +59,23 @@ void COption::Init(CTinyCadDoc *pDesign)
 	AutoSnap = CRegistry::GetBool("AutoSnap", true);
 	AutoSnapRange = CRegistry::GetInt("AutoDragRange", 15);
 
+	// Drawing-default preferences
+	WireWidth          = CRegistry::GetInt("WireWidth", 1);
+	CableWidth         = CRegistry::GetInt("CableWidth", 3);
+	NoteDefaultFill    = CRegistry::GetBool("NoteDefaultFill", true);
+	NoteDefaultRounded = CRegistry::GetBool("NoteDefaultRounded", true);
+
+	// Component-label font: start from the built-in pin font (correct drawing
+	// height), then apply the user's saved face / weight / italic if any.
+	ComponentLabelFont = *GetFont(fPIN);
+	CString sCompFace = CRegistry::GetString("CompFontFace", _T(""));
+	if (!sCompFace.IsEmpty())
+	{
+		_tcsncpy_s(ComponentLabelFont.lfFaceName, LF_FACESIZE, (LPCTSTR)sCompFace, _TRUNCATE);
+		ComponentLabelFont.lfWeight = CRegistry::GetInt("CompFontWeight", ComponentLabelFont.lfWeight);
+		ComponentLabelFont.lfItalic = (BYTE)CRegistry::GetInt("CompFontItalic", ComponentLabelFont.lfItalic);
+	}
+
 	// Create the no symbol object
 	CDesignFileSymbol *NoSymbol = new CDesignFileSymbol();
 	NoSymbol->CreateNoSymbol(pDesign);
@@ -115,6 +132,45 @@ void COption::SetPinNumberPos(int pl)
 {
 	PinNumberPos = pl;
 	CRegistry::Set("PinNumberPos", PinNumberPos);
+}
+
+void COption::SetWireWidth(int w)
+{
+	WireWidth = w;
+	CRegistry::Set("WireWidth", WireWidth);
+}
+
+void COption::SetCableWidth(int w)
+{
+	CableWidth = w;
+	CRegistry::Set("CableWidth", CableWidth);
+}
+
+void COption::SetNoteDefaultFill(BOOL b)
+{
+	NoteDefaultFill = b;
+	CRegistry::Set("NoteDefaultFill", NoteDefaultFill);
+}
+
+void COption::SetNoteDefaultRounded(BOOL b)
+{
+	NoteDefaultRounded = b;
+	CRegistry::Set("NoteDefaultRounded", NoteDefaultRounded);
+}
+
+void COption::SetComponentLabelFont(const LOGFONT& lf)
+{
+	// Preserve the pin font's drawing-scale height/width/orientation; take only
+	// the face, weight and italic from the user's choice.
+	LOGFONT base = *GetFont(fPIN);
+	_tcsncpy_s(base.lfFaceName, LF_FACESIZE, lf.lfFaceName, _TRUNCATE);
+	base.lfWeight = lf.lfWeight;
+	base.lfItalic = lf.lfItalic;
+	ComponentLabelFont = base;
+
+	CRegistry::Set("CompFontFace", CString(lf.lfFaceName));
+	CRegistry::Set("CompFontWeight", (int)lf.lfWeight);
+	CRegistry::Set("CompFontItalic", (int)lf.lfItalic);
 }
 
 ////// Save the current settings along with the design //////

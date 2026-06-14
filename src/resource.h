@@ -509,6 +509,30 @@
 #define IDC_TOKEN_NAME                  40008
 #define IDC_TOKEN_VALUE                 40009
 #define IDC_TOKEN_HELP                  40010
+#define IDC_TOK_SCROLL                  40018
+#define IDC_TOK_NAME0                   40020
+#define IDC_TOK_NAME1                   40021
+#define IDC_TOK_NAME2                   40022
+#define IDC_TOK_NAME3                   40023
+#define IDC_TOK_NAME4                   40024
+#define IDC_TOK_NAME5                   40025
+#define IDC_TOK_VAL0                    40030
+#define IDC_TOK_VAL1                    40031
+#define IDC_TOK_VAL2                    40032
+#define IDC_TOK_VAL3                    40033
+#define IDC_TOK_VAL4                    40034
+#define IDC_TOK_VAL5                    40035
+#define IDD_OPTIONS_DRAWING             178
+#define IDC_OPT_WIRE_WIDTH              40040
+#define IDC_OPT_WIRE_COLOR              40041
+#define IDC_OPT_CABLE_WIDTH             40042
+#define IDC_OPT_CABLE_COLOR             40043
+#define IDC_OPT_NOTE_FILL               40044
+#define IDC_OPT_NOTE_ROUNDED            40045
+#define IDC_OPT_COMP_FONT               40046
+#define IDC_OPT_COMP_FONT_NAME          40047
+#define IDC_OPT_GRID                    40048
+#define IDC_OPT_GRID_UNITS              40049
 #define IDM_TOOLCABLE                   32908
 #define IDC_IS_CONNECTOR                40011
 #define METHODBOX_COLOR                 40012
@@ -524,9 +548,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        178
+#define _APS_NEXT_RESOURCE_VALUE        179
 #define _APS_NEXT_COMMAND_VALUE         32909
-#define _APS_NEXT_CONTROL_VALUE         40018
+#define _APS_NEXT_CONTROL_VALUE         40050
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

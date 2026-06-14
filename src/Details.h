@@ -62,9 +62,18 @@ public:
 	CString m_sSheets;
 	//-- User-defined name/value tokens, referenced as {name} in any field
 	CDetailsTokenMap m_oUserTokens;
-	//-- Custom title-block as an SVG XML string.  When non-empty, the SVG
-	//-- replaces the built-in DisplayBox.  Shared across all sheets.
+	//-- Custom title-block SVG.  Hybrid storage shared across all sheets:
+	//--   m_sTitleBlockName  - name of a template in the title-block store, or
+	//--                        empty for a one-off (Browse...) SVG. The named
+	//--                        template wins on load so central edits propagate.
+	//--   m_sTitleBlockSvg   - embedded fallback copy (base64 in the .dsn) used
+	//--                        when the named template is absent — the guarantee
+	//--                        that a shared .dsn always renders.
+	//--   m_sEffectiveSvg    - transient resolved SVG actually rendered; not
+	//--                        serialized. Set by ResolveTitleBlock().
+	CString m_sTitleBlockName;
 	CString m_sTitleBlockSvg;
+	CString m_sEffectiveSvg;
 	//-- Transient sheet context (this sheet's 1-based number / total sheets)
 	//-- set by the owning CTinyCadDoc just before rendering or saving. Not serialized.
 	int m_iSheetNum;
@@ -81,6 +90,12 @@ public:
 	void ReadEx(CStream& oArchive);
 	void ReadXML(CXMLReader& xml, TransformSnap& oSnap);
 	void WriteXML(CXMLWriter& xml) const;
+
+	//-- Resolve the effective title-block SVG: prefer the named template from
+	//-- the store (so installer/central updates take effect), else fall back to
+	//-- the embedded copy.  Call after loading or after the picker changes the
+	//-- selection; cheap enough to skip per-paint disk reads.
+	void ResolveTitleBlock();
 
 	//-- Draw the details box
 private:
@@ -99,6 +114,10 @@ public:
 	CString GetDocumentNumber() const;
 	CString GetOrganisation() const;
 	CString GetSheets() const;
+	//-- The SVG text actually used to render the title block: the effective
+	//-- resolved copy when available, else the embedded copy.  Empty when the
+	//-- procedural (built-in) box is in use.  Used to discover {token} refs.
+	CString GetTitleBlockSvg() const;
 	CPoint GetPageBoundsAsPoint() const;
 	CDPoint GetOverlap() const;
 	CRect GetPageBoundsAsRect() const;
@@ -125,8 +144,9 @@ public:
 	//-- is set; otherwise the stored m_sSheets).
 	CString GetSheetsDisplay() const;
 	//-- Copy the fields that are considered design-wide (Title/Author/Revision/
-	//-- DocNo/Organisation/Date and the user tokens) from another CDetails.
-	//-- Page size, rulers and visibility are NOT copied.
+	//-- DocNo/Organisation/Date, visibility, the user tokens and the SVG
+	//-- title-block selection) from another CDetails.
+	//-- Page size and rulers are NOT copied.
 	void CopyDesignFields(const CDetails& src);
 	//-- Set the page boundries from a CPoint
 	void SetPageBounds(CPoint ptBounds);

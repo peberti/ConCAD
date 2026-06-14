@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -35,8 +35,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_VIEW_EDITTOOLBAR, OnViewEdittoolbar)
 	ON_COMMAND(ID_VIEW_FILETOOLBAR, OnViewFiletoolbar)
 	ON_COMMAND(ID_VIEW_GROUPTOOLBAR, OnViewGrouptoolbar)
-	ON_COMMAND(ID_VIEW_BUSTOOLBAR, OnViewBustoolbar)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_BUSTOOLBAR, OnUpdateViewBustoolbar)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_ANNOTATIONTOOLBAR, OnUpdateViewAnnotationtoolbar)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_EDITTOOLBAR, OnUpdateViewEdittoolbar)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_FILETOOLBAR, OnUpdateViewFiletoolbar)
@@ -118,14 +116,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	//szButton.cy = szImage.cy + 6;
 	//m_wndToolBarDraw.SetMenuSizes(szButton, szImage);  // button size must be at least 6 bigger than image size
 
-	CMFCToolBarInfo tbi3;
-	if (!m_wndToolBarDrawBus.CreateEx(this, dwCtrlStyle, dwStyle | CBRS_TOP, r, IDR_DRAWBUS) ||
-		!m_wndToolBarDrawBus.LoadToolBarEx(IDR_DRAWBUS, tbi3, TRUE))
-	{
-		TRACE0("Failed to create toolbar for buses\n");
-		return -1; // fail to create
-	}
-
 	CMFCToolBarInfo tbi4;
 	if (!m_wndToolBarDrawGroup.CreateEx(this, dwCtrlStyle, dwStyle | CBRS_TOP, r, IDR_DRAWGROUP) ||
 		!m_wndToolBarDrawGroup.LoadToolBarEx(IDR_DRAWGROUP, tbi4, TRUE))
@@ -164,7 +154,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	m_wndToolBarDraw.EnableDocking(CBRS_ALIGN_ANY);
 	m_wndToolBarAnnotate.EnableDocking(CBRS_ALIGN_ANY);
-	m_wndToolBarDrawBus.EnableDocking(CBRS_ALIGN_ANY);
 	m_wndToolBarDrawGroup.EnableDocking(CBRS_ALIGN_ANY);
 	m_wndPositionBox.EnableDocking(CBRS_ALIGN_ANY);
 	//m_wndPositionBox.EnableDocking(CBRS_ALIGN_TOP | CBRS_ALIGN_BOTTOM);
@@ -173,8 +162,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// This will show the toolbars in the proper order
 	DockPane(&m_wndPositionBox);
 	DockPaneLeftOf(&m_wndToolBarDrawGroup, &m_wndPositionBox);
-	DockPaneLeftOf(&m_wndToolBarDrawBus, &m_wndToolBarDrawGroup);
-	DockPaneLeftOf(&m_wndToolBarAnnotate, &m_wndToolBarDrawBus);
+	DockPaneLeftOf(&m_wndToolBarAnnotate, &m_wndToolBarDrawGroup);
 	DockPaneLeftOf(&m_wndToolBarDraw, &m_wndToolBarAnnotate);
 	DockPaneLeftOf(&m_wndToolBar, &m_wndToolBarDraw);
 
@@ -292,17 +280,6 @@ void CMainFrame::OnViewAnnotationtoolbar()
 void CMainFrame::OnUpdateViewAnnotationtoolbar(CCmdUI* pCmdUI)
 {
 	pCmdUI->SetCheck(m_wndToolBarAnnotate.IsWindowVisible());
-}
-
-void CMainFrame::OnViewBustoolbar()
-{
-	ShowPane(&m_wndToolBarDrawBus, !(m_wndToolBarDrawBus.IsVisible()), FALSE, TRUE);
-	RecalcLayout();
-}
-
-void CMainFrame::OnUpdateViewBustoolbar(CCmdUI* pCmdUI)
-{
-	pCmdUI->SetCheck(m_wndToolBarDrawBus.IsWindowVisible());
 }
 
 void CMainFrame::OnViewEdittoolbar()

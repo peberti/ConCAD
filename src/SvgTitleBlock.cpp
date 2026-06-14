@@ -6,6 +6,8 @@
 #include "TinyCad.h"
 #include <shlobj.h>
 #include <algorithm>
+#include <wincrypt.h>
+#pragma comment(lib, "Crypt32.lib")
 
 #define NANOSVG_IMPLEMENTATION
 #include "nanosvg/nanosvg.h"
@@ -13,8 +15,11 @@
 #include "rapidxml-1.13/rapidxml.hpp"
 
 #include <vector>
+#include <map>
+#include <string>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <math.h>
 
 CSvgTitleBlock::CSvgTitleBlock()
@@ -379,6 +384,116 @@ void ParseCssTextStyle(const char* style, CssTextProps& out)
 	}
 }
 
+// Merge "set" properties from src onto dst (src wins where it has a value).
+void MergeTextProps(CssTextProps& dst, const CssTextProps& src)
+{
+	if (src.hasFontSize)   { dst.fontSize = src.fontSize;     dst.hasFontSize = true; }
+	if (src.hasFontFamily) { dst.fontFamily = src.fontFamily; dst.hasFontFamily = true; }
+	if (src.hasFill)       { dst.fill = src.fill;             dst.hasFill = true; }
+	if (src.hasAlign)      { dst.align = src.align;           dst.hasAlign = true; }
+}
+
+// class-name -> resolved text properties, parsed from <style> rules.
+typedef std::map<std::string, CssTextProps> CssRuleMap;
+
+// Parse a CSS stylesheet body (the text of a <style> element).  Handles
+// ".name { decls }" and comma-separated selectors; comments are skipped.
+// Inkscape/Illustrator put title-block font sizes here as class rules, so
+// without this every class-styled <text> falls back to the default size.
+void ParseStyleSheet(const char* css, CssRuleMap& rules)
+{
+	if (!css) return;
+	const char* p = css;
+	while (*p)
+	{
+		while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+		if (p[0] == '/' && p[1] == '*')           // skip /* comment */
+		{
+			p += 2;
+			while (*p && !(p[0] == '*' && p[1] == '/')) ++p;
+			if (*p) p += 2;
+			continue;
+		}
+		if (!*p) break;
+
+		const char* selStart = p;
+		while (*p && *p != '{') ++p;
+		if (*p != '{') break;
+		const char* selEnd = p;
+		++p;                                       // skip '{'
+		const char* blockStart = p;
+		while (*p && *p != '}') ++p;
+		const char* blockEnd = p;
+		if (*p == '}') ++p;
+
+		std::string block(blockStart, (size_t)(blockEnd - blockStart));
+		CssTextProps props;
+		ParseCssTextStyle(block.c_str(), props);
+
+		// Split the selector list on ',' and store under each ".class" token.
+		std::string sel(selStart, (size_t)(selEnd - selStart));
+		size_t i = 0;
+		while (i <= sel.size())
+		{
+			size_t comma = sel.find(',', i);
+			std::string one = sel.substr(i, comma == std::string::npos ? std::string::npos : comma - i);
+			size_t dot = one.find('.');
+			if (dot != std::string::npos)
+			{
+				size_t s = dot + 1, e = s;
+				while (e < one.size() && (isalnum((unsigned char)one[e]) || one[e] == '-' || one[e] == '_')) ++e;
+				if (e > s) MergeTextProps(rules[one.substr(s, e - s)], props);
+			}
+			if (comma == std::string::npos) break;
+			i = comma + 1;
+		}
+	}
+}
+
+// Apply the rules referenced by node's "class" attribute onto out.
+void ApplyClassRules(rapidxml::xml_node<>* node, const CssRuleMap& rules, CssTextProps& out)
+{
+	if (rules.empty() || !node) return;
+	rapidxml::xml_attribute<>* cls = node->first_attribute("class");
+	if (!cls || !cls->value()) return;
+	const char* p = cls->value();
+	while (*p)
+	{
+		while (*p == ' ' || *p == '\t') ++p;
+		const char* s = p;
+		while (*p && *p != ' ' && *p != '\t') ++p;
+		if (p > s)
+		{
+			CssRuleMap::const_iterator it = rules.find(std::string(s, (size_t)(p - s)));
+			if (it != rules.end()) MergeTextProps(out, it->second);
+		}
+	}
+}
+
+// Collect and parse every <style> element in the tree (they may sit under
+// <defs>), accumulating their class rules.
+void CollectStyleSheet(rapidxml::xml_node<>* node, CssRuleMap& rules)
+{
+	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
+	{
+		if (c->type() != rapidxml::node_element) continue;
+		const char* n = c->name();
+		if (n && strcmp(n, "style") == 0)
+		{
+			CStringA css;
+			for (rapidxml::xml_node<>* t = c->first_node(); t; t = t->next_sibling())
+				if ((t->type() == rapidxml::node_data || t->type() == rapidxml::node_cdata) && t->value())
+					css += t->value();
+			if (css.IsEmpty() && c->value()) css = c->value();
+			ParseStyleSheet(css, rules);
+		}
+		else
+		{
+			CollectStyleSheet(c, rules);
+		}
+	}
+}
+
 COLORREF ParseHexColor(const char* v, COLORREF fallback)
 {
 	if (!v || *v != '#') return fallback;
@@ -405,72 +520,71 @@ COLORREF ParseHexColor(const char* v, COLORREF fallback)
 	return fallback;
 }
 
-void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
-                   const ViewBoxXform& xf, const CDetails& details,
-                   const Affine& parentTransform)
+// Resolve a node's font-size/family/fill/anchor in CSS precedence order:
+// presentation attributes (lowest) < class rules < inline style (highest).
+// Also reads x/y when xOut/yOut are provided (the <text> node only).
+void ResolveNodeTextProps(rapidxml::xml_node<>* node, const CssRuleMap& rules,
+                          CssTextProps& eff, double* xOut, double* yOut)
 {
-	if (!node) return;
-
-	double x = 0.0, y = 0.0, fontSize = 12.0;
-	COLORREF fill = RGB(0, 0, 0);
-	UINT align = TA_LEFT | TA_BASELINE | TA_NOUPDATECP;
-	CStringA fontFamily;
-
-	// Track whether font-size was set explicitly anywhere — without it, a
-	// 12-unit default scaled through viewBoxToPixel renders absurdly large.
-	bool fontSizeFromAttr = false;
 	for (rapidxml::xml_attribute<>* a = node->first_attribute(); a; a = a->next_attribute())
 	{
 		const char* name = a->name();
 		const char* val  = a->value();
 		if (!name || !val) continue;
-		if      (strcmp(name, "x") == 0)            x = atof(val);
-		else if (strcmp(name, "y") == 0)            y = atof(val);
-		else if (strcmp(name, "font-size") == 0)  { fontSize = atof(val); fontSizeFromAttr = true; }
-		else if (strcmp(name, "font-family") == 0)  fontFamily = val;
-		else if (strcmp(name, "fill") == 0)         fill = ParseHexColor(val, fill);
+		if      (xOut && strcmp(name, "x") == 0)    *xOut = atof(val);
+		else if (yOut && strcmp(name, "y") == 0)    *yOut = atof(val);
+		else if (strcmp(name, "font-size") == 0)  { eff.fontSize = atof(val); eff.hasFontSize = true; }
+		else if (strcmp(name, "font-family") == 0){ eff.fontFamily = val; eff.hasFontFamily = true; }
+		else if (strcmp(name, "fill") == 0)       { eff.fill = ParseHexColor(val, eff.fill); eff.hasFill = true; }
 		else if (strcmp(name, "text-anchor") == 0)
 		{
-			if      (strcmp(val, "middle") == 0) align = TA_CENTER | TA_BASELINE | TA_NOUPDATECP;
-			else if (strcmp(val, "end")    == 0) align = TA_RIGHT  | TA_BASELINE | TA_NOUPDATECP;
+			if      (strcmp(val, "middle") == 0) eff.align = TA_CENTER | TA_BASELINE | TA_NOUPDATECP;
+			else if (strcmp(val, "end")    == 0) eff.align = TA_RIGHT  | TA_BASELINE | TA_NOUPDATECP;
+			else                                  eff.align = TA_LEFT   | TA_BASELINE | TA_NOUPDATECP;
+			eff.hasAlign = true;
 		}
 	}
 
-	// CSS-style properties — Inkscape uses these instead of discrete
-	// presentation attributes.  Style takes precedence over attributes.
+	// class="..." rules from the <style> sheet override presentation attrs.
+	ApplyClassRules(node, rules, eff);
+
+	// Inline style="..." overrides everything above.
 	if (rapidxml::xml_attribute<>* st = node->first_attribute("style"))
 	{
 		CssTextProps css;
 		ParseCssTextStyle(st->value(), css);
-		if (css.hasFontSize)   { fontSize = css.fontSize; fontSizeFromAttr = true; }
-		if (css.hasFontFamily) fontFamily = css.fontFamily;
-		if (css.hasFill)       fill = css.fill;
-		if (css.hasAlign)      align = css.align;
+		MergeTextProps(eff, css);
+	}
+}
+
+void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
+                   const ViewBoxXform& xf, const CDetails& details,
+                   const Affine& parentTransform, const CssRuleMap& rules)
+{
+	if (!node) return;
+
+	double x = 0.0, y = 0.0;
+
+	// Resolve on the <text> node, then refine with the first <tspan> child
+	// (more specific): Inkscape/Illustrator often carry the size on the tspan
+	// or on a class referenced by it.  Each level only overrides where set.
+	CssTextProps eff;
+	ResolveNodeTextProps(node, rules, eff, &x, &y);
+	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
+	{
+		if (c->type() != rapidxml::node_element) continue;
+		const char* cn = c->name();
+		if (!cn || strcmp(cn, "tspan") != 0) continue;
+		ResolveNodeTextProps(c, rules, eff, nullptr, nullptr);
+		break;
 	}
 
-	// Also check the first <tspan> child for style — Inkscape sometimes
-	// puts font-size only on the outer tspan rather than the <text>.
-	if (!fontSizeFromAttr)
-	{
-		for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
-		{
-			if (c->type() != rapidxml::node_element) continue;
-			const char* cn = c->name();
-			if (!cn || strcmp(cn, "tspan") != 0) continue;
-			if (rapidxml::xml_attribute<>* fs = c->first_attribute("font-size"))
-			{
-				fontSize = atof(fs->value()); fontSizeFromAttr = true;
-			}
-			if (rapidxml::xml_attribute<>* st = c->first_attribute("style"))
-			{
-				CssTextProps css;
-				ParseCssTextStyle(st->value(), css);
-				if (css.hasFontSize) { fontSize = css.fontSize; fontSizeFromAttr = true; }
-				if (css.hasFontFamily && fontFamily.IsEmpty()) fontFamily = css.fontFamily;
-			}
-			if (fontSizeFromAttr) break;
-		}
-	}
+	// Without an explicit size anywhere, a 12-unit default scaled through
+	// viewBoxToPixel renders absurdly large, so keep the conservative 12.
+	double fontSize = eff.hasFontSize ? eff.fontSize : 12.0;
+	COLORREF fill = eff.hasFill ? eff.fill : RGB(0, 0, 0);
+	UINT align = eff.align;
+	CStringA fontFamily = eff.fontFamily;
 
 	// Collect text content recursively: Inkscape nests text inside
 	// <text><tspan><tspan>Title</tspan></tspan></text>, so a single-level
@@ -546,7 +660,7 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 
 void RenderTextsRecursive(rapidxml::xml_node<>* node, CContext& dc,
                           const ViewBoxXform& xf, const CDetails& details,
-                          const Affine& parentTransform)
+                          const Affine& parentTransform, const CssRuleMap& rules)
 {
 	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
 	{
@@ -562,9 +676,9 @@ void RenderTextsRecursive(rapidxml::xml_node<>* node, CContext& dc,
 		}
 
 		if (strcmp(n, "text") == 0)
-			RenderOneText(c, dc, xf, details, parentTransform);
+			RenderOneText(c, dc, xf, details, parentTransform, rules);
 		else
-			RenderTextsRecursive(c, dc, xf, details, childTransform);
+			RenderTextsRecursive(c, dc, xf, details, childTransform, rules);
 	}
 }
 
@@ -627,7 +741,10 @@ void CSvgTitleBlock::Paint(CContext& dc, CDPoint tl, CDPoint br,
 			viewBoxToPixel.d = (vbH > 0.0) ? (double)m_image->height / vbH : 1.0;
 			viewBoxToPixel.e = -vbX * viewBoxToPixel.a;
 			viewBoxToPixel.f = -vbY * viewBoxToPixel.d;
-			RenderTextsRecursive(root, dc, xf, details, viewBoxToPixel);
+			// Parse <style> class rules once, then walk the text nodes.
+			CssRuleMap rules;
+			CollectStyleSheet(root, rules);
+			RenderTextsRecursive(root, dc, xf, details, viewBoxToPixel, rules);
 		}
 	}
 	catch (const rapidxml::parse_error&)
@@ -659,7 +776,8 @@ void AddTemplatesFromFolder(const CString& folder, bool isUserFolder,
 
 		CString fname = finder.GetFileName();
 		const int dotIdx = fname.ReverseFind(_T('.'));
-		t.displayName = (dotIdx > 0) ? fname.Left(dotIdx) : fname;
+		t.name = (dotIdx > 0) ? fname.Left(dotIdx) : fname;
+		t.displayName = t.name;
 		if (isUserFolder) t.displayName += _T(" (user)");
 
 		out.push_back(t);
@@ -680,12 +798,12 @@ std::vector<STitleBlockTemplate> CTitleBlockTemplateStore::Enumerate()
 	// Dev-build fallback: one level up from exe (Debug/.. -> repo root)
 	AddTemplatesFromFolder(mainDir + _T("..\\templates\\title-blocks"), false, result);
 
-	// User additions in %APPDATA%\TinyCAD\templates\title-blocks
+	// User additions in %APPDATA%\ConCAD\templates\title-blocks
 	TCHAR appData[MAX_PATH] = { 0 };
 	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appData)))
 	{
 		AddTemplatesFromFolder(
-			CString(appData) + _T("\\TinyCAD\\templates\\title-blocks"),
+			CString(appData) + _T("\\ConCAD\\templates\\title-blocks"),
 			true, result);
 	}
 
@@ -714,6 +832,78 @@ bool CTitleBlockTemplateStore::ReadFile(const CString& path, CString& outSvg)
 
 	CA2T converted(buf.data(), CP_UTF8);
 	outSvg = (LPCTSTR)converted;
+	return !outSvg.IsEmpty();
+}
+
+bool CTitleBlockTemplateStore::FindByName(const CString& name, CString& outSvg)
+{
+	outSvg.Empty();
+	if (name.IsEmpty()) return false;
+
+	const std::vector<STitleBlockTemplate> all = Enumerate();
+	for (size_t i = 0; i < all.size(); ++i)
+	{
+		if (all[i].name.CompareNoCase(name) == 0)
+		{
+			return ReadFile(all[i].fullPath, outSvg);
+		}
+	}
+	return false;
+}
+
+CString CTitleBlockTemplateStore::EncodeSvgBase64(const CString& svgText)
+{
+	if (svgText.IsEmpty()) return CString();
+
+	// Encode the SVG's UTF-8 bytes (the on-disk representation), not the
+	// build's wide chars, so the blob is portable across builds.
+	CT2A utf8(svgText, CP_UTF8);
+	const DWORD srcLen = (DWORD)strlen((LPCSTR)utf8);
+	if (srcLen == 0) return CString();
+
+	DWORD outChars = 0;
+	if (!CryptBinaryToStringA((const BYTE*)(LPCSTR)utf8, srcLen,
+		CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &outChars) || outChars == 0)
+	{
+		return CString();
+	}
+
+	std::vector<char> b64((size_t)outChars + 1, 0);
+	if (!CryptBinaryToStringA((const BYTE*)(LPCSTR)utf8, srcLen,
+		CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, b64.data(), &outChars))
+	{
+		return CString();
+	}
+	b64[(size_t)outChars] = '\0';
+
+	return CString(CA2T(b64.data()));
+}
+
+bool CTitleBlockTemplateStore::DecodeSvgBase64(const CString& base64, CString& outSvg)
+{
+	outSvg.Empty();
+	if (base64.IsEmpty()) return false;
+
+	CT2A b64(base64);
+	const DWORD srcLen = (DWORD)strlen((LPCSTR)b64);
+	if (srcLen == 0) return false;
+
+	DWORD outBytes = 0;
+	if (!CryptStringToBinaryA((LPCSTR)b64, srcLen, CRYPT_STRING_BASE64,
+		NULL, &outBytes, NULL, NULL) || outBytes == 0)
+	{
+		return false;
+	}
+
+	std::vector<BYTE> bytes((size_t)outBytes + 1, 0);
+	if (!CryptStringToBinaryA((LPCSTR)b64, srcLen, CRYPT_STRING_BASE64,
+		bytes.data(), &outBytes, NULL, NULL))
+	{
+		return false;
+	}
+	bytes[(size_t)outBytes] = 0;
+
+	outSvg = CString(CA2T((LPCSTR)bytes.data(), CP_UTF8));
 	return !outSvg.IsEmpty();
 }
 

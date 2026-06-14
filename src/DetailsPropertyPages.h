@@ -24,6 +24,7 @@
 #define __DETAILSPROPERTYPAGES_H__
 
 #include "Details.h"
+#include <vector>
 
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage1 dialog
@@ -34,6 +35,22 @@ class CDetailsPropertyPage1: public CPropertyPage
 
 private:
 	CMultiSheetDoc* m_pDesign;
+
+	// User-defined variables (tokens) editor, embedded on this page.  A fixed
+	// set of Name/Value edit rows is virtualised over the full token list via
+	// a scrollbar.  See DetailsPropertyPages.cpp for the row-commit logic.
+	struct STokenRow { CString name; CString value; };
+	std::vector<STokenRow> m_tokenRows;
+	int   m_scrollTop;        // index of the first token shown in the visible rows
+	bool  m_tokensDirty;
+	CScrollBar m_tokenScroll;
+	static const int kVisibleRows = 6;
+
+	void LoadTokens();              // build m_tokenRows from the tokens currently referenced in the design
+	void CollectReferencedTokenNames(std::vector<CString>& out);  // ordered, de-duped {name}s actually used
+	void RefreshTokenView();        // fill the visible edit rows from m_tokenRows
+	void CommitVisibleRows();       // read the visible edit rows back into m_tokenRows
+	void UpdateTokenScrollBar();
 
 	// Construction
 public:
@@ -72,6 +89,7 @@ protected:
 	//{{AFX_MSG(CDetailsPropertyPage1)
 	virtual BOOL OnInitDialog();
 	//}}AFX_MSG
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	DECLARE_MESSAGE_MAP()
 
 };
@@ -139,6 +157,12 @@ private:
 
 	void RebuildList(int selectIndex = -1);
 	bool GetSelectedToken(CString& sName) const;
+	//-- Scan the current sheet's title-block fields and SVG template for
+	//-- {Name} references and add any that are valid, not built-in and not
+	//-- already defined to the token list (with an empty value), so a token
+	//-- typed into a field or shipped in a template surfaces here ready to
+	//-- be given a value.
+	void MergeReferencedTokens();
 
 public:
 	CDetailsPropertyPage3(CMultiSheetDoc* pDesign = NULL);
@@ -172,7 +196,8 @@ class CDetailsPropertyPage4: public CPropertyPage
 
 private:
 	CMultiSheetDoc* m_pDesign;
-	CString         m_sSvg;       // pending value to apply
+	CString         m_sSvg;       // pending SVG content to apply (embedded copy)
+	CString         m_sName;      // pending template name; empty for a Browse... file
 	bool            m_bDirty;
 
 	CListBox                            m_wndList;

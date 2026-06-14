@@ -52,7 +52,9 @@ void CDetails::Reset()
 	m_sOrg = "";
 	m_sSheets = "1 of 1";
 	m_oUserTokens.clear();
+	m_sTitleBlockName = "";
 	m_sTitleBlockSvg = "";
+	m_sEffectiveSvg = "";
 	m_szPage = CTinyCadRegistry::GetPageSize();
 }
 //-------------------------------------------------------------------------
@@ -104,6 +106,11 @@ CString CDetails::GetOrganisation() const
 CString CDetails::GetSheets() const
 {
 	return m_sSheets;
+}
+//-------------------------------------------------------------------------
+CString CDetails::GetTitleBlockSvg() const
+{
+	return m_sEffectiveSvg.IsEmpty() ? m_sTitleBlockSvg : m_sEffectiveSvg;
 }
 //-------------------------------------------------------------------------
 // Return the page boundries in a CPoint
@@ -220,8 +227,11 @@ void CDetails::CopyDesignFields(const CDetails& src)
 	m_sDocNo           = src.m_sDocNo;
 	m_sOrg             = src.m_sOrg;
 	m_szLastChange     = src.m_szLastChange;
+	m_bIsVisible       = src.m_bIsVisible;
 	m_oUserTokens      = src.m_oUserTokens;
+	m_sTitleBlockName  = src.m_sTitleBlockName;
 	m_sTitleBlockSvg   = src.m_sTitleBlockSvg;
+	m_sEffectiveSvg    = src.m_sEffectiveSvg;
 }
 //-------------------------------------------------------------------------
 // Resolve {token} occurrences in sInput.  User-defined tokens override
@@ -230,6 +240,14 @@ void CDetails::CopyDesignFields(const CDetails& src)
 // up to a fixed expansion depth which protects against cycles.
 CString CDetails::Resolve(const CString& sInput) const
 {
+	// Fast path: nothing to substitute if there is no opening brace.  This
+	// keeps the per-paint cost negligible for the many text strings (object
+	// text, labels, rulers) that contain no token references.
+	if (sInput.Find(_T('{')) < 0)
+	{
+		return sInput;
+	}
+
 	CString sResult = sInput;
 	const int kMaxPasses = 8;
 
@@ -428,13 +446,50 @@ void CDetails::ReadXML(CXMLReader& xml, TransformSnap& oSnap)
 		}
 		else if (sName == _T("TITLEBLOCK_SVG"))
 		{
-			xml.getChildData(m_sTitleBlockSvg);
+			CString sEnc;
+			xml.getAttribute(_T("name"), m_sTitleBlockName);
+			xml.getAttribute(_T("enc"), sEnc);
+
+			CString sData;
+			xml.getChildData(sData);
+
+			if (sEnc.CompareNoCase(_T("base64")) == 0)
+			{
+				CTitleBlockTemplateStore::DecodeSvgBase64(sData, m_sTitleBlockSvg);
+			}
+			else
+			{
+				// Legacy files store the raw SVG as plain child data.
+				m_sTitleBlockSvg = sData;
+			}
 		}
 		else if (sName == _T("GRID"))
 		{
 			oSnap.LoadXML(xml);
 		}
 	}
+
+	// Pick the SVG to render: named template if installed, else embedded copy.
+	ResolveTitleBlock();
+}
+//-------------------------------------------------------------------------
+void CDetails::ResolveTitleBlock()
+{
+	m_sEffectiveSvg.Empty();
+
+	if (!m_sTitleBlockName.IsEmpty())
+	{
+		CString svg;
+		if (CTitleBlockTemplateStore::FindByName(m_sTitleBlockName, svg))
+		{
+			m_sEffectiveSvg = svg;
+			return;
+		}
+	}
+
+	// Fall back to the embedded copy — covers one-off (Browse...) SVGs and
+	// machines that lack the named template (the shared-.dsn guarantee).
+	m_sEffectiveSvg = m_sTitleBlockSvg;
 }
 //-------------------------------------------------------------------------
 void CDetails::WriteXML(CXMLWriter& xml) const
@@ -480,8 +535,16 @@ void CDetails::WriteXML(CXMLWriter& xml) const
 
 	if (!m_sTitleBlockSvg.IsEmpty())
 	{
+		// Hybrid storage: a name reference (resolved against the template store
+		// on load, so central edits propagate) plus a base64-encoded embedded
+		// copy (escape-safe, and renders when the named template is absent).
 		xml.addTag(_T("TITLEBLOCK_SVG"));
-		xml.addChildData(m_sTitleBlockSvg);
+		if (!m_sTitleBlockName.IsEmpty())
+		{
+			xml.addAttribute(_T("name"), m_sTitleBlockName);
+		}
+		xml.addAttribute(_T("enc"), _T("base64"));
+		xml.addChildData(CTitleBlockTemplateStore::EncodeSvgBase64(m_sTitleBlockSvg));
 		xml.closeTag();
 	}
 }
@@ -510,10 +573,13 @@ void CDetails::DisplayBox(CContext& dc, COption& oOption, CString sPathName) con
 
 		// If a user SVG title block is set, render it instead of the built-in
 		// box.  Falls through to the procedural drawing on parse failure.
-		if (!m_sTitleBlockSvg.IsEmpty())
+		// Use the resolved SVG (named template wins); fall back to the embedded
+		// copy if ResolveTitleBlock() has not run yet.
+		const CString& sRenderSvg = m_sEffectiveSvg.IsEmpty() ? m_sTitleBlockSvg : m_sEffectiveSvg;
+		if (!sRenderSvg.IsEmpty())
 		{
 			CSvgTitleBlock svg;
-			if (svg.Load(m_sTitleBlockSvg))
+			if (svg.Load(sRenderSvg))
 			{
 				double w_px = 0.0, h_px = 0.0;
 				CDPoint svgTl = tl, svgBr = br;

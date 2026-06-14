@@ -1426,7 +1426,7 @@ void CDrawMethod::Paint(CContext &dc, paint_options options)
 	dc.EndTRM(oldpos);
 
 	// Now display the text (if necessary)
-	dc.SelectFont(*m_pDesign->GetOptions()->GetFont(fPIN), 2);
+	dc.SelectFont(*m_pDesign->GetOptions()->GetComponentLabelFont(), 2);
 	switch (options)
 	{
 		case draw_selected:

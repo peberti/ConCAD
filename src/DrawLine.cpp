@@ -721,13 +721,13 @@ void CDrawLine::Paint(CContext &dc, paint_options options)
 		switch (xtype)
 		{
 			case xWire:
-				dc.SelectPen(PS_SOLID, 1, m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::WIRE), options);
+				dc.SelectPen(PS_SOLID, m_pDesign->GetOptions()->GetWireWidth(), m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::WIRE), options);
 				break;
 			case xBus:
 				dc.SelectPen(PS_SOLID, 5, m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::BUS), options);
 				break;
 			case xCable:
-				dc.SelectPen(PS_SOLID, 3, m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::WIRE), options);
+				dc.SelectPen(PS_SOLID, m_pDesign->GetOptions()->GetCableWidth(), m_pDesign->GetOptions()->GetUserColor().Get(CUserColor::CABLE), options);
 				break;
 			default:
 				dc.SelectPen(m_pDesign->GetOptions()->GetStyle(m_style), options);

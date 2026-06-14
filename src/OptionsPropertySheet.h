@@ -48,6 +48,7 @@ public:
 	COptionsGrid m_Page1;
 	COptionsAutosnap m_Page2;
 	COptionsAutoSave m_Page3;
+	COptionsDrawing m_Page4;
 
 	// Operations
 public:

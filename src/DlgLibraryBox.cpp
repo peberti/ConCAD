@@ -161,7 +161,7 @@ void CDlgLibraryBox::OnOK()
 void CDlgLibraryBox::OnAdd()
 {
 	CFileDialog dlg(TRUE, _T("*.TCLib"), NULL, OFN_ALLOWMULTISELECT,
-		_T("TinyCAD Library (*.TCLib)|*.TCLib|Legacy Library (*.mdb, *idx, *.TCLib)|*.mdb;*.idx;*.TCLib|All files (*.*)|*.*||"), AfxGetMainWnd());
+		_T("ConCAD Library (*.TCLib)|*.TCLib|Legacy Library (*.mdb, *idx, *.TCLib)|*.mdb;*.idx;*.TCLib|All files (*.*)|*.*||"), AfxGetMainWnd());
 
 	// Create buffer for file names. 
 	const DWORD numberOfFileNames = 100;
@@ -302,7 +302,7 @@ void CDlgLibraryBox::OnEdit()
 void CDlgLibraryBox::OnNew()
 {
 	CFileDialog dlg(FALSE, _T("TCLib"), NULL, OFN_HIDEREADONLY, 
-					_T("TinyCAD Library (*.TCLib)|*.TCLib|Library database in old MSJet format (*.mdb)|*.mdb|All files (*.*)|*.*||"), 
+					_T("ConCAD Library (*.TCLib)|*.TCLib|Library database in old MSJet format (*.mdb)|*.mdb|All files (*.*)|*.*||"),
 					AfxGetMainWnd());
 
 	if (dlg.DoModal() == IDOK)

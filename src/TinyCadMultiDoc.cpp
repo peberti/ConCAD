@@ -430,9 +430,9 @@ bool CTinyCadMultiDoc::SaveXML(CXMLWriter &xml)
 	{
 		CString comment;
 
-		comment.Format(_T("This file was written by TinyCAD %s %s\n")
-		_T("If you wish to view this file go to https://www.tinycad.net to\n")
-		_T("download the executable."), (LPCTSTR)CTinyCadApp::GetVersion(), (LPCTSTR)CTinyCadApp::GetReleaseType());
+		comment.Format(_T("This file was written by ConCAD (a fork of TinyCAD) %s %s\n")
+		_T("ConCAD files are compatible with TinyCAD; see https://www.tinycad.net\n")
+		_T("for the upstream TinyCAD project."), (LPCTSTR)CTinyCadApp::GetVersion(), (LPCTSTR)CTinyCadApp::GetReleaseType());
 
 		xml.addComment(comment);
 

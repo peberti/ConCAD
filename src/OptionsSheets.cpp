@@ -24,10 +24,13 @@
 #include "TinyCadDoc.h"
 #include "Registry.h"
 #include "AutoSave.h"
+#include "UserColor.h"
+#include <afxdlgs.h>
 
 IMPLEMENT_DYNCREATE( COptionsGrid, CPropertyPage )
 IMPLEMENT_DYNCREATE( COptionsAutosnap, CPropertyPage )
 IMPLEMENT_DYNCREATE( COptionsAutoSave, CPropertyPage )
+IMPLEMENT_DYNCREATE( COptionsDrawing, CPropertyPage )
 
 /////////////////////////////////////////////////////////////////////////////
 // COptionsGrid property page
@@ -341,6 +344,134 @@ BOOL COptionsAutoSave::OnApply()
 	CAutoSave::Start();
 
 	return super::OnApply();
+}
+//-------------------------------------------------------------------------
+//=========================================================================
+//== COptionsDrawing property page
+//=========================================================================
+
+COptionsDrawing::COptionsDrawing() :
+	CPropertyPage(COptionsDrawing::IDD)
+{
+	m_wireWidth   = 1;
+	m_cableWidth  = 3;
+	m_noteFill    = TRUE;
+	m_noteRounded = TRUE;
+	m_wireColor   = RGB(0, 0, 0);
+	m_cableColor  = RGB(0, 0, 0);
+	ZeroMemory(&m_compFont, sizeof(m_compFont));
+}
+
+COptionsDrawing::~COptionsDrawing()
+{
+}
+
+CTinyCadDoc *COptionsDrawing::GetDocument()
+{
+	return static_cast<COptionsPropertySheet*> (GetParent())->m_pDocument;
+}
+
+void COptionsDrawing::DoDataExchange(CDataExchange* pDX)
+{
+	CPropertyPage::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_OPT_WIRE_WIDTH, m_wireWidth);
+	DDV_MinMaxInt(pDX, m_wireWidth, 1, 20);
+	DDX_Text(pDX, IDC_OPT_CABLE_WIDTH, m_cableWidth);
+	DDV_MinMaxInt(pDX, m_cableWidth, 1, 20);
+	DDX_Check(pDX, IDC_OPT_NOTE_FILL, m_noteFill);
+	DDX_Check(pDX, IDC_OPT_NOTE_ROUNDED, m_noteRounded);
+}
+
+BEGIN_MESSAGE_MAP(COptionsDrawing, CPropertyPage)
+	ON_BN_CLICKED(IDC_OPT_WIRE_COLOR, OnWireColor)
+	ON_BN_CLICKED(IDC_OPT_CABLE_COLOR, OnCableColor)
+	ON_BN_CLICKED(IDC_OPT_COMP_FONT, OnCompFont)
+END_MESSAGE_MAP()
+
+BOOL COptionsDrawing::OnInitDialog()
+{
+	COption* pOpt = GetDocument()->GetOptions();
+	m_wireWidth   = pOpt->GetWireWidth();
+	m_cableWidth  = pOpt->GetCableWidth();
+	m_noteFill    = pOpt->GetNoteDefaultFill();
+	m_noteRounded = pOpt->GetNoteDefaultRounded();
+	m_wireColor   = pOpt->GetUserColor().Get(CUserColor::WIRE);
+	m_cableColor  = pOpt->GetUserColor().Get(CUserColor::CABLE);
+	m_compFont    = *pOpt->GetComponentLabelFont();
+
+	CPropertyPage::OnInitDialog();   // pushes the members into the controls
+
+	UpdateFontLabel();
+
+	return TRUE;
+}
+
+void COptionsDrawing::UpdateFontLabel()
+{
+	CString s = m_compFont.lfFaceName;
+	if (s.IsEmpty())
+	{
+		s = _T("(default)");
+	}
+	else
+	{
+		if (m_compFont.lfWeight >= FW_BOLD) s += _T(" Bold");
+		if (m_compFont.lfItalic)            s += _T(" Italic");
+	}
+	SetDlgItemText(IDC_OPT_COMP_FONT_NAME, s);
+}
+
+void COptionsDrawing::OnWireColor()
+{
+	CColorDialog dlg(m_wireColor, CC_FULLOPEN | CC_ANYCOLOR, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		m_wireColor = dlg.GetColor();
+	}
+}
+
+void COptionsDrawing::OnCableColor()
+{
+	CColorDialog dlg(m_cableColor, CC_FULLOPEN | CC_ANYCOLOR, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		m_cableColor = dlg.GetColor();
+	}
+}
+
+void COptionsDrawing::OnCompFont()
+{
+	CFontDialog dlg(&m_compFont, CF_SCREENFONTS | CF_NOSIZESEL, NULL, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		dlg.GetCurrentFont(&m_compFont);
+		UpdateFontLabel();
+	}
+}
+
+BOOL COptionsDrawing::OnApply()
+{
+	if (!UpdateData(TRUE))   // validate widths
+	{
+		return FALSE;
+	}
+
+	COption* pOpt = GetDocument()->GetOptions();
+	pOpt->SetWireWidth(m_wireWidth);
+	pOpt->SetCableWidth(m_cableWidth);
+	pOpt->SetNoteDefaultFill(m_noteFill);
+	pOpt->SetNoteDefaultRounded(m_noteRounded);
+
+	pOpt->GetUserColor().Set(CUserColor::WIRE, m_wireColor);
+	pOpt->GetUserColor().Set(CUserColor::CABLE, m_cableColor);
+	pOpt->GetUserColor().WriteRegistry();
+
+	pOpt->SetComponentLabelFont(m_compFont);
+
+	// Widths / colours / label font are applied live, so refresh the drawing.
+	GetDocument()->Invalidate();
+
+	return CPropertyPage::OnApply();
 }
 //-------------------------------------------------------------------------
 //=========================================================================

@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -12,7 +12,7 @@
 #include "BuildId.h"
 #include <assert.h>
 
-const CString CTinyCadRegistry::M_SKEY = "Software\\TinyCAD\\TinyCAD\\1x20";
+const CString CTinyCadRegistry::M_SKEY = "Software\\ConCAD\\ConCAD\\1x20";
 const CString CTinyCadRegistry::M_BUILDID = "BuildID";
 const CString CTinyCadRegistry::M_INSTALLED = "Installed";
 const CString CTinyCadRegistry::M_SPAGESIZE = "PageSize";

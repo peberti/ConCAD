@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -32,6 +32,7 @@ private:
 
 public:
 	static const int WIRE;
+	static const int CABLE;
 	static const int BUS;
 	static const int JUNCTION;
 	static const int NOCONNECT;

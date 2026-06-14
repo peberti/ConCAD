@@ -608,7 +608,7 @@ int Message(int Resource, int Type, const TCHAR *NameString)
 	TCHAR String[STRLEN], buffer[STRLEN];
 	int r;
 
-	if (LoadString(AfxGetInstanceHandle(), Resource, String, 1024) == 0) r = AfxMessageBox(_T("Could not find specified resource!  There is a fault in the file TinyCAD.EXE, please re-install it."), MB_ICONEXCLAMATION | MB_OK);
+	if (LoadString(AfxGetInstanceHandle(), Resource, String, 1024) == 0) r = AfxMessageBox(_T("Could not find specified resource!  There is a fault in the file ConCAD.EXE, please re-install it."), MB_ICONEXCLAMATION | MB_OK);
 	else
 	{
 		// Play the sound associated with this message

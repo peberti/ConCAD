@@ -185,4 +185,43 @@ public:
 	DECLARE_MESSAGE_MAP()
 };
 
+/////////////////////////////////////////////////////////////////////////////
+// COptionsDrawing dialog - drawing-default preferences (wire/cable widths,
+// new-note defaults; colours/component font/grid added in later stages)
+
+class COptionsDrawing: public CPropertyPage
+{
+	DECLARE_DYNCREATE( COptionsDrawing)
+
+public:
+	COptionsDrawing();
+	~COptionsDrawing();
+
+	CTinyCadDoc *GetDocument();
+
+	enum
+	{
+		IDD = IDD_OPTIONS_DRAWING
+	};
+
+	int      m_wireWidth;
+	int      m_cableWidth;
+	BOOL     m_noteFill;
+	BOOL     m_noteRounded;
+	COLORREF m_wireColor;
+	COLORREF m_cableColor;
+	LOGFONT  m_compFont;
+
+	virtual BOOL OnApply();
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual BOOL OnInitDialog();
+	void UpdateFontLabel();
+	afx_msg void OnWireColor();
+	afx_msg void OnCableColor();
+	afx_msg void OnCompFont();
+	DECLARE_MESSAGE_MAP()
+};
+
 #endif // __OPTIONSSHEETS_H__

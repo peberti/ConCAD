@@ -63,7 +63,6 @@ protected:
 	CMFCStatusBar m_wndStatusBar;
 	CMFCToolBar m_wndToolBar;
 	CMFCToolBar m_wndToolBarDraw;
-	CMFCToolBar m_wndToolBarDrawBus;
 	CMFCToolBar m_wndToolBarDrawGroup;
 	CMFCToolBar m_wndToolBarAnnotate;
 	CDlgPositionBox m_wndPositionBox;
@@ -91,8 +90,6 @@ protected:
 	afx_msg void OnViewEdittoolbar();
 	afx_msg void OnViewFiletoolbar();
 	afx_msg void OnViewGrouptoolbar();
-	afx_msg void OnViewBustoolbar();
-	afx_msg void OnUpdateViewBustoolbar(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateViewAnnotationtoolbar(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateViewEdittoolbar(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateViewFiletoolbar(CCmdUI* pCmdUI);

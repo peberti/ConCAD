@@ -1,7 +1,7 @@
 /*
  * Project:		TinyCAD program for schematic capture
  *				https://www.tinycad.net
- * Copyright:	© 1994-2019 Matt Pyne
+ * Copyright:	ï¿½ 1994-2019 Matt Pyne
  * License:		Lesser GNU Public License 2.1 (LGPL)
  *				http://www.opensource.org/licenses/lgpl-license.html
  */
@@ -17,6 +17,7 @@
 //=========================================================================
 const int CUserColor::WIRE = 1;
 const int CUserColor::BUS = 2;
+const int CUserColor::CABLE = 13;
 const int CUserColor::JUNCTION = 3;
 const int CUserColor::NOCONNECT = 4;
 const int CUserColor::LABEL = 5;
@@ -70,10 +71,12 @@ void CUserColor::Init()
 	m_colNames[NOTETEXT_FILL] = "COLOR_NOTETEXT_FILL";
 	m_colNames[NOTETEXT_LINE] = "COLOR_NOTETEXT_LINE";
 	m_colNames[NOTETEXT_TEXT] = "COLOR_NOTETEXT_TEXT";
+	m_colNames[CABLE] = "COLOR_CABLE";
 
 	m_colColorRef.clear();
 	m_colColorRef[WIRE] = cBLUE;
 	m_colColorRef[BUS] = cRED;
+	m_colColorRef[CABLE] = cBLUE;
 	m_colColorRef[JUNCTION] = cBLACK;
 	m_colColorRef[NOCONNECT] = cBLACK;
 	m_colColorRef[LABEL] = RGB(0,128,32);

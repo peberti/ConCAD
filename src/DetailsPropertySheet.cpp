@@ -38,7 +38,8 @@ CDetailsPropertySheet::CDetailsPropertySheet(CMultiSheetDoc* pDesign, CWnd* pWnd
 
 	AddPage(&m_Page1);
 	AddPage(&m_Page2);
-	AddPage(&m_Page3);
+	// m_Page3 (the standalone "Variables" tab) is intentionally not added —
+	// the variables editor is now embedded on the Design page (m_Page1).
 	AddPage(&m_Page4);
 }
 
