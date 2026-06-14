@@ -48,23 +48,49 @@ build. A pre-build step (`src/gitbranch.bat`) regenerates
 `src/BuildId.h` on every build; do not commit hand edits to it.
 
 There is no CMake or command-line build flow, and no automated test
-suite — verification is manual (load designs from `examples/` and
-exercise the affected UI paths).
+suite — verification is manual (load a `.dsn` design and exercise the
+affected UI paths).
 
-## Installer
+## Building the installer
 
-An NSIS script lives at `installer/ConCAD.nsi`. It is **not** invoked by
-MSBuild — run NSIS separately after a Release build.
+The Windows installer is built with [NSIS](https://nsis.sourceforge.io)
+(`makensis`), **separately from the Visual Studio build** — MSBuild does
+not invoke it. The script is `installer/ConCAD.nsi`.
+
+1. **Build the app** in Visual Studio with the **`Release | Win32`**
+   configuration. Confirm `Release\ConCAD.exe`, `libpng16.dll`, and
+   `zlib.dll` are produced.
+2. **Provide the VC++ redistributable**: place `VC_redist.x86.exe` in
+   `installer/` (download from
+   <https://aka.ms/vs/17/release/vc_redist.x86.exe>). It is bundled and
+   run silently by the installer, and is git-ignored.
+3. **Install NSIS** (one-time). It ships the MUI2 library the script
+   uses; the custom page (`AllUsersDlg.nsdinc`) is already in
+   `installer/`.
+4. **Compile from inside `installer/`** — the script uses relative paths
+   (`..\Release\ConCAD.exe`) that only resolve when the working
+   directory is `installer/`. Right-click `ConCAD.nsi` → *Compile NSIS
+   Script*, or run:
+
+   ```
+   makensis ConCAD.nsi
+   ```
+
+The output is `installer\ConCAD_<version>_Production_Release.exe`, a
+self-contained installer that installs ConCAD plus DLLs, the manual, and
+the SVG title block, runs the VC++ redist, registers `.dsn` files, and
+creates shortcuts. The version string is set by `PRODUCT_VERSION` at the
+top of `ConCAD.nsi` — bump it per release. The installer does not bundle
+symbol libraries; a fresh install starts empty and users add their own.
 
 ## Repository layout
 
 | Path           | What it is                                              |
 |----------------|--------------------------------------------------------|
 | `src/`         | Application source (MFC Doc/View). Vendored SQLite and rapidxml under `src/SQLite/` and `src/rapidxml-1.13/`. |
-| `examples/`    | Sample designs, drawings, libraries, and VHDL.         |
 | `templates/`   | Drawing templates.                                     |
 | `manual/`      | User documentation.                                    |
-| `installer/`   | NSIS installer script.                                 |
+| `installer/`   | NSIS installer script and supporting files.            |
 | `art/`         | Logo / icon sources and the icon generator.            |
 | `CHANGES.md`   | Fork feature documentation and test plan.              |
 | `CLAUDE.md`    | Architecture notes and contribution guidance.          |
