@@ -71,6 +71,8 @@ MSBuild — run NSIS separately after a Release build.
 
 ## License
 
-ConCAD inherits TinyCAD's license (GNU GPL). See the upstream project at
+ConCAD inherits TinyCAD's license: the **GNU Lesser General Public
+License, version 2.1** (or, at your option, any later version). See
+[LICENSE](LICENSE) for the full text, and the upstream project at
 [www.tinycad.net](https://www.tinycad.net) and
 [github.com/matt123p/TinyCAD](https://github.com/matt123p/TinyCAD).
