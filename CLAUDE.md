@@ -11,7 +11,7 @@ ConCAD is a fork of TinyCAD (https://www.tinycad.net), an open-source schematic-
 - Open `TinyCad.sln` at the repo root in **Visual Studio 2019 or 2022 (Community edition is fine) with the MFC C++ component installed**. Build → Build Solution (Ctrl+Shift+B). There is no CMake / no command-line build flow checked in.
 - Configurations: `Debug|Win32` and `Release|Win32`. There is no x64 config.
 - Pre-build step: `src/gitbranch.bat` runs on every build and (re)writes `src/BuildId.h` with `GIT_BRANCH` and a fresh `BUILD_UUID`. `BuildId.h` is intentionally regenerated — do not commit hand edits to it.
-- Installer: NSIS script at `installer/TinyCAD.nsi` (not invoked by msbuild; run NSIS separately after a Release build).
+- Installer: NSIS script at `installer/ConCAD.nsi` (not invoked by msbuild; run NSIS separately after a Release build).
 - Tests: there is **no test project / no automated test suite**. Verification is manual — load `.dsn` files from `examples/` and exercise the affected UI paths. `CHANGES.md` has a "Quick test plan" section that lists the smoke tests for the recent fork features.
 
 ## Vendored third-party code (do not refactor casually)
