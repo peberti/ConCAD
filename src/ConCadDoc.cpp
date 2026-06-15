@@ -1252,7 +1252,7 @@ void CConCadDoc::SelectUndoMove(CDPoint r)
 // Load a new design
 BOOL CConCadDoc::Import(BOOL select_import_object)
 {
-	CFileDialog dlg(TRUE, _T("*.dsn"), NULL, OFN_HIDEREADONLY, _T("Designs (*.dsn)|*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
+	CFileDialog dlg(TRUE, _T("*.con"), NULL, OFN_HIDEREADONLY, _T("Designs (*.con;*.dsn)|*.con;*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
 
 	if (dlg.DoModal() != IDOK) return FALSE;
 

@@ -94,9 +94,9 @@ Section "MainSection" SEC01
   ;
 
   ;
-  ; Register '.dsn' files as 'ConCAD Design'
-  ; 
-  WriteRegStr HKCR ".dsn" "" "ConCAD Design"  ; set our file association
+  ; Register '.con' files as 'ConCAD Design'
+  ;
+  WriteRegStr HKCR ".con" "" "ConCAD Design"  ; set our file association
   WriteRegStr HKCR "ConCAD Design" "" "ConCAD Design"
   WriteRegStr HKCR "ConCAD Design\shell" "" "open"
   WriteRegStr HKCR "ConCAD Design\DefaultIcon" "" "$INSTDIR\ConCAD.exe,0"

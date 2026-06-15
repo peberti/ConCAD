@@ -30,7 +30,7 @@ BOOL CConCadDoc::Save(BOOL GetName, BOOL SaveSelect)
 	{
 		selectCollection sel = m_selected;
 
-		CFileDialog dlg(FALSE, _T("*.dsn"), NULL, OFN_HIDEREADONLY, _T("Design files (*.dsn)|*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
+		CFileDialog dlg(FALSE, _T("con"), NULL, OFN_HIDEREADONLY, _T("Design files (*.con)|*.con|All files (*.*)|*.*||"), AfxGetMainWnd());
 
 		if (dlg.DoModal() != IDOK) return FALSE;
 

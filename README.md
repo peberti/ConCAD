@@ -78,7 +78,7 @@ not invoke it. The script is `installer/ConCAD.nsi`.
 
 The output is `installer\ConCAD_<version>_Production_Release.exe`, a
 self-contained installer that installs ConCAD plus DLLs, the manual, and
-the SVG title block, runs the VC++ redist, registers `.dsn` files, and
+the SVG title block, runs the VC++ redist, registers `.con` files, and
 creates shortcuts. The version string is set by `PRODUCT_VERSION` at the
 top of `ConCAD.nsi` — bump it per release. The installer does not bundle
 symbol libraries; a fresh install starts empty and users add their own.

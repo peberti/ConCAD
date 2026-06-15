@@ -199,7 +199,7 @@ void CConCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL 
 			}
 			fwprintf(stderr, _T("\nConCAD (a fork of TinyCAD) Version %s copyright (c) 1994-2019 Matt Pyne.  Licensed under GNU LGPL 2.1 or newer\n"), (LPCTSTR) (CConCadApp::GetVersion()));
 			fwprintf(stderr, _T("Correct usage is:\n"));
-			fwprintf(stderr,_T("ConCAD <design file name with optional path and mandatory file type extension (.dsn for design files)> [options]\n"));
+			fwprintf(stderr,_T("ConCAD <design file name with optional path and mandatory file type extension (.con for design files)> [options]\n"));
 			fwprintf(stderr,_T("Optional command line options:\n"));
 			fwprintf(stderr,_T("\t/s                         Generate Spice netlist file with same base name as the design file\n"));
 			fwprintf(stderr,_T("\t--gen_spice_netlist        Generate Spice netlist file with same base name as the design file\n"));
@@ -899,8 +899,8 @@ void CConCadApp::OnMyFileOpen()
 	//manual open using CFileDialog to get around buggy Microsoft MFC code that affects Windows 8.1
 	//example code copied and modified taken from http://yourprosoft.blogspot.com/2012/01/mfc-encountered-improper-argument.html
 	
-	CFileDialog pDlg(TRUE, _T("*.dsn"), NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-					_T("ConCAD file (*.dsn)|*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
+	CFileDialog pDlg(TRUE, _T("*.con"), NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+					_T("ConCAD files (*.con;*.dsn)|*.con;*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
 
 	if(pDlg.DoModal()==IDOK)
 	{

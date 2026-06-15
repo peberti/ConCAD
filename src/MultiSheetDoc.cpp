@@ -234,6 +234,26 @@ BOOL CMultiSheetDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 			}
 		}
 
+		// If the existing path carries a different extension — e.g. a legacy
+		// ".dsn" design being re-saved — swap it for the current default
+		// extension so Save As suggests "name.con", not "name.dsn" (which the
+		// suffix-append below would otherwise turn into "name.dsn.con").
+		if (!theFileName.IsEmpty())
+		{
+			CString strExt;
+			if (pTemplate->GetDocString(strExt, CDocTemplate::filterExt) && !strExt.IsEmpty())
+			{
+				int iStart = 0;
+				strExt = strExt.Tokenize(_T(";"), iStart);   // first ext, e.g. ".con"
+				int iDot = theFileName.ReverseFind(_T('.'));
+				int iBackslash = theFileName.ReverseFind(_T('\\'));
+				int iSlash = theFileName.ReverseFind(_T('/'));
+				int iSep = iBackslash > iSlash ? iBackslash : iSlash;
+				if (iDot > iSep)   // a dot in the filename part, i.e. a real extension
+					theFileName = theFileName.Left(iDot) + strExt;
+			}
+		}
+
 //Replace the buggy DoPromptFileName() code with a different technique
 		//if (!AfxGetApp()->DoPromptFileName(newName,
 		// bReplace ? AFX_IDS_SAVEFILE : AFX_IDS_SAVEFILECOPY,
@@ -317,7 +337,7 @@ BOOL CMultiSheetDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 
 BOOL CMultiSheetDoc::MyDoPromptFileName(CString& fileName, BOOL bReplace)
 {
-	CFileDialog pDlg(FALSE, NULL, fileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("ConCAD (*.dsn)|*.dsn|All files (*.*)|*.*||"), AfxGetMainWnd());
+	CFileDialog pDlg(FALSE, _T("con"), fileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("ConCAD (*.con)|*.con|All files (*.*)|*.*||"), AfxGetMainWnd());
 	CString title = bReplace ? _T("Save") : _T ("Save As");	//It is the resource identifiers that is the cause of the MFC bug that this function is working around!
 	pDlg.m_ofn.lpstrTitle = title;
 	if (pDlg.DoModal() != IDOK)

@@ -12,7 +12,7 @@ ConCAD is a fork of TinyCAD (https://www.tinycad.net), an open-source schematic-
 - Configurations: `Debug|Win32` and `Release|Win32`. There is no x64 config.
 - Pre-build step: `src/gitbranch.bat` runs on every build and (re)writes `src/BuildId.h` with `GIT_BRANCH` and a fresh `BUILD_UUID`. `BuildId.h` is intentionally regenerated — do not commit hand edits to it.
 - Installer: NSIS script at `installer/ConCAD.nsi` (not invoked by msbuild; run NSIS separately after a Release build).
-- Tests: there is **no test project / no automated test suite**. Verification is manual — load a `.dsn` design and exercise the affected UI paths (the bundled `examples/` tree was removed from the repo). `CHANGES.md` has a "Quick test plan" section that lists the smoke tests for the recent fork features.
+- Tests: there is **no test project / no automated test suite**. Verification is manual — load a `.con` (or legacy `.dsn`) design and exercise the affected UI paths (the bundled `examples/` tree was removed from the repo). `CHANGES.md` has a "Quick test plan" section that lists the smoke tests for the recent fork features.
 
 ## Vendored third-party code (do not refactor casually)
 
@@ -24,7 +24,7 @@ ConCAD is a fork of TinyCAD (https://www.tinycad.net), an open-source schematic-
 ### Document model (MFC Doc/View, three-layered)
 
 - **`CMultiSheetDoc`** (`MultiSheetDoc.h/.cpp`) — outer `CDocument` subclass. One per opened file. Owns a collection of "sheets". Two concrete subclasses:
-  - **`CConCadMultiDoc`** — a normal schematic design (`.dsn`). Each sheet is a `CConCadDoc`.
+  - **`CConCadMultiDoc`** — a normal schematic design (`.con`). Each sheet is a `CConCadDoc`.
   - **`CConCadMultiSymbolDoc`** — a library symbol being edited. Each sheet is a `CConCadSymbolDoc`.
 - **`CConCadDoc`** (`ConCadDoc.h/.cpp`, `Io.cpp`) — one sheet's worth of drawing objects, page setup, and `CDetails`. `CConCadSymbolDoc` and `CConCadHierarchicalDoc` extend it.
 - **`CConCadView`** (`ConCadView.h/.cpp`) — `CScrollView` that renders the active sheet and routes input. Most user-facing command IDs and accelerators land here first.
@@ -44,7 +44,7 @@ Anything that touches "all sheets in the open design" lives on `CMultiSheetDoc` 
 
 ### Serialization — two formats
 
-- **XML `.dsn`** is the live format. Save path: `CConCadDoc::SaveXML` → `CXMLWriter`. Load path: `Io.cpp` factory dispatches XML tags (`<WIRE>`, `<CABLE>`, `<SYMBOL>`, `<DETAILS>`, …) to the right `CDrawingObject::LoadXML`. New tags should be **additive** and tolerate older files that do not contain them.
+- **XML `.con`** is the live format (the extension changed from `.dsn`; the on-disk XML — including the `<TinyCAD>` root tag — is unchanged, and older `.dsn` files still open). Save path: `CConCadDoc::SaveXML` → `CXMLWriter`. Load path: `Io.cpp` factory dispatches XML tags (`<WIRE>`, `<CABLE>`, `<SYMBOL>`, `<DETAILS>`, …) to the right `CDrawingObject::LoadXML`. New tags should be **additive** and tolerate older files that do not contain them.
 - **Legacy binary `CStream`** (`Stream.cpp`, `StreamFile.cpp`, `StreamMemory.cpp`) is still readable for old files but is **not extended**. New features (tokens, cables, connector color overrides — see CHANGES.md) exist only in XML.
 
 ### Libraries (symbol storage)

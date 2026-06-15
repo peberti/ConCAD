@@ -1932,7 +1932,7 @@ END
 STRINGTABLE
 BEGIN
     IDR_MAINFRAME           "ConCAD"
-    IDR_TCADTYPE            "\ntCad\ntCad\nConCAD Files (*.dsn)\n.dsn\ndsn\nConCAD Document"
+    IDR_TCADTYPE            "\ntCad\ntCad\nConCAD Files (*.con)\n.con\ncon\nConCAD Document"
 END
 
 STRINGTABLE
