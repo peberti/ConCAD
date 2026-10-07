@@ -23,6 +23,7 @@
 #include "OptionsPropertySheet.h"
 #include "ConCadDoc.h"
 #include "Registry.h"
+#include "ConCadRegistry.h"
 #include "AutoSave.h"
 #include "UserColor.h"
 #include <afxdlgs.h>
@@ -360,6 +361,7 @@ COptionsDrawing::COptionsDrawing() :
 	m_wireColor   = RGB(0, 0, 0);
 	m_cableColor  = RGB(0, 0, 0);
 	ZeroMemory(&m_compFont, sizeof(m_compFont));
+	m_askTitleBlock = TRUE;
 }
 
 COptionsDrawing::~COptionsDrawing()
@@ -380,6 +382,7 @@ void COptionsDrawing::DoDataExchange(CDataExchange* pDX)
 	DDV_MinMaxInt(pDX, m_cableWidth, 1, 20);
 	DDX_Check(pDX, IDC_OPT_NOTE_FILL, m_noteFill);
 	DDX_Check(pDX, IDC_OPT_NOTE_ROUNDED, m_noteRounded);
+	DDX_Check(pDX, IDC_OPT_ASK_TITLEBLOCK, m_askTitleBlock);
 }
 
 BEGIN_MESSAGE_MAP(COptionsDrawing, CPropertyPage)
@@ -398,6 +401,7 @@ BOOL COptionsDrawing::OnInitDialog()
 	m_wireColor   = pOpt->GetUserColor().Get(CUserColor::WIRE);
 	m_cableColor  = pOpt->GetUserColor().Get(CUserColor::CABLE);
 	m_compFont    = *pOpt->GetComponentLabelFont();
+	m_askTitleBlock = CConCadRegistry::GetAskNewTitleBlock();
 
 	CPropertyPage::OnInitDialog();   // pushes the members into the controls
 
@@ -467,6 +471,8 @@ BOOL COptionsDrawing::OnApply()
 	pOpt->GetUserColor().WriteRegistry();
 
 	pOpt->SetComponentLabelFont(m_compFont);
+
+	CConCadRegistry::SetAskNewTitleBlock(m_askTitleBlock == TRUE);
 
 	// Widths / colours / label font are applied live, so refresh the drawing.
 	GetDocument()->Invalidate();

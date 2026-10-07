@@ -211,6 +211,7 @@ public:
 	COLORREF m_wireColor;
 	COLORREF m_cableColor;
 	LOGFONT  m_compFont;
+	BOOL     m_askTitleBlock;
 
 	virtual BOOL OnApply();
 

@@ -1053,3 +1053,69 @@ BOOL CDetailsPropertyPage4::OnApply()
 	}
 	return CPropertyPage::OnApply();
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// CPickTitleTemplateDlg
+
+CPickTitleTemplateDlg::CPickTitleTemplateDlg(CWnd* pParent) :
+	CDialog(CPickTitleTemplateDlg::IDD, pParent),
+	m_bDontAsk(FALSE)
+{
+}
+
+void CPickTitleTemplateDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_TBPICK_LIST, m_wndList);
+	DDX_Check(pDX, IDC_TBPICK_DONTASK, m_bDontAsk);
+}
+
+BEGIN_MESSAGE_MAP(CPickTitleTemplateDlg, CDialog)
+	ON_LBN_DBLCLK(IDC_TBPICK_LIST, OnListDblClk)
+END_MESSAGE_MAP()
+
+BOOL CPickTitleTemplateDlg::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	m_templates = CTitleBlockTemplateStore::Enumerate();
+	m_wndList.AddString(_T("(Built-in title block)"));
+	int sel = 0;
+	for (size_t i = 0; i < m_templates.size(); ++i)
+	{
+		m_wndList.AddString(m_templates[i].displayName);
+		if (!m_sName.IsEmpty() && m_templates[i].name.CompareNoCase(m_sName) == 0)
+		{
+			sel = (int)i + 1;
+		}
+	}
+	m_wndList.SetCurSel(sel);
+	m_wndList.SetFocus();
+
+	return FALSE;   // focus set to the list
+}
+
+void CPickTitleTemplateDlg::OnOK()
+{
+	if (!UpdateData(TRUE))
+	{
+		return;
+	}
+
+	const int sel = m_wndList.GetCurSel();
+	if (sel >= 1 && sel <= (int)m_templates.size())
+	{
+		m_sName = m_templates[sel - 1].name;
+	}
+	else
+	{
+		m_sName.Empty();
+	}
+
+	CDialog::OnOK();
+}
+
+void CPickTitleTemplateDlg::OnListDblClk()
+{
+	OnOK();
+}

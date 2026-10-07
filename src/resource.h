@@ -524,6 +524,7 @@
 #define IDC_TOK_VAL4                    40034
 #define IDC_TOK_VAL5                    40035
 #define IDD_OPTIONS_DRAWING             178
+#define IDD_PICK_TITLE_TEMPLATE         185
 #define IDC_OPT_WIRE_WIDTH              40040
 #define IDC_OPT_WIRE_COLOR              40041
 #define IDC_OPT_CABLE_WIDTH             40042
@@ -534,6 +535,9 @@
 #define IDC_OPT_COMP_FONT_NAME          40047
 #define IDC_OPT_GRID                    40048
 #define IDC_OPT_GRID_UNITS              40049
+#define IDC_TBPICK_LIST                 40051
+#define IDC_TBPICK_DONTASK              40052
+#define IDC_OPT_ASK_TITLEBLOCK          40053
 #define IDM_TOOLCABLE                   32908
 #define IDC_IS_CONNECTOR                40011
 #define METHODBOX_COLOR                 40012
@@ -549,9 +553,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        179
+#define _APS_NEXT_RESOURCE_VALUE        186
 #define _APS_NEXT_COMMAND_VALUE         32910
-#define _APS_NEXT_CONTROL_VALUE         40050
+#define _APS_NEXT_CONTROL_VALUE         40054
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

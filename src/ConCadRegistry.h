@@ -61,6 +61,12 @@ public:
 	//-- What was the last version of TinyCAD update the user was told about?
 	static CString GetLastAutomaticUpdateVersion();
 
+	//-- Title-block template for new designs (template name; empty = built-in)
+	static CString GetNewTitleBlock();
+
+	//-- Ask for the title block on File -> New?
+	static bool GetAskNewTitleBlock();
+
 	//=====================================================================
 	//== Mutator for application settings                               ==
 	//=====================================================================
@@ -85,6 +91,12 @@ public:
 	//-- What was the last version of TinyCAD update the user was told about
 	static void SetLastAutomaticUpdateVersion(CString version);
 
+	//-- Changes the title-block template for new designs
+	static void SetNewTitleBlock(CString name);
+
+	//-- Changes whether File -> New asks for the title block
+	static void SetAskNewTitleBlock(bool bAsk);
+
 	// Get when TinyCAD was installed
 	static CString GetInstalledFileTime();
 
@@ -105,6 +117,8 @@ private:
 	static const CString M_SLIBRARIES;
 	static const CString M_AUTOUDPATES;
 	static const CString M_AUTOUDPATEVERSION;
+	static const CString M_SNEWTITLEBLOCK;
+	static const CString M_SASKNEWTITLEBLOCK;
 };
 //=========================================================================
 

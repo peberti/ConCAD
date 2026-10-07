@@ -62,7 +62,7 @@ and a junk file literally named `src/nul) do set ...` (a stray from a
 | 3 | "Title Block" tab in `File → Design Details` (`CDetailsPropertyPage4`) with Browse / Use built-in | done |
 | 4 | Bundled templates folder + `CTitleBlockTemplateStore` enumerator + listbox in the tab + installer hook | done — tested OK |
 | 4b | **Hybrid storage** (name reference + base64 embedded fallback) — see below | done — tested OK |
-| 5 | `File → New` picker + registry default + "Don't ask again" | not started |
+| 5 | `File → New` picker + registry default + "Don't ask again" (`CPickTitleTemplateDlg`, `CConCadApp::OnFileNewDesign`; re-enable in Options → Drawing) | done — tested OK |
 | 6 | Polish: Save-as-template, preview pane, error toasts | not started |
 
 ## Step 4b — Hybrid SVG storage (named-template-wins + base64 fallback)

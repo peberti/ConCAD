@@ -23,6 +23,8 @@ const CString CConCadRegistry::M_SMAXIMIZE = "Maximize";
 const CString CConCadRegistry::M_SLIBRARIES = "Libraries";
 const CString CConCadRegistry::M_AUTOUDPATES = "AutomaticUpdates";
 const CString CConCadRegistry::M_AUTOUDPATEVERSION = "AutomaticUpdateVersion";
+const CString CConCadRegistry::M_SNEWTITLEBLOCK = "NewTitleBlock";
+const CString CConCadRegistry::M_SASKNEWTITLEBLOCK = "AskNewTitleBlock";
 
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
@@ -249,6 +251,18 @@ CString CConCadRegistry::GetLastAutomaticUpdateVersion()
 	return CRegistry::GetString(M_AUTOUDPATEVERSION, "");
 }
 //-------------------------------------------------------------------------
+//-- Title-block template for new designs (template name; empty = built-in)
+CString CConCadRegistry::GetNewTitleBlock()
+{
+	return CRegistry::GetString(M_SNEWTITLEBLOCK, "");
+}
+//-------------------------------------------------------------------------
+//-- Ask for the title block on File -> New?
+bool CConCadRegistry::GetAskNewTitleBlock()
+{
+	return CRegistry::GetBool(M_SASKNEWTITLEBLOCK, true);
+}
+//-------------------------------------------------------------------------
 
 
 //=========================================================================
@@ -296,6 +310,18 @@ void CConCadRegistry::SetAutomaticUpdatesOn(bool on)
 void CConCadRegistry::SetLastAutomaticUpdateVersion(CString version)
 {
 	CConCadRegistry::Set(M_AUTOUDPATEVERSION, version);
+}
+//-------------------------------------------------------------------------
+//-- Changes the title-block template for new designs
+void CConCadRegistry::SetNewTitleBlock(CString name)
+{
+	CConCadRegistry::Set(M_SNEWTITLEBLOCK, name);
+}
+//-------------------------------------------------------------------------
+//-- Changes whether File -> New asks for the title block
+void CConCadRegistry::SetAskNewTitleBlock(bool bAsk)
+{
+	CConCadRegistry::Set(M_SASKNEWTITLEBLOCK, bAsk);
 }
 //-------------------------------------------------------------------------
 

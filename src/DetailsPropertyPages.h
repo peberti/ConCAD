@@ -244,4 +244,28 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
+/////////////////////////////////////////////////////////////////////////////
+// CPickTitleTemplateDlg - title-block picker shown by File -> New
+
+class CPickTitleTemplateDlg: public CDialog
+{
+public:
+	CString m_sName;      // in: template to preselect; out: chosen template (empty = built-in)
+	BOOL    m_bDontAsk;
+
+	CPickTitleTemplateDlg(CWnd* pParent = NULL);
+	enum { IDD = IDD_PICK_TITLE_TEMPLATE };
+
+protected:
+	// List row 0 is the built-in title block; row i+1 is m_templates[i].
+	CListBox                            m_wndList;
+	std::vector<STitleBlockTemplate>    m_templates;
+
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual BOOL OnInitDialog();
+	virtual void OnOK();
+	afx_msg void OnListDblClk();
+	DECLARE_MESSAGE_MAP()
+};
+
 #endif // __DETAILSPROPERTYPAGES_H__

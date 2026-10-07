@@ -27,6 +27,8 @@
 #include "DlgRenameSheet.h"
 #include ".\ConCadMultiDoc.h"
 #include "ConCadHierarchicalDoc.h"
+#include "ConCadRegistry.h"
+#include "SvgTitleBlock.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CConCadMultiDoc
@@ -44,6 +46,19 @@ BOOL CConCadMultiDoc::OnNewDocument()
 	Clear();
 
 	m_sheets.push_back(new CConCadDoc(this));
+
+	// Start with the title block last chosen for new designs (see
+	// CConCadApp::OnFileNewDesign).  A template that is no longer installed
+	// leaves the built-in title block.
+	CString sName = CConCadRegistry::GetNewTitleBlock();
+	CString sSvg;
+	if (!sName.IsEmpty() && CTitleBlockTemplateStore::FindByName(sName, sSvg))
+	{
+		CDetails& details = m_sheets[0]->GetDetails();
+		details.m_sTitleBlockName = sName;
+		details.m_sTitleBlockSvg  = sSvg;
+		details.ResolveTitleBlock();
+	}
 
 	return TRUE;
 }

@@ -35,6 +35,7 @@
 #include "AutoSave.h"
 #include "TextEditDoc.h"
 #include "TextEditView.h"
+#include "DetailsPropertyPages.h"
 #include "BuildID.h"
 #include <stdio.h>
 #include <fcntl.h>
@@ -278,7 +279,7 @@ BEGIN_MESSAGE_MAP(CConCadApp, CWinAppEx)
 	ON_COMMAND(ID_HELP_SUPPORTFORUM, OnHelpSupport)
 
 	// Standard file based document commands
-	ON_COMMAND(ID_FILE_NEW, CWinAppEx::OnFileNew)
+	ON_COMMAND(ID_FILE_NEW, CConCadApp::OnFileNewDesign)
 //	ON_COMMAND(ID_FILE_OPEN, CWinAppEx::OnFileOpen)	//The standard OnFileOpen accesses buggy Microsoft MFC code that manifests only in Windows 8.1.  I replaced it with CConCadApp::OnMyFileOpen().  See http://yourprosoft.blogspot.com/2012/01/mfc-encountered-improper-argument.html
 	ON_COMMAND(ID_FILE_OPEN, CConCadApp::OnMyFileOpen)
 
@@ -297,6 +298,7 @@ CMultiDocTemplate* CConCadApp::m_pDocTemplate = NULL;
 CMultiDocTemplate* CConCadApp::m_pLibTemplate = NULL;
 CMultiDocTemplate* CConCadApp::m_pTxtTemplate = NULL;
 bool CConCadApp::m_LockOutSymbolRedraw = false;
+bool CConCadApp::m_bStartupDone = false;
 COLORREF CConCadApp::m_colours[16];
 
 bool m_hiddenWindow = false;
@@ -462,6 +464,7 @@ BOOL CConCadApp::InitInstance()
 
 	// Now dispatch all TinyCAD custom commands specified on the command line, including the DDE commands such as FileOpen, FilePrint, etc.
 	BOOL successful = ProcessShellCommand(cmdInfo);	//This executes all standard shell commands and ignores any custom flags
+	m_bStartupDone = true;
 	ATLTRACE2("CConCad::InitInstance() received %s Shell command (numeric command = %d).  Filename=\"%S\"\n", successful ? "successful" : "unsuccessful", (int) cmdInfo.m_nShellCommand, cmdInfo.m_strFileName);
 
 	if (!successful)
@@ -910,6 +913,30 @@ void CConCadApp::OnMyFileOpen()
 		//C:\Program Files\Microsoft Visual Studio 9.0\VC\atlmfc\src\mfc\docmgr.cpp
 		AfxGetApp()->OpenDocumentFile(strDocFileName);
 	}
+}
+
+//-------------------------------------------------------------------------
+// File -> New: ask which title block the new design should use, remember the
+// choice, then create the design (CConCadMultiDoc::OnNewDocument applies it).
+// The blank design created at startup uses the remembered choice silently.
+void CConCadApp::OnFileNewDesign()
+{
+	if (m_bStartupDone && CConCadRegistry::GetAskNewTitleBlock())
+	{
+		CPickTitleTemplateDlg dlg(AfxGetMainWnd());
+		dlg.m_sName = CConCadRegistry::GetNewTitleBlock();
+		if (dlg.DoModal() != IDOK)
+		{
+			return;
+		}
+		CConCadRegistry::SetNewTitleBlock(dlg.m_sName);
+		if (dlg.m_bDontAsk)
+		{
+			CConCadRegistry::SetAskNewTitleBlock(false);
+		}
+	}
+
+	CWinAppEx::OnFileNew();
 }
 
 //-------------------------------------------------------------------------

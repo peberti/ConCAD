@@ -427,13 +427,32 @@ built-ins and the user variables of §1) are substituted at paint time.
 - If the named template is missing on a machine, the embedded copy is
   used — so designs shared via SharePoint render everywhere.
 
+### Title block for new designs (File → New)
+
+`File → New` (Ctrl+N) first asks which title block the new design should
+use: **(Built-in title block)** or any template from the store. The choice
+is remembered (`HKCU\Software\ConCAD\ConCAD\1x20\NewTitleBlock`) and
+preselected next time; it is also applied silently to the blank design
+opened at startup. Cancel aborts the New.
+
+Tick **Don't ask again** to skip the dialog and always use the remembered
+choice; turn asking back on with `Options → Settings → Drawing → Ask for a
+title block on File > New` (`AskNewTitleBlock`). If the remembered
+template is no longer installed, the new design gets the built-in title
+block. No file-format change — the choice is stored in the design exactly
+as if it had been picked on the Title Block tab.
+
 ### Files changed
 
 - `src/SvgTitleBlock.{h,cpp}` (NanoSVG-based renderer + template store),
   `src/nanosvg/nanosvg.h` (vendored)
 - `src/Details.{h,cpp}` (`m_sTitleBlockName` / embedded copy /
   `m_sEffectiveSvg`, `ResolveTitleBlock`, `DisplayBox` SVG branch)
-- `src/DetailsPropertyPages.*`, `src/ConCad.rc` (the Title Block tab)
+- `src/DetailsPropertyPages.*`, `src/ConCad.rc` (the Title Block tab and
+  the File → New picker `CPickTitleTemplateDlg` / `IDD_PICK_TITLE_TEMPLATE`)
+- `src/ConCad.{h,cpp}` (`OnFileNewDesign`), `src/ConCadMultiDoc.cpp`
+  (applies the remembered template in `OnNewDocument`),
+  `src/ConCadRegistry.*`, `src/OptionsSheets.*` (re-enable checkbox)
 
 ---
 
@@ -552,7 +571,11 @@ XML-saved files.
    instances stay unchanged. Save, reopen — color persists.
 6. **SVG title block** — Design Details → Title Block → pick `Simple-A4`
    → OK; the SVG title block renders bottom-right and resolves tokens.
-   Save/reopen — still there (inspect `.dsn` for `<TITLEBLOCK_SVG>`).
+   Save/reopen — still there (inspect `.con` for `<TITLEBLOCK_SVG>`).
+   **File → New** — the picker appears; choose `Simple-A4` → the new
+   design opens with it. Ctrl+N again — `Simple-A4` is preselected; Cancel
+   opens nothing. Tick *Don't ask again* → next Ctrl+N opens directly with
+   the remembered block; re-enable under Options → Settings → Drawing.
 7. **Drawing defaults** — Options → Settings → Drawing: change wire/cable
    width and cable colour (live update); toggle the new-note Background
    fill / Rounded corners (affects newly placed notes); pick a Component

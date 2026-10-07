@@ -120,6 +120,10 @@ private:
 
 	static bool m_translateAccelerator;
 
+	// Set once InitInstance has processed the command line, so the blank
+	// design created at startup does not pop up the title-block picker.
+	static bool m_bStartupDone;
+
 	//=====================================================================
 	//== ctor/dtor/initializing                                          ==
 	//=====================================================================
@@ -168,6 +172,7 @@ public:
 	virtual BOOL OnIdle(LONG lCount);
 	virtual BOOL ProcessMessageFilter(int code, LPMSG lpMsg);
 	void OnMyFileOpen();
+	afx_msg void OnFileNewDesign();
 
 	//{{AFX_MSG(CConCadApp)
 	afx_msg void OnAppAbout();
