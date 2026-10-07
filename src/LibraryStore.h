@@ -78,6 +78,13 @@ public:
 	// Write a symbol to this library
 	virtual void Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document) = 0;
 
+	// Store a module (Special -> Create Module): data is the module's XML.
+	// Only libraries that support it (SQLite) override this.
+	virtual bool StoreModule(CLibraryStoreNameSet *nwSymbol, class CStreamMemory &data)
+	{
+		return false;
+	}
+
 	// Do any idle time tasks...
 	virtual void OnIdle() = 0;
 

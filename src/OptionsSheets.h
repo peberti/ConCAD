@@ -23,6 +23,8 @@
 #ifndef __OPTIONSSHEETS_H__
 #define __OPTIONSSHEETS_H__
 
+#include <vector>
+
 /////////////////////////////////////////////////////////////////////////////
 // COptionsGrid dialog
 
@@ -212,6 +214,8 @@ public:
 	COLORREF m_cableColor;
 	LOGFONT  m_compFont;
 	BOOL     m_askTitleBlock;
+	CComboBox            m_moduleLib;
+	std::vector<CString> m_moduleLibNames;   // per combo row; row 0 = none
 
 	virtual BOOL OnApply();
 

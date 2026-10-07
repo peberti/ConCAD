@@ -689,6 +689,54 @@ accidental edits; it does not secure the file.
 
 ---
 
+## 11. Module library (Special → Create Module)
+
+A **module** is a reusable piece of schematic — wires, placed symbols,
+labels, text, … — stored in a library and inserted into a design like a
+paste.
+
+- **Set the library:** Options → Settings → Drawing → *Module library*
+  lists the attached SQLite libraries (`.TCLib`). Choose one; modules are
+  stored there.
+- **Create:** select the objects, then **Special → Create Module…**. The
+  usual store dialog opens (titled *Store Module*, without the Connector
+  box): give the module a name, description and fields, then *Store*. The
+  definitions of the symbols the module uses are stored with it, so it can
+  be placed in any design. No title-block details or sheet options are
+  stored, so placing a module never changes the target sheet.
+- **Place:** a module appears in the library panel like a symbol (with a
+  preview). Double-click it: its objects follow the mouse; click to drop
+  them (right-click cancels), exactly like Edit → Paste. Symbol references
+  are kept as stored (re-annotate if needed).
+- **Library window:** *Edit* does not open a module in the symbol editor
+  (storing it from there would lose its objects) — place it, change it and
+  Create Module again. *Duplicate*, *Send to library* and *Properties*
+  copy the module data unchanged. Library XML export skips modules.
+- Replace Symbol refuses a module.
+
+**Storage:** a module is a normal library record whose `[Type]` column is
+`1` (symbols are `0`; the column already existed and was always 0). Its
+`[Symbol].[Data]` is a `<TinyCAD>` XML document with the selected objects
+plus the FONT/STYLE/FILL/IMAGE/SYMBOLDEF resources they use. Older
+ConCAD/TinyCAD builds only read `[Type]=0`, so they ignore modules.
+
+Also fixed: `CLibrarySQLite::GetMethodArchive` now reports database errors
+instead of letting the exception escape.
+
+### Files changed
+
+- `src/Symbol.{h,cpp}` (`CSymbolRecord::is_module`), `src/LibraryStore.h`
+  (`StoreModule`), `src/LibrarySQLite.{h,cpp}` (`StoreData` shared by
+  symbols and modules, `[Type]` read/write, `GetMethodArchive` try/catch)
+- `src/Io.cpp`, `src/ConCadDoc.h` (`SaveModuleXML`)
+- `src/ConCadView.{h,cpp}`, `src/Menu.cpp` (Create Module, `PlaceModule`)
+- `src/DlgUpdateBox.{h,cpp}` (module mode), `src/LibraryDoc.cpp`,
+  `src/LibraryStore.cpp`, `src/DrawMethod.cpp` (module guards)
+- `src/OptionsSheets.{h,cpp}`, `src/ConCadRegistry.*` (`ModuleLibrary`),
+  `src/ConCad.rc`, `src/resource.h`
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -762,3 +810,12 @@ XML-saved files.
     again hides it. Edit `templates/revision.svg` (e.g. the heading) and
     the open design updates. Save, reopen — position, visibility and rows
     are kept.
+11. **Modules** — Options → Settings → Drawing: pick a `.TCLib` as Module
+    library. Select a few wires and two placed symbols, Special → Create
+    Module…: dialog titled *Store Module*; name it `Test module`, Store.
+    It appears in the library panel with a preview. Open another design,
+    double-click it: the objects follow the mouse, click to drop; the
+    symbols draw correctly; title block, grid and colours unchanged. Undo
+    removes it. Library → Libraries → Edit the module library: Edit on the
+    module shows a message; Duplicate makes "Copy of Test module";
+    Properties lets you rename it.

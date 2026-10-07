@@ -99,6 +99,7 @@ CSymbolRecord::CSymbolRecord()
 	fields_loaded = FALSE;
 	NameID = (DWORD) -1;
 	is_connector = FALSE;
+	is_module = FALSE;
 }
 
 // Save this symbol into an XML file

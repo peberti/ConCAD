@@ -157,6 +157,7 @@ BEGIN
         MENUITEM "&Generate Symbol References...", IDM_SPECIALANNOTATE
         MENUITEM "Create &Parts List...",       IDM_SPECIALBOM
         MENUITEM SEPARATOR
+        MENUITEM "Create &Module...",           IDM_SPECIAL_CREATEMODULE
         MENUITEM "Insert another design as symbol...", IDM_TOOLHIERARCHICAL
     END
     POPUP "&Options"
@@ -484,7 +485,7 @@ BEGIN
     LTEXT           "mm",GRIDBOX_UNITS,127,70,19,8
 END
 
-IDD_OPTIONS_DRAWING DIALOGEX 6, 18, 190, 180
+IDD_OPTIONS_DRAWING DIALOGEX 6, 18, 190, 212
 STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Drawing"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
@@ -505,6 +506,9 @@ BEGIN
     PUSHBUTTON      "Font...",IDC_OPT_COMP_FONT,114,119,56,12
     GROUPBOX        "New designs",IDC_STATIC,10,146,166,28
     CONTROL         "Ask for a title block on File > New",IDC_OPT_ASK_TITLEBLOCK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,158,150,10
+    GROUPBOX        "Modules",IDC_STATIC,10,178,166,30
+    LTEXT           "Module library:",IDC_STATIC,18,192,52,8
+    COMBOBOX        IDC_OPT_MODULE_LIB,72,190,98,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_NO_TOOL DIALOG 4, 16, 94, 18
@@ -1212,6 +1216,7 @@ BEGIN
     IDM_FILE_CREATEVERSION  "Save a write-protected version of this design\nCreate version"
     IDM_FILE_EDITFILE       "Make an editable working copy of this write-protected version\nEdit file"
     IDM_EDIT_REVISIONHISTORY "Show or hide the revision history table on the first sheet\nRevision history"
+    IDM_SPECIAL_CREATEMODULE "Store the selected objects as a module in the module library\nCreate module"
     ID_OPTIONS_COLOURS      "Set the colours used in the drawing\nDrawing colours"
     ID_CONTEXT_DUPLICATESYMBOL 
                             "Make a copy of this symbol within this library"

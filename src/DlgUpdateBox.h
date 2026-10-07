@@ -26,6 +26,7 @@
 class CDlgUpdateBox: public CDialog
 {
 	CLibraryStoreNameSet* m_NewSymbol;
+	bool m_bModule;
 
 	void AddSymbolField(CSymbolField &f);
 
@@ -90,6 +91,12 @@ public:
 	void SetSymbol(CLibraryStoreNameSet *s)
 	{
 		m_NewSymbol = s;
+	}
+
+	// Store a module (Special -> Create Module) rather than a symbol
+	void SetModuleMode()
+	{
+		m_bModule = true;
 	}
 
 	// Implementation

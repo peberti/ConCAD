@@ -165,6 +165,49 @@ void CConCadDoc::SaveXML(CXMLWriter &xml, drawingCollection &drawing, BOOL Detai
 	}
 }
 
+//-------------------------------------------------------------------------
+// Save the selected objects as a module: the objects plus the fonts, styles,
+// images and symbol definitions they use.  No DETAILS or OPTIONS, so placing
+// a module (an import of this XML) never changes the target sheet's title
+// block, grid or colours.
+void CConCadDoc::SaveModuleXML(CXMLWriter &xml)
+{
+	try
+	{
+		// Tag only what the selection uses (a normal save re-tags everything)
+		theOptions.UnTag();
+		for (drawingIterator i = m_drawing.begin(); i != m_drawing.end(); i++)
+		{
+			if (IsSelected(*i))
+			{
+				(*i)->TagResources();
+			}
+		}
+
+		xml.addTag(GetXMLTag());
+		theOptions.SaveFontsXML(xml);
+		theOptions.SaveStylesXML(xml);
+		theOptions.SaveFillStylesXML(xml);
+		theOptions.SaveMetaFilesXML(xml);
+		theOptions.SaveSymbolsXML(xml);
+
+		// Keep the drawing order
+		for (drawingIterator i = m_drawing.begin(); i != m_drawing.end(); i++)
+		{
+			CDrawingObject* obj = *i;
+			if (IsSelected(obj) && obj->GetType() != xError && !obj->IsConstruction())
+			{
+				obj->SaveXML(xml);
+			}
+		}
+		xml.closeTag();
+	} catch (CException *e)
+	{
+		e->ReportError();
+		e->Delete();
+	}
+}
+
 BOOL CConCadDoc::ReadFile(CStream &theArchive)
 {
 	drawingCollection drawing;

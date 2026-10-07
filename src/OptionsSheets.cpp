@@ -24,6 +24,7 @@
 #include "ConCadDoc.h"
 #include "Registry.h"
 #include "ConCadRegistry.h"
+#include "LibraryCollection.h"
 #include "AutoSave.h"
 #include "UserColor.h"
 #include <afxdlgs.h>
@@ -383,6 +384,7 @@ void COptionsDrawing::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_OPT_NOTE_FILL, m_noteFill);
 	DDX_Check(pDX, IDC_OPT_NOTE_ROUNDED, m_noteRounded);
 	DDX_Check(pDX, IDC_OPT_ASK_TITLEBLOCK, m_askTitleBlock);
+	DDX_Control(pDX, IDC_OPT_MODULE_LIB, m_moduleLib);
 }
 
 BEGIN_MESSAGE_MAP(COptionsDrawing, CPropertyPage)
@@ -406,6 +408,29 @@ BOOL COptionsDrawing::OnInitDialog()
 	CPropertyPage::OnInitDialog();   // pushes the members into the controls
 
 	UpdateFontLabel();
+
+	// Module library: any attached library that can be written (SQLite)
+	const CString current = CConCadRegistry::GetModuleLibrary();
+	m_moduleLibNames.clear();
+	m_moduleLibNames.push_back(CString());
+	m_moduleLib.AddString(_T("(none)"));
+	int sel = 0;
+	CLibraryStore* pLib;
+	for (int i = 0; (pLib = CLibraryCollection::GetLibraryByIndex(i)) != NULL; ++i)
+	{
+		if (pLib->MustUpgrade())
+		{
+			continue;
+		}
+		CString display = pLib->m_name.Mid(pLib->m_name.ReverseFind(_T('\\')) + 1);
+		m_moduleLib.AddString(display);
+		m_moduleLibNames.push_back(pLib->m_name);
+		if (pLib->m_name.CompareNoCase(current) == 0)
+		{
+			sel = (int)m_moduleLibNames.size() - 1;
+		}
+	}
+	m_moduleLib.SetCurSel(sel);
 
 	return TRUE;
 }
@@ -473,6 +498,12 @@ BOOL COptionsDrawing::OnApply()
 	pOpt->SetComponentLabelFont(m_compFont);
 
 	CConCadRegistry::SetAskNewTitleBlock(m_askTitleBlock == TRUE);
+
+	const int sel = m_moduleLib.GetCurSel();
+	if (sel >= 0 && sel < (int)m_moduleLibNames.size())
+	{
+		CConCadRegistry::SetModuleLibrary(m_moduleLibNames[sel]);
+	}
 
 	// Widths / colours / label font are applied live, so refresh the drawing.
 	GetDocument()->Invalidate();

@@ -502,6 +502,7 @@
 #define IDM_FILE_CREATEVERSION          32910
 #define IDM_FILE_EDITFILE               32911
 #define IDM_EDIT_REVISIONHISTORY        32912
+#define IDM_SPECIAL_CREATEMODULE        32913
 #define IDC_SCALING                     40000
 #define IDS_NOCLEANUP                   40001
 #define POSITIONBOX_GRIDSIZE            40002
@@ -547,6 +548,7 @@
 #define IDC_VERSION_HISTORY             40056
 #define IDC_DESIGNBOX_DESCRIPTION       40057
 #define IDC_VERSION_REVISEDBY           40058
+#define IDC_OPT_MODULE_LIB              40059
 #define IDM_TOOLCABLE                   32908
 #define IDC_IS_CONNECTOR                40011
 #define METHODBOX_COLOR                 40012
@@ -563,8 +565,8 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        187
-#define _APS_NEXT_COMMAND_VALUE         32913
-#define _APS_NEXT_CONTROL_VALUE         40059
+#define _APS_NEXT_COMMAND_VALUE         32914
+#define _APS_NEXT_CONTROL_VALUE         40060
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

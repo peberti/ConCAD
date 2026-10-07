@@ -169,6 +169,14 @@ void CConCadView::OnSelectGet()
 		return;
 	}
 
+	// A module is inserted as its objects, like a paste
+	if (theSymbol->is_module)
+	{
+		PlaceModule(theSymbol);
+		SetFocus();
+		return;
+	}
+
 	GetCurrentDocument()->SelectSymbol(theSymbol);
 
 	// Set focus to View so that it will receive keyboard messages.

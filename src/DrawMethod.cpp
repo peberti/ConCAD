@@ -122,7 +122,12 @@ void CDrawMethod::ContextMenu(CDPoint p, UINT id)
 			CSymbolRecord *pSymbol = GetSymbolData();
 			CDlgReplaceBox dlg(AfxGetMainWnd());
 			dlg.m_search_string = pSymbol->name;
-			if (dlg.DoModal() == IDOK && dlg.GetSymbol() != NULL)
+			const bool chosen = dlg.DoModal() == IDOK && dlg.GetSymbol() != NULL;
+			if (chosen && dlg.GetSymbol()->is_module)
+			{
+				AfxMessageBox(_T("A module cannot replace a symbol. Place modules from the library panel."), MB_ICONINFORMATION);
+			}
+			else if (chosen)
 			{
 				m_pDesign->BeginNewChangeSet();
 				hSYMBOL new_symbol = m_pDesign->GetOptions()->AddSymbol(dlg.GetSymbol()->GetDesignSymbol(m_pDesign));

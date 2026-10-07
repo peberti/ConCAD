@@ -26,6 +26,7 @@ const CString CConCadRegistry::M_AUTOUDPATEVERSION = "AutomaticUpdateVersion";
 const CString CConCadRegistry::M_SNEWTITLEBLOCK = "NewTitleBlock";
 const CString CConCadRegistry::M_SASKNEWTITLEBLOCK = "AskNewTitleBlock";
 const CString CConCadRegistry::M_SLASTREVISEDBY = "LastRevisedBy";
+const CString CConCadRegistry::M_SMODULELIBRARY = "ModuleLibrary";
 
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
@@ -270,6 +271,12 @@ CString CConCadRegistry::GetLastRevisedBy()
 	return CRegistry::GetString(M_SLASTREVISEDBY, "");
 }
 //-------------------------------------------------------------------------
+//-- Library that Special -> Create Module stores into
+CString CConCadRegistry::GetModuleLibrary()
+{
+	return CRegistry::GetString(M_SMODULELIBRARY, "");
+}
+//-------------------------------------------------------------------------
 
 
 //=========================================================================
@@ -335,6 +342,12 @@ void CConCadRegistry::SetAskNewTitleBlock(bool bAsk)
 void CConCadRegistry::SetLastRevisedBy(CString name)
 {
 	CConCadRegistry::Set(M_SLASTREVISEDBY, name);
+}
+//-------------------------------------------------------------------------
+//-- Changes the module library
+void CConCadRegistry::SetModuleLibrary(CString name)
+{
+	CConCadRegistry::Set(M_SMODULELIBRARY, name);
 }
 //-------------------------------------------------------------------------
 

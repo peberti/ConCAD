@@ -30,6 +30,9 @@
 #include "diag.h"
 #include "EditToolbar.h"
 #include "DlgPositionBox.h"
+#include "DlgUpdateBox.h"
+#include "LibraryCollection.h"
+#include "StreamMemory.h"
 #include ".\ConCadView.h"
 
 #include <winspool.h>
@@ -116,6 +119,8 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_COMMAND(ID_CONTEXT_MAKEHORIZONTAL, OnContextMakehorizontal)
 	ON_COMMAND(ID_CONTEXT_MAKEVERTICAL, OnContextMakevertical)
 	ON_COMMAND(ID_FILE_SAVEASBITMAP, OnFileSaveasbitmap)
+	ON_COMMAND(IDM_SPECIAL_CREATEMODULE, OnSpecialCreateModule)
+	ON_UPDATE_COMMAND_UI(IDM_SPECIAL_CREATEMODULE, OnUpdateEditcopy)
 	ON_COMMAND(IDM_EDIT_REVISIONHISTORY, OnEditRevisionHistory)
 	ON_UPDATE_COMMAND_UI(IDM_EDIT_REVISIONHISTORY, OnUpdateEditRevisionHistory)
 	ON_COMMAND(ID_FILE_EXPORTPDF, OnFileExportpdf)
@@ -2009,6 +2014,7 @@ static bool IsAllowedWhenWriteProtected(UINT nID)
 		case ID_FILE_SAVE_AS:
 		case IDM_FILE_CREATEVERSION:
 		case IDM_FILE_EDITFILE:
+		case IDM_SPECIAL_CREATEMODULE:
 			return true;
 		default:
 			return false;
@@ -2096,4 +2102,83 @@ void CConCadView::OnUpdateEditRevisionHistory(CCmdUI* pCmdUI)
 	CConCadDoc* pFirst = GetDocument()->GetSheet(0);
 	CDrawRevisionHistory* pTable = pFirst != NULL ? FindRevisionTable(pFirst) : NULL;
 	pCmdUI->SetCheck(pTable != NULL && pTable->IsVisible());
+}
+
+//-------------------------------------------------------------------------
+// Modules: a group of drawing objects stored in the module library
+// (Options > Settings > Drawing) and inserted like a paste.
+
+void CConCadView::OnSpecialCreateModule()
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	if (pDoc->GetEdit() == NULL || pDoc->GetEdit()->GetType() != xEditItem || !pDoc->IsSelected())
+	{
+		AfxMessageBox(_T("Select the objects to store as a module first."), MB_ICONINFORMATION);
+		return;
+	}
+
+	const CString sModuleLib = CConCadRegistry::GetModuleLibrary();
+	CLibraryStore* pLib = sModuleLib.IsEmpty() ? NULL : CLibraryCollection::GetLibrary(sModuleLib);
+	if (pLib == NULL || pLib->MustUpgrade())
+	{
+		AfxMessageBox(_T("No module library is set.\n\nChoose one under Options > Settings > Drawing > Module library. ")
+			_T("Only SQLite libraries (.TCLib) can hold modules."), MB_ICONINFORMATION);
+		return;
+	}
+
+	// The selection as module XML (objects + the symbols etc. they use)
+	CStreamMemory stream;
+	{
+		CXMLWriter xml(&stream);
+		pDoc->SaveModuleXML(xml);
+	}
+
+	CLibraryStoreNameSet module;
+	module.Blank();
+	module.lib = pLib;
+	module.GetRecord(0).name = _T("New module");
+	module.GetRecord(0).description = _T("");
+	module.GetRecord(0).reference = _T("");
+
+	CDlgUpdateBox dlg(AfxGetMainWnd());
+	dlg.SetSymbol(&module);
+	dlg.SetModuleMode();
+	if (dlg.DoModal() != IDOK)
+	{
+		return;
+	}
+
+	for (int i = 0; i < module.GetNumRecords(); i++)
+	{
+		module.GetRecord(i).is_module = TRUE;
+	}
+	pLib->StoreModule(&module, stream);   // reports its own errors
+}
+
+void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	CStream* pStream = theModule->m_pParent->GetMethodArchive();
+	if (pStream == NULL)
+	{
+		return;
+	}
+
+	// Same as Edit -> Paste: import the objects, then let them follow the
+	// mouse until the user clicks to drop them.
+	pDoc->BeginNewChangeSet();
+	pDoc->SelectObject(new CDrawEditItem(pDoc));
+	pDoc->SelectObject(NULL);
+	if (pDoc->Import(*pStream))
+	{
+		pDoc->PostPaste();
+		CDrawBlockImport *pImport = new CDrawBlockImport(pDoc);
+		pDoc->SelectObject(pImport);
+		pImport->Import();
+	}
+	else
+	{
+		pDoc->SelectObject(new CDrawEditItem(pDoc));
+	}
+	delete pStream;
 }

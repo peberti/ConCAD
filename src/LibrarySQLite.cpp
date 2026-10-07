@@ -91,7 +91,9 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 			}
 		}
 
-		CString sql("SELECT * FROM [Name] WHERE [Type]=0");
+		// Type 0 = symbol, 1 = module (older builds only read type 0, so they
+		// never see modules).
+		CString sql("SELECT * FROM [Name] WHERE [Type]=0 OR [Type]=1");
 		CppSQLite3Query q = m_database.execQuery(sql);
 
 		while (!q.eof())
@@ -120,6 +122,7 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 			r.name_type = static_cast<SymbolFieldType> (q.getIntField(_T("ShowName")));
 			r.ref_type = static_cast<SymbolFieldType> (q.getIntField(_T("ShowRef")));
 			r.is_connector = hasIsConnector && q.getIntField(_T("IsConnector"), 0) != 0;
+			r.is_module = q.getIntField(_T("Type"), 0) == 1;
 
 			if (is_new)
 			{
@@ -165,6 +168,27 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 // Write a symbol to this library
 void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document)
 {
+	// Write the symbol data into the methods file
+	CStreamMemory stream;
+	CXMLWriter xml(&stream);
+	document.SaveXML(xml);
+
+	if (StoreData(nwSymbol, stream, 0))
+	{
+		// Inform the design it has been saved
+		document.SetModifiedFlag(FALSE);
+	}
+}
+
+bool CLibrarySQLite::StoreModule(CLibraryStoreNameSet *nwSymbol, CStreamMemory &data)
+{
+	return StoreData(nwSymbol, data, 1);
+}
+
+bool CLibrarySQLite::StoreData(CLibraryStoreNameSet *nwSymbol, CStreamMemory &stream, int type)
+{
+	bool ok = false;
+
 	// Set the busy cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
@@ -173,11 +197,6 @@ void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc
 		m_database.execDML(_T("BEGIN TRANSACTION"));
 		CppSQLite3Query q;
 		CString sql;
-
-		// Write the symbol data into the methods file
-		CStreamMemory stream;
-		CXMLWriter xml(&stream);
-		document.SaveXML(xml);
 
 		CppSQLite3Statement stmt = m_database.compileStatement(_T(
 				"INSERT INTO [Symbol] ( [Data] ) VALUES (?)"));
@@ -215,7 +234,7 @@ void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc
 			_T(" VALUES (?,?,?,?,?,?,?,?,?,?)"));
 			stmt.bind(1, r.name);
 			stmt.bind(2, static_cast<int> (nwSymbol->FilePos));
-			stmt.bind(3, 0);
+			stmt.bind(3, type);
 			stmt.bind(4, r.reference);
 			stmt.bind(5, nwSymbol->ppp);
 			stmt.bind(6, r.description);
@@ -250,22 +269,21 @@ void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc
 		}
 
 		m_database.execDML(_T("COMMIT TRANSACTION"));
-
-		// Inform the design it has been saved
-		document.SetModifiedFlag(FALSE);
+		ok = true;
 
 	} catch (CppSQLite3Exception& e)
 	{
 		m_database.execDML(_T("ROLLBACK TRANSACTION"));
 		CString s;
 		CString msg(e.errorMessage());
-		s.Format(_T("Error storing symbol into library %s.\r\n%s"), (LPCTSTR)m_name, (LPCTSTR)msg);
+		s.Format(_T("Error storing %s into library %s.\r\n%s"), type == 1 ? _T("module") : _T("symbol"), (LPCTSTR)m_name, (LPCTSTR)msg);
 		AfxMessageBox(s);
 	}
 
 	// Re-load the library now it has changed
 	ReRead();
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
+	return ok;
 }
 
 // Delete a symbol from the database
@@ -332,6 +350,8 @@ CStream *CLibrarySQLite::GetMethodArchive(CLibraryStoreNameSet *symbol)
 		return NULL;
 	}
 
+	try
+	{
 	// Now get the attributes
 	// Do this for each of the names in the symbol set
 	for (int i = 0; i < symbol->GetNumRecords(); i++)
@@ -371,6 +391,15 @@ CStream *CLibrarySQLite::GetMethodArchive(CLibraryStoreNameSet *symbol)
 		CStreamMemory* stream = new CStreamMemory;
 		stream->Write(blob, len);
 		return stream;
+	}
+	}
+	catch (CppSQLite3Exception& e)
+	{
+		CString s;
+		CString msg(e.errorMessage());
+		s.Format(_T("Error reading symbol from library %s.\r\n%s"), (LPCTSTR)m_name, (LPCTSTR)msg);
+		AfxMessageBox(s);
+		return NULL;
 	}
 
 	return new CStreamMemory();

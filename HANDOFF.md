@@ -1,5 +1,38 @@
 # Session handoff — schematic feature work
 
+## Latest session (2026-10-07) — start here
+
+**Machine rebuilt** after a wipe: VS 2022 + v142 + MFC reinstalled, builds
+clean (see `SETUP.md`). Claude can compile-check from WSL via MSBuild.
+NSIS not reinstalled yet.
+
+**Done and committed today** (details in CHANGES.md):
+- `SETUP.md`; NSIS uninstaller removes the `.con` association.
+- File → New title-block picker (§7). Save-as-template dropped by the user.
+- File → Create Version / Edit File with write protection (§10), required
+  revision history (Rev / date / description / revised by), new
+  Description field, Drawing-Details title block, movable revision table
+  on sheet 1 (Edit → Revision History, linked to `templates/revision.svg`,
+  grows per version, word-wraps descriptions), bold/italic SVG text, tidy
+  mm-based templates.
+- **Module library (§11) — committed but only partly tested.** The user
+  hit an assert (empty module-library name) which is fixed; the full
+  test (CHANGES.md quick test plan step 11) has **not** been run yet.
+
+**Next session:**
+1. Run quick-test step 11 (modules): Create Module, placement, library
+   preview of a module, placing a module in the symbol editor, library
+   window Edit/Duplicate/Properties.
+2. Check the connector-colour bug noted in TODO.md (`is_connector` probably
+   never reaches placed symbols).
+3. Remaining small items: component colour in Options → Drawing; title-block
+   picker preview + error messages; click `[Write protected]` to edit.
+4. Push: `master` is several commits ahead of GitHub. The SSH keys were lost
+   in the wipe; the user pushes from Windows with
+   `git push https://github.com/peberti/ConCAD.git master` (browser login).
+
+---
+
 ## State
 
 A single large commit on `master` now captures the whole fork-feature body
@@ -63,7 +96,7 @@ and a junk file literally named `src/nul) do set ...` (a stray from a
 | 4 | Bundled templates folder + `CTitleBlockTemplateStore` enumerator + listbox in the tab + installer hook | done — tested OK |
 | 4b | **Hybrid storage** (name reference + base64 embedded fallback) — see below | done — tested OK |
 | 5 | `File → New` picker + registry default + "Don't ask again" (`CPickTitleTemplateDlg`, `CConCadApp::OnFileNewDesign`; re-enable in Options → Drawing) | done — tested OK |
-| 6 | Polish: Save-as-template, preview pane, error toasts | not started |
+| 6 | Polish: preview pane, error toasts (Save-as-template dropped by the user, 2026-10-07) | not started |
 
 ## Step 4b — Hybrid SVG storage (named-template-wins + base64 fallback)
 

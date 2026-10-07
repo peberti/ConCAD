@@ -236,6 +236,8 @@ public:
 	BOOL Save(BOOL GetName = TRUE, BOOL SaveSelect = FALSE);
 	void SaveXML(CXMLWriter&, drawingCollection &drawing, BOOL Details = FALSE, BOOL SaveSelect = FALSE, BOOL SaveResources = TRUE, BOOL SaveOrigin = FALSE);
 	void SaveXML(CXMLWriter&, BOOL Details = FALSE, BOOL SaveSelect = FALSE);
+	// Save the selected objects as a module (Special -> Create Module)
+	void SaveModuleXML(CXMLWriter&);
 	void SaveDocumentOriginXML(CXMLWriter&);
 
 	virtual const CString GetXMLTag();

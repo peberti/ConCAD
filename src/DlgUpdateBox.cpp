@@ -37,6 +37,7 @@ CDlgUpdateBox::CDlgUpdateBox(CWnd* pParentWnd) :
 	//}}AFX_DATA_INIT
 	m_capture = FALSE;
 	m_current_record = 0;
+	m_bModule = false;
 }
 
 void CDlgUpdateBox::DoDataExchange(CDataExchange* pDX)
@@ -134,6 +135,12 @@ BOOL CDlgUpdateBox::OnInitDialog()
 	m_Tab.InsertItem(1, _T("SPICE"));
 
 	InitFromRecord();
+
+	if (m_bModule)
+	{
+		SetWindowText(_T("Store Module"));
+		GetDlgItem(IDC_IS_CONNECTOR)->ShowWindow(SW_HIDE);
+	}
 
 	return TRUE;
 }

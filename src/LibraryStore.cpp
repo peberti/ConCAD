@@ -192,7 +192,10 @@ void CLibraryStore::SaveXML(const TCHAR *filename, int id)
 
 		while (it != m_Symbols.end())
 		{
-			if (id == -1 || id == it->first)
+			// Modules are not exported: this format goes through the symbol
+			// editor, which would drop the module's objects.
+			const bool is_module = it->second.GetNumRecords() > 0 && it->second.GetRecord(0).is_module;
+			if ((id == -1 || id == it->first) && !is_module)
 			{
 				CLibraryStoreNameSet &symbol = it->second;
 				CConCadMultiSymbolDoc temp_doc(this, symbol);

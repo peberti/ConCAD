@@ -29,6 +29,9 @@
 
 class CLibrarySQLite: public CLibraryStore
 {
+	// Write data (the drawing XML) and the name records; type 0 = symbol,
+	// 1 = module.  Returns false (after reporting) on a database error.
+	bool StoreData(CLibraryStoreNameSet *nwSymbol, CStreamMemory &data, int type);
 protected:
 	// Here is our connection to the library
 	CppSQLite3DB m_database;
@@ -45,6 +48,7 @@ public:
 
 	// Write a symbol to this library
 	virtual void Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document) OVERRIDE;
+	virtual bool StoreModule(CLibraryStoreNameSet *nwSymbol, CStreamMemory &data) OVERRIDE;
 
 	// Delete a symbol from this library
 	virtual void DeleteSymbol(CLibraryStoreNameSet &symbol) OVERRIDE;

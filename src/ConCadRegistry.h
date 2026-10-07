@@ -70,6 +70,9 @@ public:
 	//-- "Revised by" last entered in File -> Create version
 	static CString GetLastRevisedBy();
 
+	//-- Library that Special -> Create Module stores into (library name; empty = none)
+	static CString GetModuleLibrary();
+
 	//=====================================================================
 	//== Mutator for application settings                               ==
 	//=====================================================================
@@ -103,6 +106,9 @@ public:
 	//-- Remembers the "Revised by" entered in File -> Create version
 	static void SetLastRevisedBy(CString name);
 
+	//-- Changes the module library
+	static void SetModuleLibrary(CString name);
+
 	// Get when TinyCAD was installed
 	static CString GetInstalledFileTime();
 
@@ -126,6 +132,7 @@ private:
 	static const CString M_SNEWTITLEBLOCK;
 	static const CString M_SASKNEWTITLEBLOCK;
 	static const CString M_SLASTREVISEDBY;
+	static const CString M_SMODULELIBRARY;
 };
 //=========================================================================
 

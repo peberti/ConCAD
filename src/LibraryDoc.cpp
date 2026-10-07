@@ -22,6 +22,62 @@
 #include "LibraryDoc.h"
 #include "ConCadSymbolDoc.h"
 #include "ConCadMultiSymbolDoc.h"
+#include "DlgUpdateBox.h"
+#include "StreamMemory.h"
+
+// Modules (Special -> Create Module) hold design objects rather than a symbol
+// drawing.  Opening one in the symbol editor and storing it again would lose
+// those objects, so modules are copied as raw data instead.
+static bool IsModule(CLibraryStoreNameSet& s)
+{
+	return s.GetNumRecords() > 0 && s.GetRecord(0).is_module;
+}
+
+// Store a copy of module src into target, as a new record (asNew) or in place;
+// showDialog lets the user edit names and fields first.
+static void StoreModuleCopy(CLibraryStoreNameSet& src, CLibraryStore* target, bool asNew, bool showDialog, const CString& namePrefix)
+{
+	CStream* pData = src.GetMethodArchive();   // also loads the fields
+	CStreamMemory* pMem = dynamic_cast<CStreamMemory*>(pData);
+	if (pMem == NULL)
+	{
+		delete pData;
+		return;
+	}
+
+	CLibraryStoreNameSet copy = src;
+	copy.lib = target;
+	if (asNew)
+	{
+		copy.FilePos = (DWORD) -1;
+		for (int i = 0; i < copy.GetNumRecords(); i++)
+		{
+			copy.GetRecord(i).NameID = (DWORD) -1;
+		}
+		copy.GetRecord(0).name = namePrefix + copy.GetRecord(0).name;
+	}
+
+	bool store = true;
+	if (showDialog)
+	{
+		CDlgUpdateBox dlg(AfxGetMainWnd());
+		dlg.SetSymbol(&copy);
+		dlg.SetModuleMode();
+		store = dlg.DoModal() == IDOK;
+	}
+	if (store)
+	{
+		for (int i = 0; i < copy.GetNumRecords(); i++)
+		{
+			copy.GetRecord(i).is_module = TRUE;
+		}
+		if (!target->StoreModule(&copy, *pMem) && target->MustUpgrade())
+		{
+			AfxMessageBox(_T("Modules can only be stored in SQLite libraries (.TCLib)."), MB_ICONINFORMATION);
+		}
+	}
+	delete pData;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CLibraryDoc
@@ -188,6 +244,13 @@ void CLibraryDoc::EditSymbol(int which)
 		CLibraryStore::symbolCollection::iterator it = getSymbol(which);
 		if (it != m_pLibrary->m_Symbols.end())
 		{
+			if (IsModule(it->second))
+			{
+				AfxMessageBox(_T("A module cannot be opened in the symbol editor.\n\n")
+					_T("To change it, place it in a design, edit it there, and store it again with Special > Create Module. ")
+					_T("Use Properties to change its name or fields."), MB_ICONINFORMATION);
+				return;
+			}
 			CConCadApp::EditSymbol(m_pLibrary, it->second);
 		}
 	}
@@ -200,6 +263,12 @@ void CLibraryDoc::DuplicateSymbol(int which)
 
 	if (it != m_pLibrary->m_Symbols.end())
 	{
+		if (IsModule(it->second))
+		{
+			StoreModuleCopy(it->second, m_pLibrary, true, false, _T("Copy of "));
+			return;
+		}
+
 		// Load this symbol into a dummy document
 		CConCadMultiSymbolDoc tempDoc(m_pLibrary, it->second);
 
@@ -224,6 +293,12 @@ void CLibraryDoc::CopySymbol(int which, CLibraryStore *target)
 
 	if (it != m_pLibrary->m_Symbols.end())
 	{
+		if (IsModule(it->second))
+		{
+			StoreModuleCopy(it->second, target, true, false, CString());
+			return;
+		}
+
 		// Load this symbol into a dummy document
 		CConCadMultiSymbolDoc tempDoc(target, it->second);
 
@@ -244,6 +319,12 @@ void CLibraryDoc::SymbolProperties(int which)
 
 	if (it != m_pLibrary->m_Symbols.end())
 	{
+		if (IsModule(it->second))
+		{
+			StoreModuleCopy(it->second, m_pLibrary, false, true, CString());
+			return;
+		}
+
 		// Load this symbol into a dummy document
 		CConCadMultiSymbolDoc tempDoc(m_pLibrary, it->second);
 		tempDoc.Store();

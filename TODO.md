@@ -16,8 +16,19 @@ Implemented; see `CHANGES.md` §10. Not done from the wish list: clicking the
 `[Write protected]` text in the title bar to start editing (use
 `File → Edit File`).
 
-## Module Library
+## Module Library — done
 
-- [ ] A new kind of library but with parts of schematics stored as "modules". 
-      Similar as "Symbols" Librarys but with schematics instead. Same function as 
-	  `File → import` 
+Implemented; see `CHANGES.md` §11 (Special → Create Module, module library
+chosen in Options → Settings → Drawing, placed like a paste).
+
+## Module behaviour
+When inserting a module, keep it as a block grouped togheter. right click allows you to edit it. 
+
+
+## Connector flag does not reach placed symbols (found 2026-10-07)
+
+`is_connector` is not copied into `CDesignFileSymbol` in `GetDesignSymbol`
+(`Symbol.cpp` ~313) and `CDesignFileSymbol::SaveXML/LoadXML` do not write or
+read it, so `CDrawMethod::IsConnector()` is probably always false and the
+per-instance connector colour never becomes editable. Needs a check in the
+app and a fix.

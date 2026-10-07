@@ -108,6 +108,11 @@ public:
 	// Edit -> Revision History: show/hide the table on the first sheet
 	afx_msg void OnEditRevisionHistory();
 	afx_msg void OnUpdateEditRevisionHistory(CCmdUI* pCmdUI);
+
+	// Special -> Create Module: store the selection in the module library
+	afx_msg void OnSpecialCreateModule();
+	// Insert a module from the library, following the mouse until placed
+	void PlaceModule(CLibraryStoreSymbol* theModule);
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 
 protected:
