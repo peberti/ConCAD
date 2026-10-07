@@ -1,221 +1,35 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
-  ConCAD title block: drawing details panel.  Filled from Design Details;
-  RevisedBy is the reviser of the latest version (File > Create Version).
-  The revision history table is the separate Revision-History template.
+  ConCAD title block: drawing details panel.  Units: mm.  Filled from
+  Design Details; RevisedBy is the reviser of the latest version
+  (File > Create Version).
 -->
-
-<svg
-   width="69.229492mm"
-   height="51.332928mm"
-   viewBox="0 0 276.91797 205.33171"
-   version="1.1"
-   id="svg50"
-   sodipodi:docname="Drawing-Details2.svg"
-   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <defs
-     id="defs50">
-    <pattern
-       id="EMFhbasepattern"
-       patternUnits="userSpaceOnUse"
-       width="6"
-       height="6"
-       x="0"
-       y="0" />
-  </defs>
-  <sodipodi:namedview
-     id="namedview50"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="mm"
-     inkscape:zoom="0.587375"
-     inkscape:cx="144.71164"
-     inkscape:cy="315.81187"
-     inkscape:window-width="1920"
-     inkscape:window-height="1009"
-     inkscape:window-x="1912"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="svg50" />
-  <title
-     id="title1">Drawing details and revision history</title>
-  <style
-     id="style1">
-    text { font-family: Arial, Helvetica, sans-serif; fill: #000; }
-    .heading { font-size: 22px; font-weight: bold; }
-    .label { font-size: 17px; }
-    .value { font-size: 21px; }
-    .history { font-size: 17px; }
-    .grid { fill: none; stroke: #000; stroke-width: 1.5; }
-  </style>
-  <rect
-     x="0.89999998"
-     y="0.89999998"
-     width="275.11798"
-     height="203.53171"
-     id="rect33"
-     style="fill:none;stroke:#000000;stroke-width:1.8" />
-  <path
-     d="M 0.89997916,20.526993 H 276.01801 M 0.89997916,51.177783 H 276.01801 M 0.89997916,81.828573 H 276.01801 M 0.89997916,112.47936 H 276.01801 M 0.89997916,143.13015 H 276.01801 M 0.89997916,173.78094 H 276.01801 M 91.828809,173.9663 v 30.53085 M 182.75761,173.9663 v 30.53085"
-     id="path33"
-     style="fill:none;stroke:#000000;stroke-width:1.8" />
-  <text
-     class="heading"
-     x="6.1496339"
-     y="14.527258"
-     id="text34"
-     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14.1111px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000">DRAWING DETAILS</text>
-  <g
-     id="g53"
-     transform="translate(-915.49405,-540.70923)">
-    <text
-       class="label"
-       x="922.34937"
-       y="572.28333"
-       id="text35"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000">Drawing number / title</text>
-    <text
-       class="value"
-       x="922.34937"
-       y="585.88733"
-       id="text36"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{DocNo} — {Title}</text>
-  </g>
-  <g
-     id="g60"
-     transform="translate(-1469.0758,-510.05844)">
-    <text
-       class="label"
-       x="1475.9312"
-       y="572.38257"
-       id="text37"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Description</text>
-    <text
-       class="value"
-       x="1475.9312"
-       y="585.88733"
-       id="text38"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{Description}</text>
-  </g>
-  <g
-     id="g58"
-     transform="translate(-1293.8918,-479.40765)">
-    <text
-       class="label"
-       x="1300.7471"
-       y="572.28333"
-       id="text39"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Company</text>
-    <text
-       class="value"
-       x="1300.7471"
-       y="585.88733"
-       id="text40"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{Organisation}</text>
-  </g>
-  <g
-     id="g57"
-     transform="translate(-1212.3515,-448.75685)">
-    <text
-       class="label"
-       x="1219.2068"
-       y="572.28333"
-       id="text41"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Original author</text>
-    <text
-       class="value"
-       x="1219.2068"
-       y="585.88733"
-       id="text42"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{Author}</text>
-  </g>
-  <g
-     id="g56"
-     transform="translate(-979.09453,-358.6466)">
-    <g
-       id="g55"
-       transform="translate(-124.32432,-59.459459)">
-      <text
-         class="label"
-         x="1110.2742"
-         y="572.28333"
-         id="text43"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Revised by</text>
-      <text
-         class="value"
-         x="1110.2742"
-         y="585.88733"
-         id="text44"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{RevisedBy}</text>
-    </g>
-  </g>
-  <g
-     id="g54"
-     transform="translate(-1018.6933,-387.45527)">
-    <text
-       class="label"
-       x="1025.4412"
-       y="573.96179"
-       id="text45"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Current revision</text>
-    <text
-       class="value"
-       x="1025.5487"
-       y="585.88733"
-       id="text46"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{Revision}</text>
-  </g>
-  <g
-     id="g59"
-     transform="translate(-1289.6967,-387.50903)">
-    <text
-       class="label"
-       x="1388.7255"
-       y="573.96594"
-       id="text47"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Revision issue date</text>
-    <text
-       class="value"
-       x="1388.7255"
-       y="585.88733"
-       id="text48"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{Date}</text>
-  </g>
-  <g
-     id="g61"
-     transform="translate(-1393.7678,-387.45527)">
-    <text
-       class="label"
-       x="1583.7255"
-       y="573.96179"
-       id="text49"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Sheet</text>
-    <text
-       class="value"
-       x="1583.7255"
-       y="585.88733"
-       id="text50"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.2889px;font-family:Arial, Helvetica, sans-serif;-inkscape-font-specification:'Arial, Helvetica, sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">{Sheets}</text>
-  </g>
-  <metadata
-     id="metadata58">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:title>Drawing details and revision history</dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+   width="69.229mm" height="51.333mm" viewBox="0 0 69.229 51.333">
+  <rect x="0.125" y="0.125" width="68.979" height="51.083" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="5.132" x2="69.104" y2="5.132" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="12.794" x2="69.104" y2="12.794" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="20.457" x2="69.104" y2="20.457" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="28.12" x2="69.104" y2="28.12" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="35.783" x2="69.104" y2="35.783" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="43.445" x2="69.104" y2="43.445" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="22.957" y1="43.445" x2="22.957" y2="51.208" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="45.689" y1="43.445" x2="45.689" y2="51.208" stroke="#000000" stroke-width="0.25" fill="none" />
+  <text x="1.537" y="3.632" font-family="Arial" font-size="3.52778" font-weight="bold">DRAWING DETAILS</text>
+  <text x="1.714" y="7.894" font-family="Arial" font-size="2.11667">Drawing number / title</text>
+  <text x="1.714" y="11.295" font-family="Arial" font-size="2.82222">{DocNo} — {Title}</text>
+  <text x="1.714" y="15.581" font-family="Arial" font-size="2.11667">Description</text>
+  <text x="1.714" y="18.957" font-family="Arial" font-size="2.82222">{Description}</text>
+  <text x="1.714" y="23.219" font-family="Arial" font-size="2.11667">Company</text>
+  <text x="1.714" y="26.62" font-family="Arial" font-size="2.82222">{Organisation}</text>
+  <text x="1.714" y="30.882" font-family="Arial" font-size="2.11667">Original author</text>
+  <text x="1.714" y="34.283" font-family="Arial" font-size="2.82222">{Author}</text>
+  <text x="1.714" y="38.544" font-family="Arial" font-size="2.11667">Revised by</text>
+  <text x="1.714" y="41.945" font-family="Arial" font-size="2.82222">{RevisedBy}</text>
+  <text x="1.714" y="46.627" font-family="Arial" font-size="2.11667">Current revision</text>
+  <text x="1.714" y="49.608" font-family="Arial" font-size="2.82222">{Revision}</text>
+  <text x="24.757" y="46.627" font-family="Arial" font-size="2.11667">Revision issue date</text>
+  <text x="24.757" y="49.608" font-family="Arial" font-size="2.82222">{Date}</text>
+  <text x="47.489" y="46.627" font-family="Arial" font-size="2.11667">Sheet</text>
+  <text x="47.489" y="49.608" font-family="Arial" font-size="2.82222">{Sheets}</text>
 </svg>

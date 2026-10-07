@@ -1,60 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
   ConCAD revision history table (Edit > Revision History, first sheet).
-  Layout by the user's "Revision history.svg".  Edit this file to change
-  the table; open designs pick up the change, and each design keeps a copy
-  for machines without the file.  The column labels sit once at the top;
-  the group marked data-repeat="revisions" is one value row, repeated once
-  per version (newest five, oldest at the top).  The frame
-  (data-stretch="rows") and the height grow to fit; the table grows
-  upwards from where it is placed.
-  Row tokens: Rev1, Rev1Date, Rev1Desc, Rev1By (in braces).  The change
-  description wraps at data-wrap-width; its row then grows, and the row's
-  lines marked data-stretch="row" lengthen with it.
+  Units: mm.  The group marked data-repeat="revisions" is one table row,
+  repeated once per version (newest five, oldest at the top); the table
+  grows upwards from where it is placed.  The change description wraps at
+  data-wrap-width, its row then grows and the row's lines marked
+  data-stretch="row" lengthen.  The frame (data-stretch="rows") grows with
+  the rows.  Row tokens: Rev1, Rev1Date, Rev1Desc, Rev1By (in braces).
 -->
-<svg
-   width="103.13856mm"
-   height="14.111857mm"
-   viewBox="0 0 103.13856 14.111857"
-   version="1.1"
-   xmlns="http://www.w3.org/2000/svg">
-  <g
-     id="layer1"
-     transform="translate(-44.450001,-98.954163)">
-    <rect
-       data-stretch="rows"
-       x="44.637501"
-       y="99.141663"
-       width="102.76356"
-       height="13.736857"
-       style="fill:none;stroke:#000000;stroke-width:0.375;stroke-opacity:1" />
-    <text
-       x="45.191311"
-       y="102.57858"
-       style="font-weight:bold;font-size:3.52778px;font-family:Arial, Helvetica, sans-serif;fill:#000000">REVISION HISTORY</text>
-    <g id="labels">
-      <path d="M 44.450001,103.97852 H 147.21356" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <path d="m 55.002048,103.97852 v 4.30000" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <path d="m 76.927991,103.97852 v 4.30000" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <path d="m 125.70514,103.97852 v 4.30000" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <text x="45.713" y="107.03852" style="font-size:2.11667px;font-family:Arial, Helvetica, sans-serif;fill:#000000">Rev.</text>
-      <text x="55.68" y="107.03852" style="font-size:2.11667px;font-family:Arial, Helvetica, sans-serif;fill:#000000">Issue date</text>
-      <text x="77.697" y="107.03852" style="font-size:2.11667px;font-family:Arial, Helvetica, sans-serif;fill:#000000">Change description</text>
-      <text x="126.414" y="107.03852" style="font-size:2.11667px;font-family:Arial, Helvetica, sans-serif;fill:#000000">Revised by</text>
-    </g>
-    <g
-       id="revision-row"
-       data-repeat="revisions"
-       data-max-rows="5"
-       data-row-height="4.6">
-      <path d="M 44.450001,108.27852 H 147.21356" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <line data-stretch="row" x1="55.002048" y1="108.27852" x2="55.002048" y2="112.87852" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <line data-stretch="row" x1="76.927991" y1="108.27852" x2="76.927991" y2="112.87852" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <line data-stretch="row" x1="125.70514" y1="108.27852" x2="125.70514" y2="112.87852" style="stroke:#000000;stroke-width:0.25;stroke-opacity:1" />
-      <text x="45.801" y="111.67852" style="font-size:2.82222px;font-family:Arial, Helvetica, sans-serif;fill:#000000">{Rev1}</text>
-      <text x="55.798" y="111.67852" style="font-size:2.82222px;font-family:Arial, Helvetica, sans-serif;fill:#000000">{Rev1Date}</text>
-      <text data-wrap-width="47.2" x="77.724" y="111.67852" style="font-size:2.82222px;font-family:Arial, Helvetica, sans-serif;fill:#000000">{Rev1Desc}</text>
-      <text x="126.502" y="111.67852" style="font-size:2.82222px;font-family:Arial, Helvetica, sans-serif;fill:#000000">{Rev1By}</text>
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+   width="103.139mm" height="14.049mm" viewBox="0 0 103.139 14.049">
+  <rect data-stretch="rows" x="0.125" y="0.125" width="102.889" height="13.799" stroke="#000000" stroke-width="0.25" fill="none" />
+  <text x="0.741" y="3.624" font-family="Arial" font-size="3.52778" font-weight="bold">REVISION HISTORY</text>
+  <line x1="0.125" y1="5.024" x2="103.014" y2="5.024" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="10.552" y1="5.024" x2="10.552" y2="9.324" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="32.478" y1="5.024" x2="32.478" y2="9.324" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="81.255" y1="5.024" x2="81.255" y2="9.324" stroke="#000000" stroke-width="0.25" fill="none" />
+  <text x="1.263" y="8.084" font-family="Arial" font-size="2.11667">Rev.</text>
+  <text x="11.23" y="8.084" font-family="Arial" font-size="2.11667">Issue date</text>
+  <text x="33.247" y="8.084" font-family="Arial" font-size="2.11667">Change description</text>
+  <text x="81.964" y="8.084" font-family="Arial" font-size="2.11667">Revised by</text>
+  <g data-repeat="revisions" data-row-height="4.6" data-max-rows="5">
+    <line x1="0.125" y1="9.324" x2="103.014" y2="9.324" stroke="#000000" stroke-width="0.25" fill="none" />
+    <line data-stretch="row" x1="10.552" y1="9.324" x2="10.552" y2="13.924" stroke="#000000" stroke-width="0.25" fill="none" />
+    <line data-stretch="row" x1="32.478" y1="9.324" x2="32.478" y2="13.924" stroke="#000000" stroke-width="0.25" fill="none" />
+    <line data-stretch="row" x1="81.255" y1="9.324" x2="81.255" y2="13.924" stroke="#000000" stroke-width="0.25" fill="none" />
+    <text x="1.351" y="12.724" font-family="Arial" font-size="2.82222">{Rev1}</text>
+    <text x="11.348" y="12.724" font-family="Arial" font-size="2.82222">{Rev1Date}</text>
+    <text data-wrap-width="47.2" x="33.274" y="12.724" font-family="Arial" font-size="2.82222">{Rev1Desc}</text>
+    <text x="82.052" y="12.724" font-family="Arial" font-size="2.82222">{Rev1By}</text>
   </g>
 </svg>

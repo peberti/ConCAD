@@ -313,10 +313,31 @@ struct CssTextProps
 	CStringA fontFamily; bool hasFontFamily;
 	COLORREF fill;       bool hasFill;
 	UINT align;          bool hasAlign;
+	int weight;          bool hasWeight;    // LOGFONT weight (FW_NORMAL, FW_BOLD, ...)
+	bool italic;         bool hasItalic;
 	CssTextProps()
 		: fontSize(0.0), hasFontSize(false), fill(0), hasFill(false),
-		  align(TA_LEFT | TA_BASELINE | TA_NOUPDATECP), hasAlign(false) {}
+		  align(TA_LEFT | TA_BASELINE | TA_NOUPDATECP), hasAlign(false),
+		  weight(FW_NORMAL), hasWeight(false), italic(false), hasItalic(false) {}
 };
+
+// CSS font-weight -> LOGFONT weight: "bold"/"bolder" = 700, "normal"/
+// "lighter" = 400, or a number 100..900.
+int ParseFontWeight(const char* val)
+{
+	while (*val == ' ' || *val == '\t') ++val;
+	if (_strnicmp(val, "bold", 4) == 0) return FW_BOLD;   // also "bolder"
+	if (_strnicmp(val, "normal", 6) == 0 || _strnicmp(val, "lighter", 7) == 0) return FW_NORMAL;
+	int w = atoi(val);
+	return (w >= 100 && w <= 900) ? w : FW_NORMAL;
+}
+
+// CSS font-style: "italic" and "oblique" render italic.
+bool ParseFontItalic(const char* val)
+{
+	while (*val == ' ' || *val == '\t') ++val;
+	return _strnicmp(val, "italic", 6) == 0 || _strnicmp(val, "oblique", 7) == 0;
+}
 
 void ParseCssTextStyle(const char* style, CssTextProps& out)
 {
@@ -370,6 +391,13 @@ void ParseCssTextStyle(const char* style, CssTextProps& out)
 			memcpy(buf, valStart, valLen < sizeof(buf) - 1 ? valLen : sizeof(buf) - 1);
 			if (buf[0] == '#') { out.fill = ParseHexColor(buf, out.fill); out.hasFill = true; }
 		}
+		else if (matches("font-weight") || matches("font-style"))
+		{
+			char buf[32] = { 0 };
+			memcpy(buf, valStart, valLen < sizeof(buf) - 1 ? valLen : sizeof(buf) - 1);
+			if (matches("font-weight")) { out.weight = ParseFontWeight(buf); out.hasWeight = true; }
+			else                        { out.italic = ParseFontItalic(buf); out.hasItalic = true; }
+		}
 		else if (matches("text-anchor"))
 		{
 			char buf[16] = { 0 };
@@ -391,6 +419,8 @@ void MergeTextProps(CssTextProps& dst, const CssTextProps& src)
 	if (src.hasFontFamily) { dst.fontFamily = src.fontFamily; dst.hasFontFamily = true; }
 	if (src.hasFill)       { dst.fill = src.fill;             dst.hasFill = true; }
 	if (src.hasAlign)      { dst.align = src.align;           dst.hasAlign = true; }
+	if (src.hasWeight)     { dst.weight = src.weight;         dst.hasWeight = true; }
+	if (src.hasItalic)     { dst.italic = src.italic;         dst.hasItalic = true; }
 }
 
 // class-name -> resolved text properties, parsed from <style> rules.
@@ -536,6 +566,8 @@ void ResolveNodeTextProps(rapidxml::xml_node<>* node, const CssRuleMap& rules,
 		else if (strcmp(name, "font-size") == 0)  { eff.fontSize = atof(val); eff.hasFontSize = true; }
 		else if (strcmp(name, "font-family") == 0){ eff.fontFamily = val; eff.hasFontFamily = true; }
 		else if (strcmp(name, "fill") == 0)       { eff.fill = ParseHexColor(val, eff.fill); eff.hasFill = true; }
+		else if (strcmp(name, "font-weight") == 0){ eff.weight = ParseFontWeight(val); eff.hasWeight = true; }
+		else if (strcmp(name, "font-style") == 0) { eff.italic = ParseFontItalic(val); eff.hasItalic = true; }
 		else if (strcmp(name, "text-anchor") == 0)
 		{
 			if      (strcmp(val, "middle") == 0) eff.align = TA_CENTER | TA_BASELINE | TA_NOUPDATECP;
@@ -562,7 +594,8 @@ void ResolveNodeTextProps(rapidxml::xml_node<>* node, const CssRuleMap& rules,
 // fontSize).  A single word wider than maxWidth gets a line of its own.
 // Widths are measured with GDI on a reference-size font, so the result does
 // not depend on the zoom level.
-std::vector<CString> WrapText(const CString& textIn, double maxWidth, double fontSize, const CString& family)
+std::vector<CString> WrapText(const CString& textIn, double maxWidth, double fontSize, const CString& family,
+                              int weight = FW_NORMAL, bool italic = false)
 {
 	CString text = textIn;
 	text.Replace(_T("\r\n"), _T("\n"));
@@ -593,7 +626,8 @@ std::vector<CString> WrapText(const CString& textIn, double maxWidth, double fon
 	LOGFONT lf;
 	memset(&lf, 0, sizeof(lf));
 	lf.lfHeight = -kRef;
-	lf.lfWeight = FW_NORMAL;
+	lf.lfWeight = weight;
+	lf.lfItalic = italic ? TRUE : FALSE;
 	lf.lfCharSet = DEFAULT_CHARSET;
 	_tcsncpy_s(lf.lfFaceName, face, LF_FACESIZE - 1);
 	HFONT hFont = CreateFontIndirect(&lf);
@@ -722,7 +756,8 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 	LOGFONT lf;
 	memset(&lf, 0, sizeof(lf));
 	lf.lfHeight = -(LONG)(fontSize * (textScale > 0.0 ? textScale : 1.0) + 0.5);   // negative = "em-height"; CContext applies its own scaling
-	lf.lfWeight = FW_NORMAL;
+	lf.lfWeight = eff.weight;
+	lf.lfItalic = eff.italic ? TRUE : FALSE;
 	lf.lfCharSet = DEFAULT_CHARSET;
 	lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
 	lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
@@ -748,7 +783,7 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 		wrapWidth = atof(ww->value());
 	}
 	CA2T family(fontFamily, CP_UTF8);
-	const std::vector<CString> lines = WrapText(text, wrapWidth, fontSize, CString((LPCTSTR)family));
+	const std::vector<CString> lines = WrapText(text, wrapWidth, fontSize, CString((LPCTSTR)family), eff.weight, eff.italic);
 	for (size_t line = 0; line < lines.size(); ++line)
 	{
 		double lx = localX, ly = localY + line * fontSize * 1.2;
@@ -1138,6 +1173,8 @@ CString CTitleBlockTemplateStore::ExpandRevisionRows(const CString& svgIn, const
 	// <text> holding {Rev1Desc} (font-size and data-wrap-width in root units).
 	double descFont = 0.0, descWrap = 0.0;
 	CString descFamily;
+	int descWeight = FW_NORMAL;
+	bool descItalic = false;
 	int dp = row.Find(_T("{Rev1Desc}"));
 	int dt = dp < 0 ? -1 : row.Left(dp).ReverseFind(_T('<'));
 	if (dt >= 0)
@@ -1156,6 +1193,14 @@ CString CTitleBlockTemplateStore::ExpandRevisionRows(const CString& svgIn, const
 			int semi = descFamily.Find(_T(';'));
 			if (semi >= 0) descFamily = descFamily.Left(semi);
 		}
+		CString sWeight = GetTagAttr(tag, _T("font-weight"));
+		CString sStyle = GetTagAttr(tag, _T("font-style"));
+		int fw = style.Find(_T("font-weight:"));
+		if (fw >= 0) sWeight = style.Mid(fw + 12);
+		int fst = style.Find(_T("font-style:"));
+		if (fst >= 0) sStyle = style.Mid(fst + 11);
+		if (!sWeight.IsEmpty()) descWeight = ParseFontWeight(CT2A(sWeight));
+		if (!sStyle.IsEmpty())  descItalic = ParseFontItalic(CT2A(sStyle));
 	}
 
 	// Repeat the row, each copy shifted down below the previous (possibly
@@ -1167,7 +1212,7 @@ CString CTitleBlockTemplateStore::ExpandRevisionRows(const CString& svgIn, const
 		int lineCount = 1;
 		if (first + i < entryCount && descFont > 0.0)
 		{
-			lineCount = (int)WrapText(descriptions[first + i], descWrap, descFont, descFamily).size();
+			lineCount = (int)WrapText(descriptions[first + i], descWrap, descFont, descFamily, descWeight, descItalic).size();
 		}
 		const double grow = (lineCount - 1) * descFont * 1.2;
 

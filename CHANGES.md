@@ -623,6 +623,12 @@ that must grow with it:
 <rect data-stretch="rows" … />
 ```
 
+**Bold / italic:** SVG text honours `font-weight` (`bold`, `bolder`,
+`normal`, `lighter`, or 100–900) and `font-style` (`italic`, `oblique`),
+whether given as an attribute, in a `<style>` class rule or inline
+`style="…"`; word-wrap measurement uses the same font. (Previously all
+template text rendered in normal weight.)
+
 **Word wrap:** a `<text>` with `data-wrap-width="<w>"` (its local units)
 is word-wrapped to that width; explicit line breaks always break. In the
 revision table the change description wraps at its column (47.2 mm), and
