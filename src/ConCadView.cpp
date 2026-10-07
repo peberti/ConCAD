@@ -116,6 +116,8 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_COMMAND(ID_CONTEXT_MAKEHORIZONTAL, OnContextMakehorizontal)
 	ON_COMMAND(ID_CONTEXT_MAKEVERTICAL, OnContextMakevertical)
 	ON_COMMAND(ID_FILE_SAVEASBITMAP, OnFileSaveasbitmap)
+	ON_COMMAND(IDM_EDIT_REVISIONHISTORY, OnEditRevisionHistory)
+	ON_UPDATE_COMMAND_UI(IDM_EDIT_REVISIONHISTORY, OnUpdateEditRevisionHistory)
 	ON_COMMAND(ID_FILE_EXPORTPDF, OnFileExportpdf)
 	ON_COMMAND(ID_OPTIONS_COLOURS, OnOptionsColours)
 	ON_COMMAND(ID_CONTEXT_REPLACESYMBOL, OnContextReplacesymbol)
@@ -694,6 +696,12 @@ void CConCadView::OnMouseMove(UINT nFlags, CPoint p)
 
 void CConCadView::OnLButtonDown(UINT nFlags, CPoint p)
 {
+	// No selecting, placing or dragging on a write-protected version.
+	if (IsWriteProtected())
+	{
+		return;
+	}
+
 	CContext theContext(this, GetTransform());
 
 	CDPoint snapped_p = GetTransform().DeScale(GetCurrentDocument()->m_snap, p);
@@ -711,6 +719,12 @@ void CConCadView::OnLButtonDown(UINT nFlags, CPoint p)
 
 void CConCadView::OnLButtonDblClk(UINT nFlags, CPoint p)
 {
+	if (IsWriteProtected())
+	{
+		AfxMessageBox(_T("This version is write-protected.\n\nUse File > Edit File to make a working copy you can change."), MB_ICONINFORMATION);
+		return;
+	}
+
 	CContext theContext(this, GetTransform());
 
 	CDPoint snapped_p = GetTransform().DeScale(GetCurrentDocument()->m_snap, p);
@@ -764,6 +778,12 @@ void CConCadView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		::GetKeyState(VK_LWIN) >= 0 && 
 		::GetKeyState(VK_RWIN) >= 0)
 	{
+		// Only Find is available on a write-protected version.
+		if (IsWriteProtected() && nChar != 'F')
+		{
+			return;
+		}
+
 		switch (nChar)
 		{
 			case 'R':
@@ -1946,3 +1966,134 @@ void CConCadView::ChangeDir(int dir)
 	}
 }
 
+//-------------------------------------------------------------------------
+// Write-protected versions (File -> Create version)
+
+bool CConCadView::IsWriteProtected()
+{
+	CMultiSheetDoc* pDoc = GetDocument();
+	return pDoc != NULL && pDoc->IsWriteProtected();
+}
+
+// Commands of this view / its document that stay available on a
+// write-protected version: viewing, finding, copying out and output.
+static bool IsAllowedWhenWriteProtected(UINT nID)
+{
+	switch (nID)
+	{
+		case IDM_VIEWZOOMIN:
+		case IDM_VIEWZOOMOUT:
+		case IDM_VIEWCENTRE:
+		case ID_RULER_VERT:
+		case ID_RULER_HORIZ:
+		case IDM_SNAPTOGRID:
+		case IDM_TOGGLE_GRIDSIZE:
+		case POSITIONBOX_GRIDSIZE:
+		case IDM_VIEW_OPTIONS:
+		case ID_OPTIONS_COLOURS:
+		case ID_FIND_FIND:
+		case IDM_EDITEDIT:
+		case IDM_EDITSELECTALL:
+		case IDM_EDITCOPY:
+		case ID_CONTEXT_OPENDESIGN:
+		case ID_FILE_PRINT:
+		case ID_FILE_PRINT_DIRECT:
+		case ID_FILE_PRINT_PREVIEW:
+		case ID_FILE_SAVEASBITMAP:
+		case ID_FILE_EXPORTPDF:
+		case IDM_SPECIALNET:
+		case IDM_SPECIALBOM:
+		case ID_SPECIAL_CREATESPICEFILE:
+		case ID_SPECIAL_VHDL:
+		case ID_FILE_CLOSE:
+		case ID_FILE_SAVE_AS:
+		case IDM_FILE_CREATEVERSION:
+		case IDM_FILE_EDITFILE:
+			return true;
+		default:
+			return false;
+	}
+}
+
+// On a write-protected version, disable (grey out and ignore) every command
+// this view or its document handles, except the ones allowed above.
+// Commands handled elsewhere (main frame, application) are not affected.
+BOOL CConCadView::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+	if (pHandlerInfo == NULL && (nCode == CN_COMMAND || nCode == CN_UPDATE_COMMAND_UI)
+		&& IsWriteProtected() && !IsAllowedWhenWriteProtected(nID))
+	{
+		AFX_CMDHANDLERINFO info;
+		if (CFolderView::OnCmdMsg(nID, CN_COMMAND, NULL, &info))
+		{
+			if (nCode == CN_UPDATE_COMMAND_UI)
+			{
+				static_cast<CCmdUI*>(pExtra)->Enable(FALSE);
+			}
+			return TRUE;
+		}
+	}
+	return CFolderView::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+}
+
+//-------------------------------------------------------------------------
+// Edit -> Revision History
+
+// The revision-history table on a sheet, or NULL.
+static CDrawRevisionHistory* FindRevisionTable(CConCadDoc* pSheet)
+{
+	for (drawingIterator it = pSheet->GetDrawingBegin(); it != pSheet->GetDrawingEnd(); ++it)
+	{
+		if ((*it)->GetType() == xRevisionHistory)
+		{
+			return static_cast<CDrawRevisionHistory*>(*it);
+		}
+	}
+	return NULL;
+}
+
+// Show or hide the revision-history table.  It always lives on the first
+// sheet; the first time it is placed at the bottom-left of the page, from
+// where it can be moved like any other object.
+void CConCadView::OnEditRevisionHistory()
+{
+	CMultiSheetDoc* pDoc = GetDocument();
+	CConCadDoc* pFirst = pDoc->GetSheet(0);
+	if (pFirst == NULL)
+	{
+		return;
+	}
+	if (pDoc->GetActiveSheetIndex() != 0)
+	{
+		pDoc->SelectSheetView(0);
+	}
+
+	pFirst->BeginNewChangeSet();
+	CDrawRevisionHistory* pTable = FindRevisionTable(pFirst);
+	if (pTable == NULL)
+	{
+		CDrawRevisionHistory table(pFirst);
+		const CPoint page = pFirst->GetDetails().GetPageBoundsAsPoint();
+		table.m_point_a = CDPoint(10, page.y - 10);
+		table.UpdateExtent();
+		if (table.m_point_a == table.m_point_b)
+		{
+			AfxMessageBox(_T("The revision history template (templates\\revision.svg) was not found."), MB_ICONEXCLAMATION);
+			return;
+		}
+		pTable = static_cast<CDrawRevisionHistory*>(table.Store());
+	}
+	else
+	{
+		pFirst->MarkChangeForUndo(pTable);
+		pTable->SetVisible(!pTable->IsVisible());
+	}
+	pFirst->Invalidate();
+}
+
+void CConCadView::OnUpdateEditRevisionHistory(CCmdUI* pCmdUI)
+{
+	CConCadDoc* pFirst = GetDocument()->GetSheet(0);
+	CDrawRevisionHistory* pTable = pFirst != NULL ? FindRevisionTable(pFirst) : NULL;
+	pCmdUI->SetCheck(pTable != NULL && pTable->IsVisible());
+}

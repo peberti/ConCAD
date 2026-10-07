@@ -499,6 +499,9 @@
 #define ID_CONTEXT_MOVESHEET            32906
 #define ID_CONTEXT_MOVESHEETRIGHT       32907
 #define ID_FILE_EXPORTPDF               32909
+#define IDM_FILE_CREATEVERSION          32910
+#define IDM_FILE_EDITFILE               32911
+#define IDM_EDIT_REVISIONHISTORY        32912
 #define IDC_SCALING                     40000
 #define IDS_NOCLEANUP                   40001
 #define POSITIONBOX_GRIDSIZE            40002
@@ -525,6 +528,7 @@
 #define IDC_TOK_VAL5                    40035
 #define IDD_OPTIONS_DRAWING             178
 #define IDD_PICK_TITLE_TEMPLATE         185
+#define IDD_CREATE_VERSION              186
 #define IDC_OPT_WIRE_WIDTH              40040
 #define IDC_OPT_WIRE_COLOR              40041
 #define IDC_OPT_CABLE_WIDTH             40042
@@ -538,6 +542,11 @@
 #define IDC_TBPICK_LIST                 40051
 #define IDC_TBPICK_DONTASK              40052
 #define IDC_OPT_ASK_TITLEBLOCK          40053
+#define IDC_VERSION_EDIT                40054
+#define IDC_VERSION_FILENAME            40055
+#define IDC_VERSION_HISTORY             40056
+#define IDC_DESIGNBOX_DESCRIPTION       40057
+#define IDC_VERSION_REVISEDBY           40058
 #define IDM_TOOLCABLE                   32908
 #define IDC_IS_CONNECTOR                40011
 #define METHODBOX_COLOR                 40012
@@ -553,9 +562,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        186
-#define _APS_NEXT_COMMAND_VALUE         32910
-#define _APS_NEXT_CONTROL_VALUE         40054
+#define _APS_NEXT_RESOURCE_VALUE        187
+#define _APS_NEXT_COMMAND_VALUE         32913
+#define _APS_NEXT_CONTROL_VALUE         40059
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

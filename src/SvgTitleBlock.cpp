@@ -557,6 +557,90 @@ void ResolveNodeTextProps(rapidxml::xml_node<>* node, const CssRuleMap& rules,
 	}
 }
 
+// Split text into display lines.  '\n' always breaks; when maxWidth > 0,
+// lines are also word-wrapped so none is wider than maxWidth (same units as
+// fontSize).  A single word wider than maxWidth gets a line of its own.
+// Widths are measured with GDI on a reference-size font, so the result does
+// not depend on the zoom level.
+std::vector<CString> WrapText(const CString& textIn, double maxWidth, double fontSize, const CString& family)
+{
+	CString text = textIn;
+	text.Replace(_T("\r\n"), _T("\n"));
+
+	std::vector<CString> lines;
+	if (maxWidth <= 0.0 || fontSize <= 0.0)
+	{
+		int start = 0;
+		for (;;)
+		{
+			int nl = text.Find(_T('\n'), start);
+			lines.push_back(nl < 0 ? text.Mid(start) : text.Mid(start, nl - start));
+			if (nl < 0) break;
+			start = nl + 1;
+		}
+		return lines;
+	}
+
+	// First family of a CSS list, without quotes; Arial when unset.
+	CString face = family;
+	int comma = face.Find(_T(','));
+	if (comma >= 0) face = face.Left(comma);
+	face.Trim(_T(" \t'\""));
+	if (face.IsEmpty()) face = _T("Arial");
+
+	const int kRef = 1000;   // reference em size in pixels
+	HDC hdc = CreateCompatibleDC(NULL);
+	LOGFONT lf;
+	memset(&lf, 0, sizeof(lf));
+	lf.lfHeight = -kRef;
+	lf.lfWeight = FW_NORMAL;
+	lf.lfCharSet = DEFAULT_CHARSET;
+	_tcsncpy_s(lf.lfFaceName, face, LF_FACESIZE - 1);
+	HFONT hFont = CreateFontIndirect(&lf);
+	HGDIOBJ hOld = SelectObject(hdc, hFont);
+	const double scale = fontSize / kRef;
+	auto width = [&](const CString& s) -> double
+	{
+		SIZE sz = { 0, 0 };
+		GetTextExtentPoint32(hdc, s, s.GetLength(), &sz);
+		return sz.cx * scale;
+	};
+
+	int start = 0;
+	for (;;)
+	{
+		int nl = text.Find(_T('\n'), start);
+		CString para = nl < 0 ? text.Mid(start) : text.Mid(start, nl - start);
+		CString line;
+		int pos = 0;
+		bool any = false;
+		for (;;)
+		{
+			CString word = para.Tokenize(_T(" "), pos);
+			if (pos < 0) break;
+			any = true;
+			CString candidate = line.IsEmpty() ? word : line + _T(" ") + word;
+			if (!line.IsEmpty() && width(candidate) > maxWidth)
+			{
+				lines.push_back(line);
+				line = word;
+			}
+			else
+			{
+				line = candidate;
+			}
+		}
+		lines.push_back(any ? line : CString());
+		if (nl < 0) break;
+		start = nl + 1;
+	}
+
+	SelectObject(hdc, hOld);
+	DeleteObject(hFont);
+	DeleteDC(hdc);
+	return lines;
+}
+
 void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
                    const ViewBoxXform& xf, const CDetails& details,
                    const Affine& parentTransform, const CssRuleMap& rules)
@@ -625,6 +709,7 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 	{
 		textTransform = ConcatAffine(parentTransform, ParseTransformAttr(tr->value()));
 	}
+	const double localX = x, localY = y;   // pre-transform, for extra lines
 	textTransform.Apply(x, y);
 	// Font sizing: scale by the viewBox->pixel factor only (no xf.scale on
 	// top).  Multiplying by xf.scale as well would render an Inkscape "2.82
@@ -654,8 +739,23 @@ void RenderOneText(rapidxml::xml_node<>* node, CContext& dc,
 	dc.SetTextAlign(align);
 	dc.SetBkMode(TRANSPARENT);
 
-	CDPoint pos = xf.Map(x, y);
-	dc.TextOut(pos.x, pos.y, text);
+	// A resolved token may span several lines (e.g. a multi-line revision
+	// change description), and data-wrap-width="<w>" word-wraps the text to
+	// that width (local units): draw each line 1.2 em below the previous one.
+	double wrapWidth = 0.0;
+	if (rapidxml::xml_attribute<>* ww = node->first_attribute("data-wrap-width"))
+	{
+		wrapWidth = atof(ww->value());
+	}
+	CA2T family(fontFamily, CP_UTF8);
+	const std::vector<CString> lines = WrapText(text, wrapWidth, fontSize, CString((LPCTSTR)family));
+	for (size_t line = 0; line < lines.size(); ++line)
+	{
+		double lx = localX, ly = localY + line * fontSize * 1.2;
+		textTransform.Apply(lx, ly);
+		CDPoint pos = xf.Map(lx, ly);
+		dc.TextOut(pos.x, pos.y, lines[line]);
+	}
 }
 
 void RenderTextsRecursive(rapidxml::xml_node<>* node, CContext& dc,
@@ -907,3 +1007,250 @@ bool CTitleBlockTemplateStore::DecodeSvgBase64(const CString& base64, CString& o
 	return !outSvg.IsEmpty();
 }
 
+//=========================================================================
+// Growing revision table (see CTitleBlockTemplateStore::ExpandRevisionRows)
+
+namespace {
+
+// Value of attribute name in the start tag text, or "" if absent.
+CString GetTagAttr(const CString& tag, const CString& name, int* pValueStart = nullptr, int* pValueLen = nullptr)
+{
+	for (int from = 0; ; )
+	{
+		int p = tag.Find(name, from);
+		if (p < 0) return CString();
+		from = p + 1;
+		// Must be a whole attribute name: preceded by whitespace, followed by '='.
+		if (p == 0 || !_istspace(tag[p - 1])) continue;
+		int q = p + name.GetLength();
+		while (q < tag.GetLength() && _istspace(tag[q])) ++q;
+		if (q >= tag.GetLength() || tag[q] != _T('=')) continue;
+		++q;
+		while (q < tag.GetLength() && _istspace(tag[q])) ++q;
+		if (q >= tag.GetLength() || (tag[q] != _T('"') && tag[q] != _T('\''))) continue;
+		TCHAR quote = tag[q];
+		int end = tag.Find(quote, q + 1);
+		if (end < 0) return CString();
+		if (pValueStart) *pValueStart = q + 1;
+		if (pValueLen) *pValueLen = end - q - 1;
+		return tag.Mid(q + 1, end - q - 1);
+	}
+}
+
+// Replace attribute name's value inside svg's start tag at [tagStart, tagEnd).
+// Returns the length change.
+int SetTagAttr(CString& svg, int tagStart, int tagEnd, const CString& name, const CString& value)
+{
+	CString tag = svg.Mid(tagStart, tagEnd - tagStart);
+	int vs = 0, vl = 0;
+	GetTagAttr(tag, name, &vs, &vl);
+	if (vl == 0 && vs == 0) return 0;
+	svg = svg.Left(tagStart + vs) + value + svg.Mid(tagStart + vs + vl);
+	return value.GetLength() - vl;
+}
+
+// Next occurrence of needle (from 'from') that sits inside an element's
+// start tag — not in a comment or text.  Sets tagStart to its '<'.
+int FindInStartTag(const CString& svg, const CString& needle, int from, int& tagStart)
+{
+	for (int p = svg.Find(needle, from); p >= 0; p = svg.Find(needle, p + 1))
+	{
+		int lt = svg.Left(p).ReverseFind(_T('<'));
+		if (lt < 0 || svg.Mid(lt, p - lt).Find(_T('>')) >= 0) continue;
+		if (lt + 1 < svg.GetLength() && _istalpha(svg[lt + 1]))
+		{
+			tagStart = lt;
+			return p;
+		}
+	}
+	return -1;
+}
+
+CString FormatNumber(double v)
+{
+	CString s;
+	s.Format(_T("%.10g"), v);
+	return s;
+}
+
+// End (one past '>') of the element whose start tag begins at tagStart.
+int FindElementEnd(const CString& svg, int tagStart)
+{
+	int nameEnd = tagStart + 1;
+	while (nameEnd < svg.GetLength() && !_istspace(svg[nameEnd]) && svg[nameEnd] != _T('>') && svg[nameEnd] != _T('/')) ++nameEnd;
+	const CString name = svg.Mid(tagStart + 1, nameEnd - tagStart - 1);
+
+	int gt = svg.Find(_T('>'), tagStart);
+	if (gt < 0) return -1;
+	if (svg[gt - 1] == _T('/')) return gt + 1;   // self-closing
+
+	int depth = 1;
+	int pos = gt + 1;
+	while (depth > 0)
+	{
+		int lt = svg.Find(_T('<'), pos);
+		if (lt < 0) return -1;
+		int e = svg.Find(_T('>'), lt);
+		if (e < 0) return -1;
+		if (svg.Mid(lt + 1, 1) == _T("/"))
+		{
+			if (svg.Mid(lt + 2, name.GetLength()) == name) --depth;
+		}
+		else if (svg.Mid(lt + 1, name.GetLength()) == name && svg[e - 1] != _T('/'))
+		{
+			TCHAR after = svg[lt + 1 + name.GetLength()];
+			if (_istspace(after) || after == _T('>')) ++depth;
+		}
+		pos = e + 1;
+	}
+	return pos;
+}
+
+} // namespace
+
+CString CTitleBlockTemplateStore::ExpandRevisionRows(const CString& svgIn, const std::vector<CString>& descriptions, int* pRows)
+{
+	const int entryCount = (int)descriptions.size();
+	if (pRows) *pRows = 0;
+	CString svg = svgIn;
+	const CString marker = _T("data-repeat=\"revisions\"");
+	int rowStart = -1;
+	int m = FindInStartTag(svg, marker, 0, rowStart);
+	if (m < 0) return svg;
+
+	int rowTagEnd = svg.Find(_T('>'), m);
+	int rowEnd = FindElementEnd(svg, rowStart);
+	if (rowStart < 0 || rowTagEnd < 0 || rowEnd < 0) return svgIn;
+
+	const CString rowTag = svg.Mid(rowStart, rowTagEnd - rowStart);
+	const double pitch = _tstof(GetTagAttr(rowTag, _T("data-row-height")));
+	CString sMax = GetTagAttr(rowTag, _T("data-max-rows"));
+	const int maxRows = sMax.IsEmpty() ? 5 : max(1, _ttoi(sMax));
+	if (pitch <= 0.0) return svgIn;
+
+	const int rows = max(1, min(entryCount, maxRows));
+	const int first = entryCount > rows ? entryCount - rows : 0;   // newest rows
+	if (pRows) *pRows = rows;
+
+	const CString row = svg.Mid(rowStart, rowEnd - rowStart);
+
+	// A row grows by 1.2 em per extra line of its change description: the
+	// <text> holding {Rev1Desc} (font-size and data-wrap-width in root units).
+	double descFont = 0.0, descWrap = 0.0;
+	CString descFamily;
+	int dp = row.Find(_T("{Rev1Desc}"));
+	int dt = dp < 0 ? -1 : row.Left(dp).ReverseFind(_T('<'));
+	if (dt >= 0)
+	{
+		const CString tag = row.Mid(dt, row.Find(_T('>'), dt) - dt);
+		descWrap = _tstof(GetTagAttr(tag, _T("data-wrap-width")));
+		descFont = _tstof(GetTagAttr(tag, _T("font-size")));
+		descFamily = GetTagAttr(tag, _T("font-family"));
+		const CString style = GetTagAttr(tag, _T("style"));
+		int fs = style.Find(_T("font-size:"));
+		if (fs >= 0) descFont = _tstof(style.Mid(fs + 10));
+		int ff = style.Find(_T("font-family:"));
+		if (ff >= 0)
+		{
+			descFamily = style.Mid(ff + 12);
+			int semi = descFamily.Find(_T(';'));
+			if (semi >= 0) descFamily = descFamily.Left(semi);
+		}
+	}
+
+	// Repeat the row, each copy shifted down below the previous (possibly
+	// taller) row, renumbered, and its data-stretch="row" elements lengthened.
+	CString rowsText;
+	double offset = 0.0;
+	for (int i = 0; i < rows; ++i)
+	{
+		int lineCount = 1;
+		if (first + i < entryCount && descFont > 0.0)
+		{
+			lineCount = (int)WrapText(descriptions[first + i], descWrap, descFont, descFamily).size();
+		}
+		const double grow = (lineCount - 1) * descFont * 1.2;
+
+		CString n;
+		n.Format(_T("%d"), i + 1);
+		CString copy = row;
+		if (i > 0)
+		{
+			copy.Replace(_T("{Rev1}"),     _T("{Rev") + n + _T("}"));
+			copy.Replace(_T("{Rev1Date}"), _T("{Rev") + n + _T("Date}"));
+			copy.Replace(_T("{Rev1Desc}"), _T("{Rev") + n + _T("Desc}"));
+			copy.Replace(_T("{Rev1By}"),   _T("{Rev") + n + _T("By}"));
+			copy.Replace(_T(" ") + marker, _T(""));
+		}
+		if (grow > 0.0)
+		{
+			const CString rowStretch = _T("data-stretch=\"row\"");
+			int ts = -1;
+			for (int p = FindInStartTag(copy, rowStretch, 0, ts); p >= 0; p = FindInStartTag(copy, rowStretch, p + 1, ts))
+			{
+				int te = copy.Find(_T('>'), p);
+				const CString tag = copy.Mid(ts, te - ts);
+				CString y2 = GetTagAttr(tag, _T("y2"));
+				if (!y2.IsEmpty())
+				{
+					SetTagAttr(copy, ts, te, _T("y2"), FormatNumber(_tstof(y2) + grow));
+				}
+				else
+				{
+					CString h = GetTagAttr(tag, _T("height"));
+					if (!h.IsEmpty()) SetTagAttr(copy, ts, te, _T("height"), FormatNumber(_tstof(h) + grow));
+				}
+			}
+		}
+		if (i == 0 && offset == 0.0)
+		{
+			rowsText += copy;
+		}
+		else
+		{
+			rowsText += _T("<g transform=\"translate(0,") + FormatNumber(offset) + _T(")\">") + copy + _T("</g>");
+		}
+		offset += pitch + grow;
+	}
+	svg = svg.Left(rowStart) + rowsText + svg.Mid(rowEnd);
+	const double extra = offset - pitch;
+	if (extra <= 0.0) return svg;
+
+	// Stretch marked elements (e.g. the outer frame).
+	const CString stretch = _T("data-stretch=\"rows\"");
+	int ts = -1;
+	for (int p = FindInStartTag(svg, stretch, 0, ts); p >= 0; p = FindInStartTag(svg, stretch, p + 1, ts))
+	{
+		int te = svg.Find(_T('>'), p);
+		CString h = GetTagAttr(svg.Mid(ts, te - ts), _T("height"));
+		if (!h.IsEmpty())
+		{
+			SetTagAttr(svg, ts, te, _T("height"), FormatNumber(_tstof(h) + extra));
+		}
+	}
+
+	// Grow the root: viewBox height, and height in proportion (keeps units).
+	int rs = svg.Find(_T("<svg"));
+	int re = rs < 0 ? -1 : svg.Find(_T('>'), rs);
+	if (rs >= 0 && re >= 0)
+	{
+		CString vb = GetTagAttr(svg.Mid(rs, re - rs), _T("viewBox"));
+		double v[4] = { 0, 0, 0, 0 };
+		CString tmp = vb;
+		tmp.Replace(_T(','), _T(' '));
+		if (_stscanf_s(tmp, _T("%lf %lf %lf %lf"), &v[0], &v[1], &v[2], &v[3]) == 4 && v[3] > 0.0)
+		{
+			const double newVbH = v[3] + extra;
+			CString h = GetTagAttr(svg.Mid(rs, re - rs), _T("height"));
+			if (!h.IsEmpty())
+			{
+				LPTSTR unit = nullptr;
+				const double num = _tcstod(h, &unit);
+				re += SetTagAttr(svg, rs, re, _T("height"), FormatNumber(num * newVbH / v[3]) + unit);
+			}
+			SetTagAttr(svg, rs, re, _T("viewBox"),
+				FormatNumber(v[0]) + _T(" ") + FormatNumber(v[1]) + _T(" ") + FormatNumber(v[2]) + _T(" ") + FormatNumber(newVbH));
+		}
+	}
+	return svg;
+}

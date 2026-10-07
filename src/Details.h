@@ -12,6 +12,7 @@
 #include "stream.h"
 #include "xmlwriter.h"
 #include <map>
+#include <vector>
 
 //=========================================================================
 // Case-insensitive comparator for CString keys in the user-token map.
@@ -24,6 +25,16 @@ struct CDetailsTokenKeyLess
 };
 
 typedef std::map<CString, CString, CDetailsTokenKeyLess> CDetailsTokenMap;
+
+// One revision-history record, added by File -> Create version.
+struct SRevisionEntry
+{
+	CString rev;          // the version, e.g. "R7"
+	CString date;         // issue date (YYYY-MM-DD)
+	CString description;  // change description; may contain '\n'
+	CString revisedBy;
+};
+typedef std::vector<SRevisionEntry> CRevisionHistory;
 
 class CDetails
 {
@@ -58,6 +69,13 @@ public:
 	CString m_sDocNo;
 	//-- The organisation which designed this design
 	CString m_sOrg;
+	//-- Free-text description of this design
+	CString m_sDescription;
+	//-- Revision history, oldest first (File -> Create version appends)
+	CRevisionHistory m_oRevisionHistory;
+	//-- Transient: number of revision-history rows the title-block SVG shows
+	//-- (highest N of its {RevN...} tokens).  Set by ResolveTitleBlock().
+	int m_nHistoryRows;
 	//-- The number of sheets in this design
 	CString m_sSheets;
 	//-- User-defined name/value tokens, referenced as {name} in any field
@@ -113,6 +131,8 @@ public:
 	CString GetRevision() const;
 	CString GetDocumentNumber() const;
 	CString GetOrganisation() const;
+	CString GetDescription() const;
+	const CRevisionHistory& GetRevisionHistory() const;
 	CString GetSheets() const;
 	//-- The SVG text actually used to render the title block: the effective
 	//-- resolved copy when available, else the embedded copy.  Empty when the
@@ -129,6 +149,8 @@ public:
 	void SetRevision(CString sRevision);
 	void SetDocumentNumber(CString sDocNo);
 	void SetOrganisation(CString sOrganisation);
+	void SetDescription(CString sDescription);
+	void SetRevisionHistory(const CRevisionHistory& history);
 	void SetSheets(CString sSheets);
 	//-- User token accessors
 	const CDetailsTokenMap& GetUserTokens() const;
@@ -136,6 +158,11 @@ public:
 	//-- Resolve {token} references inside a string.  Built-in tokens map to the
 	//-- fixed title-block fields; user-defined tokens override built-ins.
 	CString Resolve(const CString& sInput) const;
+	//-- Is sName a built-in token (Title, Author, ..., RevisedBy, Rev3Desc, ...)?
+	static bool IsBuiltInToken(const CString& sName);
+private:
+	bool ResolveHistoryToken(const CString& sName, CString& sValue) const;
+public:
 	//-- Set the transient sheet context.  When num+total are both >0, m_sSheets
 	//-- is rewritten as "<num> of <total>" so subsequent rendering and saving
 	//-- pick up the auto-computed value.

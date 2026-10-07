@@ -109,6 +109,11 @@ Section "MainSection" SEC01
   ; SVG title-block templates, picked from File -> Design Details -> Title Block.
   SetOutPath "$INSTDIR\templates\title-blocks"
   File "..\templates\title-blocks\Simple-A4.svg"
+  File "..\templates\title-blocks\Drawing-Details.svg"
+
+  ; Revision history table template (Edit -> Revision History).
+  SetOutPath "$INSTDIR\templates"
+  File "..\templates\revision.svg"
   
   ; A file purely for the purpose of setting a timestamp of when TinyCAD was installed
   FileOpen $0 "$INSTDIR\installed.txt" w
@@ -193,6 +198,8 @@ Section Uninstall
   Delete "$INSTDIR\LGPL Version 2.1.txt"
   Delete "$INSTDIR\LGPL Version 3.0.txt"
   Delete "$INSTDIR\templates\title-blocks\Simple-A4.svg"
+  Delete "$INSTDIR\templates\title-blocks\Drawing-Details.svg"
+  Delete "$INSTDIR\templates\revision.svg"
 
   RMDir "$SMPROGRAMS\ConCAD"
   RMDir "$INSTDIR\templates\title-blocks"

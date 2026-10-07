@@ -31,8 +31,8 @@ and a junk file literally named `src/nul) do set ...` (a stray from a
   defaults, component-label font. See CHANGES.md §8.
 
 ### Deferred / skipped (by the user, this session)
-- **Create version / Edit file / write-protection** feature — designed but
-  **not started**. Intended behaviour: `File → Create version` prompts for a
+- **Create version / Edit file / write-protection** feature — **done
+  2026-10-07** (see CHANGES.md §10); original notes kept below. Intended behaviour: `File → Create version` prompts for a
   version string (pre-filled from Revision), writes it to the Revision
   field, stamps Date = today, saves as `Name_<ver>.dsn`, makes that the
   open **write-protected** document (internal serialized flag, `[Write

@@ -67,6 +67,12 @@ public:
 
 	virtual BOOL IsModified() OVERRIDE;
 
+	// Is this a write-protected version (File -> Create version)?
+	virtual bool IsWriteProtected()
+	{
+		return false;
+	}
+
 	void DelayUpdateFrameTitle();
 
 	// Attributes

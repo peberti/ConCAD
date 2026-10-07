@@ -37,6 +37,7 @@ IMPLEMENT_DYNCREATE(CConCadMultiDoc, CMultiSheetDoc)
 CConCadMultiDoc::CConCadMultiDoc()
 {
 	m_active_doc = 0;
+	m_bWriteProtected = false;
 }
 
 BOOL CConCadMultiDoc::OnNewDocument()
@@ -44,6 +45,7 @@ BOOL CConCadMultiDoc::OnNewDocument()
 	if (!CMultiSheetDoc::OnNewDocument()) return FALSE;
 
 	Clear();
+	m_bWriteProtected = false;
 
 	m_sheets.push_back(new CConCadDoc(this));
 
@@ -84,6 +86,10 @@ BEGIN_MESSAGE_MAP(CConCadMultiDoc, CMultiSheetDoc)
 	ON_COMMAND(ID_LIBRARY_ADDPIN, OnLibraryAddpin)
 	ON_UPDATE_COMMAND_UI(ID_LIBRARY_ADDPIN, OnUpdateLibraryAddpin)
 	ON_UPDATE_COMMAND_UI(ID_CONTEXT_RENAMESHEET, OnUpdateContextRenamesheet)
+	ON_COMMAND(IDM_FILE_CREATEVERSION, OnFileCreateVersion)
+	ON_UPDATE_COMMAND_UI(IDM_FILE_CREATEVERSION, OnUpdateFileCreateVersion)
+	ON_COMMAND(IDM_FILE_EDITFILE, OnFileEditFile)
+	ON_UPDATE_COMMAND_UI(IDM_FILE_EDITFILE, OnUpdateFileEditFile)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -350,6 +356,7 @@ BOOL CConCadMultiDoc::ReadFile(CStreamFile& file)
 	CHeaderStamp oHeader;
 
 	Clear();
+	m_bWriteProtected = false;
 
 	LONG pos = file.GetPos();
 
@@ -403,6 +410,12 @@ BOOL CConCadMultiDoc::ReadFile(CStreamFile& file)
 			return FALSE;
 		}
 
+		CString sWriteProtected;
+		if (xml.getAttribute(_T("write_protected"), sWriteProtected))
+		{
+			m_bWriteProtected = sWriteProtected == _T("1");
+		}
+
 		xml.intoTag();
 
 		while (xml.nextTag(name))
@@ -452,6 +465,10 @@ bool CConCadMultiDoc::SaveXML(CXMLWriter &xml)
 		xml.addComment(comment);
 
 		xml.addTag(_T("TinyCADSheets"));
+		if (m_bWriteProtected)
+		{
+			xml.addAttribute(_T("write_protected"), 1);
+		}
 
 		sheetCollection::iterator i = m_sheets.begin();
 		while (i != m_sheets.end())
@@ -634,3 +651,291 @@ void CConCadMultiDoc::OnUpdateLibraryAddpin(CCmdUI* pCmdUI)
 	pCmdUI->Enable(GetCurrentSheet()->IsHierarchicalSymbol());
 }
 
+//=========================================================================
+//== File -> Create version / File -> Edit file                          ==
+//=========================================================================
+
+static bool EndsWithNoCase(const CString& s, const CString& suffix)
+{
+	return s.GetLength() >= suffix.GetLength()
+		&& s.Right(suffix.GetLength()).CompareNoCase(suffix) == 0;
+}
+
+// Full path without its extension.
+static CString StripExtension(const CString& path)
+{
+	int dot = path.ReverseFind(_T('.'));
+	int sep = max(path.ReverseFind(_T('\\')), path.ReverseFind(_T('/')));
+	return dot > sep ? path.Left(dot) : path;
+}
+
+// The path a version is saved next to, without the version suffix.  A working
+// copy "Name_<ver>_working" (made by File -> Edit file) maps back to "Name",
+// so versions do not pile up suffixes ("Name_1.0_working" -> "Name_1.1", not
+// "Name_1.0_working_1.1").  Versions cannot contain '_', so "_<ver>" is
+// everything after the last '_'.
+static CString VersionBasePath(const CString& path)
+{
+	CString base = StripExtension(path);
+	const CString working = _T("_working");
+	if (EndsWithNoCase(base, working))
+	{
+		base = base.Left(base.GetLength() - working.GetLength());
+		int us = base.ReverseFind(_T('_'));
+		int sep = max(base.ReverseFind(_T('\\')), base.ReverseFind(_T('/')));
+		if (us > sep + 1)
+		{
+			base = base.Left(us);
+		}
+	}
+	return base;
+}
+
+static CString FileNamePart(const CString& path)
+{
+	int sep = max(path.ReverseFind(_T('\\')), path.ReverseFind(_T('/')));
+	return path.Mid(sep + 1);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CDlgCreateVersion - asks for the version string, shows the resulting file
+
+class CDlgCreateVersion: public CDialog
+{
+public:
+	CString m_sVersion;
+	CString m_sRevisedBy;   // required
+	CString m_sChange;      // change description (required)
+
+	CDlgCreateVersion(const CString& sBasePath, CWnd* pParent = NULL) :
+		CDialog(IDD_CREATE_VERSION, pParent),
+		m_sBasePath(sBasePath)
+	{
+	}
+
+	CString GetTargetPath() const
+	{
+		return m_sBasePath + _T("_") + m_sVersion + _T(".con");
+	}
+
+protected:
+	CString m_sBasePath;
+
+	virtual void DoDataExchange(CDataExchange* pDX)
+	{
+		CDialog::DoDataExchange(pDX);
+		DDX_Text(pDX, IDC_VERSION_EDIT, m_sVersion);
+		DDX_Text(pDX, IDC_VERSION_REVISEDBY, m_sRevisedBy);
+		DDX_Text(pDX, IDC_VERSION_HISTORY, m_sChange);
+	}
+
+	virtual BOOL OnInitDialog()
+	{
+		CDialog::OnInitDialog();
+		UpdateFileName();
+		return TRUE;
+	}
+
+	virtual void OnOK()
+	{
+		if (!UpdateData(TRUE))
+		{
+			return;
+		}
+		m_sVersion.Trim();
+		if (m_sVersion.IsEmpty() || m_sVersion.FindOneOf(_T("\\/:*?\"<>|_")) >= 0)
+		{
+			AfxMessageBox(_T("Enter a version, e.g. R7 or 1.0. It becomes part of the file name, so it cannot contain \\ / : * ? \" < > | or _"), MB_ICONEXCLAMATION);
+			return;
+		}
+		m_sRevisedBy.Trim();
+		if (m_sRevisedBy.IsEmpty())
+		{
+			AfxMessageBox(_T("Enter who revised the design."), MB_ICONEXCLAMATION);
+			GetDlgItem(IDC_VERSION_REVISEDBY)->SetFocus();
+			return;
+		}
+		m_sChange.Trim();
+		if (m_sChange.IsEmpty())
+		{
+			AfxMessageBox(_T("Enter a short change description for this version."), MB_ICONEXCLAMATION);
+			GetDlgItem(IDC_VERSION_HISTORY)->SetFocus();
+			return;
+		}
+		if (GetFileAttributes(GetTargetPath()) != INVALID_FILE_ATTRIBUTES)
+		{
+			CString msg;
+			msg.Format(_T("%s already exists.\n\nA version is never overwritten - choose another version."), (LPCTSTR)FileNamePart(GetTargetPath()));
+			AfxMessageBox(msg, MB_ICONEXCLAMATION);
+			return;
+		}
+		CDialog::OnOK();
+	}
+
+	void UpdateFileName()
+	{
+		GetDlgItemText(IDC_VERSION_EDIT, m_sVersion);
+		m_sVersion.Trim();
+		SetDlgItemText(IDC_VERSION_FILENAME, GetTargetPath());
+	}
+
+	afx_msg void OnVersionChange()
+	{
+		UpdateFileName();
+	}
+
+	DECLARE_MESSAGE_MAP()
+};
+
+BEGIN_MESSAGE_MAP(CDlgCreateVersion, CDialog)
+	ON_EN_CHANGE(IDC_VERSION_EDIT, OnVersionChange)
+END_MESSAGE_MAP()
+
+//-------------------------------------------------------------------------
+void CConCadMultiDoc::SetVersionFields(const CString& sRevision, const CString& sDate, bool bWriteProtected,
+	const CRevisionHistory& history)
+{
+	m_bWriteProtected = bWriteProtected;
+	for (sheetCollection::iterator i = m_sheets.begin(); i != m_sheets.end(); ++i)
+	{
+		CDetails& details = (*i)->GetDetails();
+		details.SetRevision(sRevision);
+		details.SetLastChange(sDate);
+		details.SetRevisionHistory(history);
+	}
+}
+
+//-------------------------------------------------------------------------
+// Show "[Write protected]" after the file name in the window titles.
+void CConCadMultiDoc::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
+{
+	CMultiSheetDoc::SetPathName(lpszPathName, bAddToMRU);
+	if (m_bWriteProtected)
+	{
+		SetTitle(GetTitle() + _T(" [Write protected]"));
+	}
+}
+
+//-------------------------------------------------------------------------
+// A write-protected version is never saved over.  Editing commands are
+// disabled on it, so any in-memory change (e.g. ERC markers left by a
+// netlist run) is discarded on close without asking.
+BOOL CConCadMultiDoc::SaveModified()
+{
+	if (m_bWriteProtected)
+	{
+		return TRUE;
+	}
+	return CMultiSheetDoc::SaveModified();
+}
+
+//-------------------------------------------------------------------------
+// Save the design as "Name_<version>.con" with Revision = version and
+// Date = today, and continue with that file write-protected.
+void CConCadMultiDoc::OnFileCreateVersion()
+{
+	if (GetPathName().IsEmpty())
+	{
+		AfxMessageBox(_T("Save the design first - the version is saved next to it."), MB_ICONINFORMATION);
+		if (!DoSave(NULL))
+		{
+			return;
+		}
+	}
+
+	// Design-level fields are shared by all sheets, so sheet 0 speaks for all.
+	const CString sOldRevision = GetSheet(0)->GetDetails().GetRevision();
+	const CString sOldDate = GetSheet(0)->GetDetails().GetLastChange();
+
+	CDlgCreateVersion dlg(VersionBasePath(GetPathName()), AfxGetMainWnd());
+	dlg.m_sVersion = sOldRevision;
+	dlg.m_sRevisedBy = CConCadRegistry::GetLastRevisedBy();
+	if (dlg.m_sRevisedBy.IsEmpty())
+	{
+		TCHAR user[256];
+		DWORD len = 256;
+		if (GetUserName(user, &len))
+		{
+			dlg.m_sRevisedBy = user;
+		}
+	}
+	if (dlg.DoModal() != IDOK)
+	{
+		return;
+	}
+
+	// Remember who revised, as the default for the next version.
+	CConCadRegistry::SetLastRevisedBy(dlg.m_sRevisedBy);
+
+	// Drop any half-finished drawing tool before the design is frozen.
+	GetCurrentSheet()->SelectObject(new CDrawEditItem(GetCurrentSheet()));
+
+	const CRevisionHistory oldHistory = GetSheet(0)->GetDetails().GetRevisionHistory();
+	const CString sToday = CTime::GetCurrentTime().Format(_T("%Y-%m-%d"));
+
+	SRevisionEntry entry;
+	entry.rev = dlg.m_sVersion;
+	entry.date = sToday;
+	entry.description = dlg.m_sChange;
+	entry.description.Replace(_T("\r\n"), _T("\n"));
+	entry.revisedBy = dlg.m_sRevisedBy;
+	CRevisionHistory newHistory = oldHistory;
+	newHistory.push_back(entry);
+
+	SetVersionFields(dlg.m_sVersion, sToday, true, newHistory);
+	if (!DoSave(dlg.GetTargetPath(), TRUE))
+	{
+		SetVersionFields(sOldRevision, sOldDate, false, oldHistory);
+		UpdateAllViews(NULL);
+		return;
+	}
+	UpdateAllViews(NULL);
+}
+
+void CConCadMultiDoc::OnUpdateFileCreateVersion(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(!m_bWriteProtected);
+}
+
+//-------------------------------------------------------------------------
+// Copy this write-protected version to "Name_<version>_working.con" and
+// continue editing that copy.
+void CConCadMultiDoc::OnFileEditFile()
+{
+	if (!m_bWriteProtected || GetPathName().IsEmpty())
+	{
+		return;
+	}
+
+	const CString sTarget = StripExtension(GetPathName()) + _T("_working.con");
+	if (GetFileAttributes(sTarget) != INVALID_FILE_ATTRIBUTES)
+	{
+		CString msg;
+		msg.Format(_T("A working copy already exists:\n\n%s\n\n")
+			_T("Yes\t- open the existing working copy\n")
+			_T("No\t- replace it with a fresh copy of this version"), (LPCTSTR)FileNamePart(sTarget));
+		int r = AfxMessageBox(msg, MB_YESNOCANCEL | MB_ICONQUESTION);
+		if (r == IDCANCEL)
+		{
+			return;
+		}
+		if (r == IDYES)
+		{
+			AfxGetApp()->OpenDocumentFile(sTarget);
+			return;
+		}
+	}
+
+	m_bWriteProtected = false;
+	if (!DoSave(sTarget, TRUE))
+	{
+		m_bWriteProtected = true;
+		return;
+	}
+	UpdateAllViews(NULL);
+}
+
+void CConCadMultiDoc::OnUpdateFileEditFile(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_bWriteProtected);
+}

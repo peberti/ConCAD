@@ -10,21 +10,11 @@ app-path registry keys, and the `.con` → `ConCAD Design` association (`.con` i
 only cleared if it still points at ConCAD). Needs a manual install → uninstall
 check with NSIS once the build machine is set up again (see `SETUP.md`).
 
-## File → Create version / Edit file / write-protection
+## File → Create version / Edit file / write-protection — done
 
-Designed but **not started** (deferred by the user). From `HANDOFF.md`:
-
-- [ ] `File → Create version` prompts for a version string (pre-filled from
-      the Revision field), writes it to Revision, stamps Date = today, and
-      saves as `Name_<ver>.con`.
-- [ ] That saved document becomes the open, **write-protected** document:
-      internal serialized flag, `[Write protected]` shown in the title bar,
-      edits gated.
-- [ ] `File → Edit file` copies it to `Name_<ver>_working.con` and clears
-      write-protection.
-
-Note: the Date field being read-only in the Design Details dialog was already
-done as the first step of this feature.
+Implemented; see `CHANGES.md` §10. Not done from the wish list: clicking the
+`[Write protected]` text in the title bar to start editing (use
+`File → Edit File`).
 
 ## Module Library
 

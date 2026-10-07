@@ -645,6 +645,10 @@ BOOL CConCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &d
 			{
 				obj = new CDrawPower(this);
 			}
+			else if (name == CDrawRevisionHistory::GetXMLTag())
+			{
+				obj = new CDrawRevisionHistory(this);
+			}
 
 			if (obj != NULL)
 			{

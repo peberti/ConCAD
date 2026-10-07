@@ -35,20 +35,7 @@ IMPLEMENT_DYNCREATE(CDetailsPropertyPage4, CPropertyPage)
 // Reserved token names (built-ins exposed by CDetails::Resolve)
 static bool IsReservedTokenName(const CString& sName)
 {
-	static const TCHAR* const reserved[] = {
-		_T("Title"), _T("Author"), _T("Revision"),
-		_T("DocNo"), _T("Document"),
-		_T("Organisation"), _T("Org"),
-		_T("Sheets"), _T("Date"),
-	};
-	for (size_t i = 0; i < sizeof(reserved) / sizeof(reserved[0]); ++i)
-	{
-		if (sName.CompareNoCase(reserved[i]) == 0)
-		{
-			return true;
-		}
-	}
-	return false;
+	return CDetails::IsBuiltInToken(sName);
 }
 
 static bool IsValidTokenName(const CString& sName)
@@ -128,6 +115,7 @@ CDetailsPropertyPage1::CDetailsPropertyPage1(CMultiSheetDoc* pDesign) :
 	m_sAuthor = _T("");
 	m_sDate = _T("");
 	m_sOrg = _T("");
+	m_sDescription = _T("");
 	m_sDoc = _T("");
 	m_sRevision = _T("");
 	m_sSheets = _T("");
@@ -151,6 +139,7 @@ void CDetailsPropertyPage1::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, DESIGNBOX_AUTHOR, m_sAuthor);
 	DDX_Text(pDX, DESIGNBOX_DATE, m_sDate);
 	DDX_Text(pDX, DESIGNBOX_ORGANISATION, m_sOrg);
+	DDX_Text(pDX, IDC_DESIGNBOX_DESCRIPTION, m_sDescription);
 	DDX_Text(pDX, DESIGNBOX_DOCUMENT, m_sDoc);
 	DDX_Text(pDX, DESIGNBOX_REVISION, m_sRevision);
 	DDX_Text(pDX, DESIGNBOX_SHEET, m_sSheets);
@@ -243,6 +232,7 @@ BOOL CDetailsPropertyPage1::OnApply()
 	current.SetRevision(m_sRevision);
 	current.SetDocumentNumber(m_sDoc);
 	current.SetOrganisation(m_sOrg);
+	current.SetDescription(m_sDescription);
 	current.SetUserTokens(newTokens);
 	// Note: Date is NOT written back — it is set only by File → Create version.
 	// Note: m_sSheets is NOT written back — the title block's "N of M" is
@@ -291,6 +281,7 @@ void CDetailsPropertyPage1::CollectReferencedTokenNames(std::vector<CString>& ou
 	blob += d.GetRevision();       blob += _T('\n');
 	blob += d.GetDocumentNumber(); blob += _T('\n');
 	blob += d.GetOrganisation();   blob += _T('\n');
+	blob += d.GetDescription();    blob += _T('\n');
 	blob += d.GetTitleBlockSvg();
 
 	const int total = m_pDesign->GetNumberOfSheets();
@@ -484,6 +475,7 @@ BOOL CDetailsPropertyPage1::OnInitDialog()
 	m_sRevision = m_pDesign->GetCurrentSheet()->GetDetails().GetRevision();
 	m_sDoc = m_pDesign->GetCurrentSheet()->GetDetails().GetDocumentNumber();
 	m_sOrg = m_pDesign->GetCurrentSheet()->GetDetails().GetOrganisation();
+	m_sDescription = m_pDesign->GetCurrentSheet()->GetDetails().GetDescription();
 
 	// Sheets field is auto-computed "N of M" from the multi-doc sheet count.
 	int total = m_pDesign->GetNumberOfSheets();
@@ -635,6 +627,7 @@ void CDetailsPropertyPage3::MergeReferencedTokens()
 	blob += d.GetRevision();       blob += _T('\n');
 	blob += d.GetDocumentNumber(); blob += _T('\n');
 	blob += d.GetOrganisation();   blob += _T('\n');
+	blob += d.GetDescription();    blob += _T('\n');
 	blob += d.GetTitleBlockSvg();
 	for (CDetailsTokenMap::const_iterator it = m_oTokens.begin(); it != m_oTokens.end(); ++it)
 	{

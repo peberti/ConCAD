@@ -82,6 +82,7 @@ enum ObjType {
 	xHierarchicalSymbol = 141,
 	xRefPoint = 142,
 	xCable = 143,
+	xRevisionHistory = 144,
 
 	// the value for undefined
 	xNULL = 255

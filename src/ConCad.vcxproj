@@ -303,6 +303,7 @@
     </ClCompile>
     <ClCompile Include="DrawNoteText.cpp" />
     <ClCompile Include="DrawOrigin.cpp" />
+    <ClCompile Include="DrawRevisionHistory.cpp" />
     <ClCompile Include="EditDlgNoteText.cpp" />
     <ClCompile Include="DbAttributeSet.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>

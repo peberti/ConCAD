@@ -50,6 +50,9 @@ void CDetails::Reset()
 	m_sRevision = "1.0";
 	m_sDocNo = "";
 	m_sOrg = "";
+	m_sDescription = "";
+	m_oRevisionHistory.clear();
+	m_nHistoryRows = 0;
 	m_sSheets = "1 of 1";
 	m_oUserTokens.clear();
 	m_sTitleBlockName = "";
@@ -101,6 +104,16 @@ CString CDetails::GetDocumentNumber() const
 CString CDetails::GetOrganisation() const
 {
 	return m_sOrg;
+}
+//-------------------------------------------------------------------------
+CString CDetails::GetDescription() const
+{
+	return m_sDescription;
+}
+//-------------------------------------------------------------------------
+const CRevisionHistory& CDetails::GetRevisionHistory() const
+{
+	return m_oRevisionHistory;
 }
 //-------------------------------------------------------------------------
 CString CDetails::GetSheets() const
@@ -183,6 +196,17 @@ void CDetails::SetOrganisation(CString sOrg)
 	m_sOrg = sOrg;
 }
 //-------------------------------------------------------------------------
+void CDetails::SetDescription(CString sDescription)
+{
+	m_sDescription = sDescription;
+}
+//-------------------------------------------------------------------------
+void CDetails::SetRevisionHistory(const CRevisionHistory& history)
+{
+	m_oRevisionHistory = history;
+	ResolveTitleBlock();   // a growing revision table changes size
+}
+//-------------------------------------------------------------------------
 void CDetails::SetSheets(CString sSheets)
 {
 	m_sSheets = sSheets;
@@ -226,12 +250,90 @@ void CDetails::CopyDesignFields(const CDetails& src)
 	m_sRevision        = src.m_sRevision;
 	m_sDocNo           = src.m_sDocNo;
 	m_sOrg             = src.m_sOrg;
+	m_sDescription     = src.m_sDescription;
+	m_oRevisionHistory = src.m_oRevisionHistory;
+	m_nHistoryRows     = src.m_nHistoryRows;
 	m_szLastChange     = src.m_szLastChange;
 	m_bIsVisible       = src.m_bIsVisible;
 	m_oUserTokens      = src.m_oUserTokens;
 	m_sTitleBlockName  = src.m_sTitleBlockName;
 	m_sTitleBlockSvg   = src.m_sTitleBlockSvg;
 	m_sEffectiveSvg    = src.m_sEffectiveSvg;
+}
+//-------------------------------------------------------------------------
+// Split a revision-history token "Rev<N>[Date|Desc|By]" into its row number
+// and field suffix.  Returns false for any other name.
+static bool ParseHistoryToken(const CString& sName, int& row, CString& sField)
+{
+	if (sName.GetLength() < 4 || sName.Left(3).CompareNoCase(_T("Rev")) != 0)
+	{
+		return false;
+	}
+	int i = 3;
+	while (i < sName.GetLength() && _istdigit(sName[i]))
+	{
+		++i;
+	}
+	if (i == 3)
+	{
+		return false;
+	}
+	row = _ttoi(sName.Mid(3, i - 3));
+	sField = sName.Mid(i);
+	return row > 0 && (sField.IsEmpty()
+		|| sField.CompareNoCase(_T("Date")) == 0
+		|| sField.CompareNoCase(_T("Desc")) == 0
+		|| sField.CompareNoCase(_T("By")) == 0);
+}
+//-------------------------------------------------------------------------
+// {Rev<N>}, {Rev<N>Date}, {Rev<N>Desc}, {Rev<N>By}: row N of the title
+// block's revision table.  The table shows the newest m_nHistoryRows
+// entries, oldest at row 1; rows without an entry resolve to "".
+bool CDetails::ResolveHistoryToken(const CString& sName, CString& sValue) const
+{
+	int row = 0;
+	CString sField;
+	if (!ParseHistoryToken(sName, row, sField))
+	{
+		return false;
+	}
+
+	const int count = (int)m_oRevisionHistory.size();
+	const int rows = m_nHistoryRows > 0 ? m_nHistoryRows : count;
+	const int first = count > rows ? count - rows : 0;
+	const int index = first + row - 1;
+
+	sValue.Empty();
+	if (index < count)
+	{
+		const SRevisionEntry& e = m_oRevisionHistory[index];
+		if (sField.IsEmpty())                          sValue = e.rev;
+		else if (sField.CompareNoCase(_T("Date")) == 0) sValue = e.date;
+		else if (sField.CompareNoCase(_T("Desc")) == 0) sValue = e.description;
+		else                                           sValue = e.revisedBy;
+	}
+	return true;
+}
+//-------------------------------------------------------------------------
+bool CDetails::IsBuiltInToken(const CString& sName)
+{
+	static const TCHAR* const builtIns[] = {
+		_T("Title"), _T("Author"), _T("Revision"),
+		_T("DocNo"), _T("Document"),
+		_T("Organisation"), _T("Org"),
+		_T("Sheets"), _T("Date"),
+		_T("Description"), _T("RevisedBy"),
+	};
+	for (size_t i = 0; i < sizeof(builtIns) / sizeof(builtIns[0]); ++i)
+	{
+		if (sName.CompareNoCase(builtIns[i]) == 0)
+		{
+			return true;
+		}
+	}
+	int row = 0;
+	CString sField;
+	return ParseHistoryToken(sName, row, sField);
 }
 //-------------------------------------------------------------------------
 // Resolve {token} occurrences in sInput.  User-defined tokens override
@@ -290,6 +392,19 @@ CString CDetails::Resolve(const CString& sInput) const
 					         sName.CompareNoCase(_T("Org")) == 0)          { sValue = m_sOrg;          bResolved = true; }
 					else if (sName.CompareNoCase(_T("Sheets")) == 0)       { sValue = GetSheetsDisplay(); bResolved = true; }
 					else if (sName.CompareNoCase(_T("Date")) == 0)         { sValue = m_szLastChange;  bResolved = true; }
+					else if (sName.CompareNoCase(_T("Description")) == 0)  { sValue = m_sDescription;  bResolved = true; }
+					else if (sName.CompareNoCase(_T("RevisedBy")) == 0)
+					{
+						if (!m_oRevisionHistory.empty())
+						{
+							sValue = m_oRevisionHistory.back().revisedBy;
+						}
+						bResolved = true;
+					}
+					else
+					{
+						bResolved = ResolveHistoryToken(sName, sValue);
+					}
 
 					if (bResolved)
 					{
@@ -409,6 +524,29 @@ void CDetails::ReadXML(CXMLReader& xml, TransformSnap& oSnap)
 		{
 			xml.getChildData(m_sOrg);
 		}
+		else if (sName == _T("DESCRIPTION"))
+		{
+			xml.getChildData(m_sDescription);
+		}
+		else if (sName == _T("REVISION_HISTORY"))
+		{
+			m_oRevisionHistory.clear();
+			xml.intoTag();
+			CString sEntryTag;
+			while (xml.nextTag(sEntryTag))
+			{
+				if (sEntryTag == _T("ENTRY"))
+				{
+					SRevisionEntry e;
+					xml.getAttribute(_T("rev"), e.rev);
+					xml.getAttribute(_T("date"), e.date);
+					xml.getAttribute(_T("by"), e.revisedBy);
+					xml.getChildData(e.description);
+					m_oRevisionHistory.push_back(e);
+				}
+			}
+			xml.outofTag();
+		}
 		else if (sName == _T("SHEETS"))
 		{
 			xml.getChildData(m_sSheets);
@@ -477,19 +615,46 @@ void CDetails::ResolveTitleBlock()
 {
 	m_sEffectiveSvg.Empty();
 
-	if (!m_sTitleBlockName.IsEmpty())
+	CString svg;
+	if (!m_sTitleBlockName.IsEmpty() && CTitleBlockTemplateStore::FindByName(m_sTitleBlockName, svg))
 	{
-		CString svg;
-		if (CTitleBlockTemplateStore::FindByName(m_sTitleBlockName, svg))
-		{
-			m_sEffectiveSvg = svg;
-			return;
-		}
+		m_sEffectiveSvg = svg;
+	}
+	else
+	{
+		// Fall back to the embedded copy — covers one-off (Browse...) SVGs and
+		// machines that lack the named template (the shared-.dsn guarantee).
+		m_sEffectiveSvg = m_sTitleBlockSvg;
 	}
 
-	// Fall back to the embedded copy — covers one-off (Browse...) SVGs and
-	// machines that lack the named template (the shared-.dsn guarantee).
-	m_sEffectiveSvg = m_sTitleBlockSvg;
+	// A growing revision table gets one row per history entry.
+	std::vector<CString> descriptions;
+	for (size_t i = 0; i < m_oRevisionHistory.size(); ++i)
+	{
+		descriptions.push_back(m_oRevisionHistory[i].description);
+	}
+	m_sEffectiveSvg = CTitleBlockTemplateStore::ExpandRevisionRows(m_sEffectiveSvg, descriptions);
+
+	// The revision table has as many rows as the highest {Rev<N>...} token.
+	m_nHistoryRows = 0;
+	int pos = 0;
+	while ((pos = m_sEffectiveSvg.Find(_T('{'), pos)) >= 0)
+	{
+		int end = m_sEffectiveSvg.Find(_T('}'), pos + 1);
+		if (end < 0)
+		{
+			break;
+		}
+		int row = 0;
+		CString sField;
+		CString sName = m_sEffectiveSvg.Mid(pos + 1, end - pos - 1);
+		sName.Trim();
+		if (ParseHistoryToken(sName, row, sField) && row > m_nHistoryRows)
+		{
+			m_nHistoryRows = row;
+		}
+		pos = end + 1;
+	}
 }
 //-------------------------------------------------------------------------
 void CDetails::WriteXML(CXMLWriter& xml) const
@@ -521,6 +686,25 @@ void CDetails::WriteXML(CXMLWriter& xml) const
 	xml.addTag(_T("REVISION"), m_sRevision);
 	xml.addTag(_T("DOCNUMBER"), m_sDocNo);
 	xml.addTag(_T("ORGANISATION"), m_sOrg);
+	if (!m_sDescription.IsEmpty())
+	{
+		xml.addTag(_T("DESCRIPTION"), m_sDescription);
+	}
+	if (!m_oRevisionHistory.empty())
+	{
+		xml.addTag(_T("REVISION_HISTORY"));
+		for (size_t i = 0; i < m_oRevisionHistory.size(); ++i)
+		{
+			const SRevisionEntry& e = m_oRevisionHistory[i];
+			xml.addTag(_T("ENTRY"));
+			xml.addAttribute(_T("rev"), e.rev);
+			xml.addAttribute(_T("date"), e.date);
+			xml.addAttribute(_T("by"), e.revisedBy);
+			xml.addChildData(e.description);
+			xml.closeTag();
+		}
+		xml.closeTag();
+	}
 	xml.addTag(_T("SHEETS"), m_sSheets);
 	xml.addTag(_T("SHOWS"), nShows);
 	xml.addTag(_T("DATE"), m_szLastChange);

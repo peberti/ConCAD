@@ -314,6 +314,57 @@ public:
 	}
 };
 
+// The revision-history table: an SVG template (templates/revision.svg) whose
+// rows grow with the design's revision history (File -> Create version).
+// Lives on the first sheet; shown/hidden with Edit -> Revision History.
+// m_point_a is the bottom-left corner (it grows upwards); m_point_b the
+// top-right corner, recomputed from the template's size.
+class CDrawRevisionHistory: public CDrawingObject
+{
+	bool     m_bVisible;
+	CString  m_sEmbeddedSvg;    // copy of the template saved with the design
+	CString  m_sLinkedPath;     // cache of the linked template file
+	CString  m_sLinkedSvg;
+	FILETIME m_ftLinked;
+
+	bool LoadSvg(class CSvgTitleBlock& svg, int& rows);
+public:
+	bool IsVisible() const
+	{
+		return m_bVisible;
+	}
+	void SetVisible(bool bVisible)
+	{
+		m_bVisible = bVisible;
+	}
+
+	// The template text: the linked file if present, else the embedded copy.
+	CString GetSvg();
+	// Recompute m_point_b from the template size and the history length.
+	void UpdateExtent();
+
+	virtual double DistanceFromPoint(CDPoint p);
+	virtual BOOL IsInside(double left, double right, double top, double bottom);
+	virtual void Display(BOOL erase = TRUE);
+	virtual void Paint(CContext &, paint_options);
+	virtual void Rotate(CDPoint, int)
+	{
+	}
+	virtual CDrawingObject* Store();
+
+	virtual void SaveXML(CXMLWriter &xml);
+	virtual void LoadXML(CXMLReader &xml);
+	static const TCHAR* GetXMLTag();
+
+	virtual ObjType GetType();
+	virtual CString GetName() const;
+
+	CDrawRevisionHistory(CConCadDoc *pDesign);
+	virtual ~CDrawRevisionHistory()
+	{
+	}
+};
+
 class CDrawOrigin: public CDrawingObject
 {
 protected:

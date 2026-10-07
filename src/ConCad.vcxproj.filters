@@ -136,6 +136,9 @@
     <ClCompile Include="DrawOrigin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DrawRevisionHistory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="DrawPin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

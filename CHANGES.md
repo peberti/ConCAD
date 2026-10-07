@@ -533,6 +533,156 @@ whole design to a single PDF, **one page per sheet**.
 
 ---
 
+## 10. File → Create version / Edit file (write-protected versions)
+
+Released versions of a design are frozen as separate, write-protected files.
+
+- **File → Create Version…** asks for a version (pre-filled with the current
+  Revision; the dialog shows the resulting file name). It sets **Revision**
+  to the version and **Date** to today (`YYYY-MM-DD`) on every sheet — this
+  is the only place Date is set; it is read-only in Design Details — and
+  saves the design as `Name_<version>.con` next to the current file. That
+  file becomes the open document, write-protected: the title bar shows
+  `[Write protected]`. An existing version file is never overwritten.
+- The same dialog requires **Revised by** (remembered from last time; the
+  Windows user name the first time) and a **Change description** (may span
+  several lines). Each version adds a record — Rev, Issue date, Change
+  description, Revised by — to the design's **revision history**, stored in
+  every sheet's `<DETAILS>` and never edited afterwards.
+- **File → Edit File** (only on a write-protected version) saves a copy as
+  `Name_<version>_working.con`, clears the protection, and continues with
+  that copy. If the working copy already exists you can open it or replace
+  it with a fresh copy.
+- Creating the next version from `Name_1.0_working.con` saves
+  `Name_1.1.con` (the `_<version>_working` suffix is dropped from the base
+  name, whatever Revision says). From a file not named `…_working`, the
+  whole file name is the base. A version cannot contain `_`, so the
+  suffix is unambiguous.
+
+On a write-protected version only viewing and output work: zoom/pan, Find,
+Select All + Copy, print, export (image/PDF), netlist/BOM/SPICE/VHDL, Save
+As, Close, and Edit File. Every other command of the drawing view and the
+design (tools, edit, undo, delete, paste, sheets, Design Details, Page Setup,
+Import, Save, …) is greyed out, and clicks on the drawing do nothing (a
+double-click explains how to get a working copy). The version file is never
+saved over; in-memory side-effects such as ERC markers are discarded on close.
+
+### Drawing-Details title block
+
+`templates/title-blocks/Drawing-Details.svg` (bundled, 69 × 51 mm, the
+user's design) is a Drawing Details panel filled automatically:
+
+| Panel field | Token |
+|---|---|
+| Drawing number / title | `{DocNo} — {Title}` |
+| Description | `{Description}` — new field on the Design Details → Design tab |
+| Company | `{Organisation}` |
+| Original author | `{Author}` |
+| Revised by | `{RevisedBy}` — reviser of the latest version |
+| Current revision / Revision issue date / Sheet | `{Revision}` / `{Date}` / `{Sheets}` |
+
+Revision-history tokens for table row *N*: `{RevN}`, `{RevNDate}`,
+`{RevNDesc}`, `{RevNBy}`. A fixed table shows as many rows as the highest *N*
+the SVG uses (the newest that many versions, oldest at the top; empty rows
+stay blank); a growing table is described below. Multi-line change
+descriptions render as multiple lines (SVG text containing a line break is
+now drawn line by line). These names are built-ins, so they never appear as
+user variables.
+
+### Revision history table (Edit → Revision History)
+
+A revision-history table drawn on the **first sheet**, separate from the
+title block:
+
+- **Edit → Revision History** shows or hides it (checked = shown); the
+  first time, it is placed at the bottom-left of the first sheet. Select and
+  drag it like any other object. Showing/hiding switches to sheet 1 and can
+  be undone; it is greyed out on write-protected versions.
+- It is drawn from the **linked template `templates/revision.svg`** (layout
+  from the user's *Revision history.svg*): column labels once at the top,
+  then one value row per version — newest five, oldest at the top. It
+  grows upwards from where it is placed. First match wins:
+  `%APPDATA%\ConCAD\templates\revision.svg` (per-user),
+  `<exe-dir>\templates\revision.svg` (installed),
+  `<exe-dir>\..\templates\revision.svg` (dev build). Edit the file and
+  open designs pick up the change (it is re-read when its timestamp
+  changes). Each design also saves a copy of the template, used on machines
+  without the file.
+
+The growth comes from markers in the SVG, so the template can be redesigned
+freely. Mark one row element (normally a `<g>` holding the row's lines and
+its `{Rev1}` `{Rev1Date}` `{Rev1Desc}` `{Rev1By}` texts) and the elements
+that must grow with it:
+
+```xml
+<g data-repeat="revisions" data-row-height="4.6" data-max-rows="5">
+  <line data-stretch="row" … />                      <!-- column divider -->
+  <text data-wrap-width="47.2" …>{Rev1Desc}</text>
+  …
+</g>
+<rect data-stretch="rows" … />
+```
+
+**Word wrap:** a `<text>` with `data-wrap-width="<w>"` (its local units)
+is word-wrapped to that width; explicit line breaks always break. In the
+revision table the change description wraps at its column (47.2 mm), and
+its row grows by one line height (1.2 em) per extra line; the row's lines
+marked `data-stretch="row"` (`<line>` `y2`, or a `height`) lengthen with
+it, and everything below moves down.
+
+The row is repeated once per history entry (at least once, at most
+`data-max-rows`, default 5). Each copy is moved down `data-row-height`
+(root viewBox units; the row's ancestors may only translate) and renumbered
+to `Rev2`, `Rev3`, …. Elements marked `data-stretch="rows"` and the root
+`height`/`viewBox` grow by the added rows. Inkscape keeps these `data-*`
+attributes when you edit the file. (`CTitleBlockTemplateStore::
+ExpandRevisionRows`; it works in title-block templates too.)
+
+### On-disk format (additive)
+
+```xml
+<TinyCADSheets write_protected="1">
+  <TinyCAD>  <!-- first sheet -->
+    <REVISION_TABLE pos="10,1040" visible="1">PHN2Zy…</REVISION_TABLE>  <!-- base64 template copy -->
+  ...
+  <DETAILS>
+    <DESCRIPTION>New Volvo buses for Bergkvara</DESCRIPTION>
+    <REVISION_HISTORY>
+      <ENTRY rev="R7" date="2026-06-30" by="Per Bertilsson">Updated connectors</ENTRY>
+    </REVISION_HISTORY>
+```
+
+Each element is emitted only when in use (protected version / non-empty
+description / at least one history entry / table placed). `REVISION_TABLE`
+is a new drawing object (`ObjType` `xRevisionHistory = 144`); older builds
+skip the unknown tag. `write_protected` is emitted only on write-protected versions. Older ConCAD/TinyCAD builds ignore
+the attribute and open the file as editable. The protection guards against
+accidental edits; it does not secure the file.
+
+### Files changed
+
+- `src/ConCadMultiDoc.{h,cpp}` (`m_bWriteProtected`, Create version / Edit
+  file handlers, `CDlgCreateVersion`, `SetPathName` title suffix,
+  `SaveModified`, `write_protected` load/save)
+- `src/MultiSheetDoc.h` (`IsWriteProtected`)
+- `src/Details.{h,cpp}` (`m_sDescription`, `m_oRevisionHistory`, history /
+  `Description` / `RevisedBy` tokens, `IsBuiltInToken`, row count in
+  `ResolveTitleBlock`), `src/DetailsPropertyPages.*` (Description field;
+  reserved names = `CDetails::IsBuiltInToken`)
+- `src/SvgTitleBlock.{h,cpp}` (multi-line text, `ExpandRevisionRows`),
+  `src/ConCadRegistry.*` (`LastRevisedBy`),
+  `templates/title-blocks/Drawing-Details.svg`, `templates/revision.svg`,
+  `installer/ConCAD.nsi`
+- `src/DrawRevisionHistory.cpp` (new), `src/Object.h`
+  (`CDrawRevisionHistory`), `src/DrawingObject.h` (`xRevisionHistory`),
+  `src/Io.cpp` (factory), `src/ConCadView.{h,cpp}` (Edit → Revision
+  History), `src/ConCad.vcxproj{,.filters}`
+- `src/ConCadView.{h,cpp}` (`OnCmdMsg` command gate, mouse/key gate)
+- `src/ConCad.rc`, `src/resource.h` (menu items, status strings,
+  `IDD_CREATE_VERSION`)
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -541,7 +691,8 @@ following sense:
 
 - New elements (`<USERTOKEN>`, `<CABLE>`, `<CONNECTOR>`,
   `<TITLEBLOCK_SVG>`, the new `use_color`/`color` attributes on
-  `<SYMBOL>`) are emitted only when the corresponding feature is in use.
+  `<SYMBOL>`, `write_protected` on `<TinyCADSheets>`) are emitted only when
+  the corresponding feature is in use.
 - A pre-existing file with no new elements loads unchanged.
 - Saving a file with the new build, then loading it in the new build
   again, round-trips cleanly.
@@ -585,3 +736,23 @@ XML-saved files.
    A3 (420×297 mm) in landscape — one page per sheet, each in its own
    page size/orientation; title blocks resolve tokens and "Sheets N of M".
    Zoom in to confirm lines/text are vector (not rasterised).
+9. **Create version** — open/save `Board.con` with Revision `R6`; in
+   Design Details pick the `Drawing-Details` title block and fill in
+   Description (shown in the panel). File → Create Version…: field shows
+   `R6`, type `R7` → "Saved as" shows `Board_R7.con`; Revised by is
+   pre-filled; OK with an empty Change description → refused; enter a
+   description, OK. Title bar: `Board_R7.con [Write protected]`; the panel
+   shows Revised by, Current revision R7 and today's date. Tools, Delete,
+   Undo, Save and Design Details are greyed; zoom, print and Export as PDF
+   work. Close and reopen — still protected, history intact. File → Edit
+   File → `Board_R7_working.con`, editable. Create Version `R8` from it →
+   `Board_R8.con`. Creating `R8` again is refused.
+10. **Revision history table** — Edit → Revision History: the table
+    appears bottom-left on sheet 1 (menu item checked) with one empty row.
+    Drag it elsewhere; Undo moves it back. Create Version → one filled row;
+    Edit File + Create Version twice more → three rows, growing upwards.
+    After a sixth version it shows the newest five. A long change
+    description wraps inside its column and makes only its own row taller. Edit → Revision History
+    again hides it. Edit `templates/revision.svg` (e.g. the heading) and
+    the open design updates. Save, reopen — position, visibility and rows
+    are kept.

@@ -101,6 +101,15 @@ public:
 	CMultiSheetDoc* GetDocument();
 	CConCadDoc* GetCurrentDocument();
 
+	// Is the design a write-protected version?  Only viewing and output
+	// commands are available then (see OnCmdMsg).
+	bool IsWriteProtected();
+
+	// Edit -> Revision History: show/hide the table on the first sheet
+	afx_msg void OnEditRevisionHistory();
+	afx_msg void OnUpdateEditRevisionHistory(CCmdUI* pCmdUI);
+	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
+
 protected:
 	// Our own version of this function, so that we
 	// can set portrait/landscape mode automatically

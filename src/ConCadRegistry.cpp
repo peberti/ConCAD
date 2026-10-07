@@ -25,6 +25,7 @@ const CString CConCadRegistry::M_AUTOUDPATES = "AutomaticUpdates";
 const CString CConCadRegistry::M_AUTOUDPATEVERSION = "AutomaticUpdateVersion";
 const CString CConCadRegistry::M_SNEWTITLEBLOCK = "NewTitleBlock";
 const CString CConCadRegistry::M_SASKNEWTITLEBLOCK = "AskNewTitleBlock";
+const CString CConCadRegistry::M_SLASTREVISEDBY = "LastRevisedBy";
 
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
@@ -263,6 +264,12 @@ bool CConCadRegistry::GetAskNewTitleBlock()
 	return CRegistry::GetBool(M_SASKNEWTITLEBLOCK, true);
 }
 //-------------------------------------------------------------------------
+//-- "Revised by" last entered in File -> Create version
+CString CConCadRegistry::GetLastRevisedBy()
+{
+	return CRegistry::GetString(M_SLASTREVISEDBY, "");
+}
+//-------------------------------------------------------------------------
 
 
 //=========================================================================
@@ -322,6 +329,12 @@ void CConCadRegistry::SetNewTitleBlock(CString name)
 void CConCadRegistry::SetAskNewTitleBlock(bool bAsk)
 {
 	CConCadRegistry::Set(M_SASKNEWTITLEBLOCK, bAsk);
+}
+//-------------------------------------------------------------------------
+//-- Remembers the "Revised by" entered in File -> Create version
+void CConCadRegistry::SetLastRevisedBy(CString name)
+{
+	CConCadRegistry::Set(M_SLASTREVISEDBY, name);
 }
 //-------------------------------------------------------------------------
 

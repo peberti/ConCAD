@@ -67,6 +67,9 @@ public:
 	//-- Ask for the title block on File -> New?
 	static bool GetAskNewTitleBlock();
 
+	//-- "Revised by" last entered in File -> Create version
+	static CString GetLastRevisedBy();
+
 	//=====================================================================
 	//== Mutator for application settings                               ==
 	//=====================================================================
@@ -97,6 +100,9 @@ public:
 	//-- Changes whether File -> New asks for the title block
 	static void SetAskNewTitleBlock(bool bAsk);
 
+	//-- Remembers the "Revised by" entered in File -> Create version
+	static void SetLastRevisedBy(CString name);
+
 	// Get when TinyCAD was installed
 	static CString GetInstalledFileTime();
 
@@ -119,6 +125,7 @@ private:
 	static const CString M_AUTOUDPATEVERSION;
 	static const CString M_SNEWTITLEBLOCK;
 	static const CString M_SASKNEWTITLEBLOCK;
+	static const CString M_SLASTREVISEDBY;
 };
 //=========================================================================
 

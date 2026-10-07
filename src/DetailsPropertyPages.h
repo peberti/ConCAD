@@ -66,6 +66,7 @@ public:
 	CString m_sAuthor;
 	CString m_sDate;
 	CString m_sOrg;
+	CString m_sDescription;
 	CString m_sDoc;
 	CString m_sRevision;
 	CString m_sSheets;

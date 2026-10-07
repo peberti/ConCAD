@@ -81,7 +81,24 @@ public:
 	// Get the file path name during loading or saving
 	virtual CString GetXMLPathName();
 
+	// Is this a write-protected version (File -> Create version)?
+	virtual bool IsWriteProtected()
+	{
+		return m_bWriteProtected;
+	}
+
+	virtual void SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU = TRUE);
+	virtual BOOL SaveModified();
+
 protected:
+	// Set by File -> Create version, cleared by File -> Edit file; saved as
+	// the write_protected attribute of <TinyCADSheets>.
+	bool m_bWriteProtected;
+
+	// Write Revision, Date and the write-protect flag to every sheet
+	void SetVersionFields(const CString& sRevision, const CString& sDate, bool bWriteProtected,
+		const CRevisionHistory& history);
+
 	typedef std::vector<CConCadDoc*> sheetCollection;
 	sheetCollection m_sheets;
 
@@ -127,6 +144,10 @@ public:
 	afx_msg void OnContextAddhierarchicalsymbol();
 	afx_msg void OnUpdateContextAddhierarchicalsymbol(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateContextRenamesheet(CCmdUI *pCmdUI);
+	afx_msg void OnFileCreateVersion();
+	afx_msg void OnUpdateFileCreateVersion(CCmdUI *pCmdUI);
+	afx_msg void OnFileEditFile();
+	afx_msg void OnUpdateFileEditFile(CCmdUI *pCmdUI);
 };
 
 //{{AFX_INSERT_LOCATION}}
