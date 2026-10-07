@@ -2,26 +2,13 @@
 
 Tracked work items for ConCAD. See `HANDOFF.md` and `CHANGES.md` for background.
 
-## Installer: complete the NSIS uninstall section
+## Installer: complete the NSIS uninstall section — done
 
-`installer/ConCAD.nsi` registers ConCAD as a standard Windows program (HKLM
-uninstall key, `.con` file association, Start Menu shortcuts), but its
-`Section Uninstall` only deletes a single legacy Start Menu shortcut. A normal
-uninstall therefore leaves files and registry keys behind.
-
-Make the uninstall section reverse what install does:
-
-- [ ] Delete installed files in `$INSTDIR` (`ConCAD.exe`, libs, etc.) and the
-      `$INSTDIR` directory itself.
-- [ ] Remove Start Menu shortcuts and the `$SMPROGRAMS\ConCAD` folder.
-- [ ] Delete the `.con` → `ConCAD Design` association keys under `HKCR`
-      (`.con`, `ConCAD Design`, and its `shell`/`DefaultIcon` subkeys) — these
-      are written on install with no matching cleanup, so `.con` files point at
-      a removed `ConCAD.exe` after uninstall.
-- [ ] Delete the uninstall registry key (`${PRODUCT_UNINST_KEY}`) and
-      `${PRODUCT_DIR_REGKEY}`.
-- [ ] Use `SetShellVarContext all` (already present) so per-machine paths/keys
-      resolve correctly under elevation.
+`Section Uninstall` in `installer/ConCAD.nsi` now reverses the install:
+installed files, `$INSTDIR`, Start Menu shortcuts and folder, the uninstall /
+app-path registry keys, and the `.con` → `ConCAD Design` association (`.con` is
+only cleared if it still points at ConCAD). Needs a manual install → uninstall
+check with NSIS once the build machine is set up again (see `SETUP.md`).
 
 ## File → Create version / Edit file / write-protection
 

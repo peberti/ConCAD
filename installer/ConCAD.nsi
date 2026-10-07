@@ -199,6 +199,19 @@ Section Uninstall
   RMDir "$INSTDIR\templates"
   RMDir "$INSTDIR"
 
+  ;
+  ; Remove the '.con' file association written on install.  Only clear
+  ; '.con' if it still points at us (another program may have claimed it
+  ; since), and keep the key if other entries (e.g. OpenWithProgids) remain.
+  ;
+  ReadRegStr $0 HKCR ".con" ""
+  StrCmp $0 "ConCAD Design" 0 +3
+    DeleteRegValue HKCR ".con" ""
+    DeleteRegKey /ifempty HKCR ".con"
+  DeleteRegKey HKCR "ConCAD Design"
+  ; SHCNE_ASSOCCHANGED: refresh Explorer's cached icons/associations
+  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
+
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
   SetAutoClose true

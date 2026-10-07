@@ -38,7 +38,8 @@ format notes, and a manual test plan.
 ## Building
 
 Requires **Visual Studio 2019 or 2022** (Community edition is fine) with
-the **MFC C++ component** installed.
+the **v142 toolset and MFC for v142** installed. See [SETUP.md](SETUP.md)
+for setting up a fresh machine.
 
 1. Open `ConCad.sln` at the repo root.
 2. Build → Build Solution (Ctrl+Shift+B).
@@ -48,7 +49,7 @@ build. A pre-build step (`src/gitbranch.bat`) regenerates
 `src/BuildId.h` on every build; do not commit hand edits to it.
 
 There is no CMake or command-line build flow, and no automated test
-suite — verification is manual (load a `.dsn` design and exercise the
+suite — verification is manual (load a `.con` design and exercise the
 affected UI paths).
 
 ## Building the installer
