@@ -14,6 +14,8 @@
 #include <math.h>
 #include "ImagePNG.h"
 #include "ConCadMultiDoc.h"
+#include "colour.h"
+#include "DrawModuleInfo.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CConCadDoc
@@ -43,6 +45,8 @@ CConCadDoc::CConCadDoc(CMultiSheetDoc *pParent)
 	m_change_set = FALSE;
 	m_InUndoAddAction = FALSE;
 	m_DuplicateObjectOnly = FALSE;
+	m_open_group = 0;
+	m_group_frames_shown = false;
 	edit = NULL;
 	NameDir = 1;
 	PinDir = 1;
@@ -103,12 +107,21 @@ drawingIterator CConCadDoc::GetDrawingEnd()
 // CConCadDoc serialization
 
 
-BOOL CConCadDoc::Import(CStream& ar)
+BOOL CConCadDoc::Import(CStream& ar, int group)
 {
 	drawingCollection drawing;
 
 	if (ReadFile(ar, FALSE, drawing))
 	{
+		if (group != 0)
+		{
+			SetGroup(drawing, group);
+		}
+		else
+		{
+			// A pasted module is a new module, not part of the one it was copied from
+			RemapGroups(drawing);
+		}
 
 		for (drawingCollection::iterator i = drawing.begin(); i != drawing.end(); i++)
 		{
@@ -522,6 +535,11 @@ void CConCadDoc::Add(CDrawingObject *NewObject)
 	{
 		if (!m_InUndoAddAction)
 		{
+			// Objects added while a module is open for editing join it
+			if (m_open_group != 0 && NewObject->m_group == 0)
+			{
+				NewObject->m_group = m_open_group;
+			}
 			MarkAdditionForUndo(NewObject);
 			SetModifiedFlag(TRUE);
 		}
@@ -1025,6 +1043,8 @@ void CConCadDoc::Select(CDPoint p1, CDPoint p2)
 
 		++it;
 	}
+
+	SelectWholeGroups();
 }
 
 // Select an object
@@ -1315,6 +1335,11 @@ void CConCadDoc::InvalidateRect(CDRect r, BOOL erase, int grow, BOOL outline_onl
 		InvalidateRect(r2, erase, grow);
 		InvalidateRect(r3, erase, grow);
 		InvalidateRect(r4, erase, grow);
+	}
+	else if (m_open_group != 0 || m_group_frames_shown || GetSelectedGroup() != 0)
+	{
+		// A module frame spans more than the changed objects: redraw it all
+		Invalidate();
 	}
 	else
 	{
@@ -1756,6 +1781,9 @@ void CConCadDoc::SelectDup()
 		++it;
 	}
 
+	// A duplicated module is a new module
+	RemapGroups(newSelection);
+
 	// Swap over the selection to the new
 	// objects...
 	UnSelect();
@@ -1968,4 +1996,395 @@ CString CConCadDoc::getDefaultReferenceString() const
 	// this is important for documents which are
 	// used as embedded hierarchical designs
 	return "H?";
+}
+
+//-------------------------------------------------------------------------
+// Module groups
+
+int CConCadDoc::GetNewGroupId()
+{
+	int id = 0;
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		id = max(id, (*it)->m_group);
+	}
+	return max(id, m_open_group) + 1;
+}
+
+void CConCadDoc::OpenGroup(int group)
+{
+	UnSelect();
+	m_open_group = group;
+	Invalidate();
+}
+
+void CConCadDoc::CloseGroup()
+{
+	if (m_open_group != 0)
+	{
+		m_open_group = 0;
+		Invalidate();
+	}
+}
+
+bool CConCadDoc::IsInClosedGroup(CDrawingObject *obj) const
+{
+	return obj != NULL && obj->m_group != 0 && obj->m_group != m_open_group;
+}
+
+void CConCadDoc::SelectGroup(CDrawingObject *obj)
+{
+	Select(obj);
+	if (IsInClosedGroup(obj))
+	{
+		for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+		{
+			if ((*it)->m_group == obj->m_group && !IsSelected(*it))
+			{
+				Select(*it);
+				(*it)->Display();
+			}
+		}
+	}
+}
+
+void CConCadDoc::UnSelectGroup(CDrawingObject *obj)
+{
+	UnSelect(obj);
+	if (IsInClosedGroup(obj))
+	{
+		for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+		{
+			if ((*it)->m_group == obj->m_group && IsSelected(*it))
+			{
+				UnSelect(*it);
+				(*it)->Display();
+			}
+		}
+	}
+}
+
+void CConCadDoc::SelectWholeGroups()
+{
+	std::set<int> groups;
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		if (IsInClosedGroup(*it))
+		{
+			groups.insert((*it)->m_group);
+		}
+	}
+	if (groups.empty())
+	{
+		return;
+	}
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		if (groups.find((*it)->m_group) != groups.end() && !IsSelected(*it))
+		{
+			Select(*it);
+			(*it)->Display();
+		}
+	}
+}
+
+int CConCadDoc::GetSelectedGroup()
+{
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		if (IsInClosedGroup(*it))
+		{
+			return (*it)->m_group;
+		}
+	}
+	return 0;
+}
+
+bool CConCadDoc::GetGroupExtent(int group, CDRect &r)
+{
+	bool found = false;
+	if (group == 0)
+	{
+		return false;
+	}
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		CDrawingObject *obj = *it;
+		if (obj->m_group != group || obj->GetType() == xModuleInfo)
+		{
+			continue;
+		}
+		CDRect box(obj->m_point_a.x, obj->m_point_a.y, obj->m_point_b.x, obj->m_point_b.y);
+		box.NormalizeRect();
+		if (!found)
+		{
+			r = box;
+			found = true;
+		}
+		else
+		{
+			r.left = min(r.left, box.left);
+			r.top = min(r.top, box.top);
+			r.right = max(r.right, box.right);
+			r.bottom = max(r.bottom, box.bottom);
+		}
+	}
+	return found;
+}
+
+void CConCadDoc::SetGroup(drawingCollection &objs, int group)
+{
+	for (drawingIterator it = objs.begin(); it != objs.end(); ++it)
+	{
+		(*it)->m_group = group;
+	}
+}
+
+void CConCadDoc::RemapGroups(drawingCollection &objs)
+{
+	std::map<int, int> ids;
+	int next = GetNewGroupId();
+	for (drawingIterator it = objs.begin(); it != objs.end(); ++it)
+	{
+		CDrawingObject *obj = *it;
+		if (obj->m_group == 0 || obj->m_group == m_open_group)
+		{
+			continue;
+		}
+		std::map<int, int>::iterator f = ids.find(obj->m_group);
+		if (f == ids.end())
+		{
+			f = ids.insert(std::make_pair(obj->m_group, next++)).first;
+		}
+		obj->m_group = f->second;
+	}
+}
+
+// Dissolve the modules in the selection: their objects become ordinary
+// objects (undoable)
+void CConCadDoc::UngroupSelection()
+{
+	std::set<int> groups;
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		if (IsInClosedGroup(*it))
+		{
+			groups.insert((*it)->m_group);
+		}
+	}
+	if (groups.empty())
+	{
+		return;
+	}
+
+	// A module's texts keep its parameter values; the parameters go
+	BeginNewChangeSet();
+	std::vector<CDrawingObject*> infos;
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		if (groups.find((*it)->m_group) != groups.end())
+		{
+			if ((*it)->GetType() == xModuleInfo)
+			{
+				infos.push_back(*it);
+				continue;
+			}
+			MarkChangeForUndo(*it);
+			BakeModuleTokens(*it);
+			(*it)->m_group = 0;
+		}
+	}
+	for (size_t i = 0; i < infos.size(); i++)
+	{
+		Delete(infos[i]);
+	}
+	SetModifiedFlag(TRUE);
+	Invalidate();
+}
+
+// Create Group: the selected objects become one new group (undoable).
+// Groups already in the selection are merged into it.
+void CConCadDoc::GroupSelection()
+{
+	if (m_selected.size() < 2)
+	{
+		return;
+	}
+
+	// Modules in the selection become plain objects of the new group:
+	// their texts keep the parameter values, the parameters go
+	BeginNewChangeSet();
+	const int group = GetNewGroupId();
+	std::vector<CDrawingObject*> infos;
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		if (IsSelected(*it))
+		{
+			if ((*it)->GetType() == xModuleInfo)
+			{
+				infos.push_back(*it);
+				continue;
+			}
+			MarkChangeForUndo(*it);
+			BakeModuleTokens(*it);
+			(*it)->m_group = group;
+		}
+	}
+	for (size_t i = 0; i < infos.size(); i++)
+	{
+		Delete(infos[i]);
+	}
+	SetModifiedFlag(TRUE);
+	Invalidate();
+}
+
+CDrawModuleInfo* CConCadDoc::GetModuleInfo(int group)
+{
+	if (group == 0)
+	{
+		return NULL;
+	}
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		if ((*it)->m_group == group && (*it)->GetType() == xModuleInfo)
+		{
+			return static_cast<CDrawModuleInfo*>(*it);
+		}
+	}
+	return NULL;
+}
+
+bool CConCadDoc::IsSelectionOneGroup(int group)
+{
+	if (group == 0 || m_selected.empty())
+	{
+		return false;
+	}
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		if ((*it)->m_group != group)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+CString CConCadDoc::ResolveModuleTokens(const CString &s, int group)
+{
+	if (group == 0 || s.Find(_T('{')) < 0)
+	{
+		return s;
+	}
+	CDrawModuleInfo *pInfo = GetModuleInfo(group);
+	return pInfo != NULL ? pInfo->Resolve(s) : s;
+}
+
+CString CConCadDoc::ResolveText(const CString &s, int group)
+{
+	return GetDetails().Resolve(ResolveModuleTokens(s, group));
+}
+
+void CConCadDoc::BakeModuleTokens(CDrawingObject *obj)
+{
+	switch (obj->GetType())
+	{
+		case xText:
+		case xTextEx:
+		case xTextEx2:
+		{
+			CDrawText *pText = static_cast<CDrawText*>(obj);
+			pText->SetValue(ResolveModuleTokens(pText->GetValue(), obj->m_group));
+		}
+			break;
+		case xNoteText:
+		{
+			CDrawNoteText *pNote = static_cast<CDrawNoteText*>(obj);
+			pNote->SetValue(ResolveModuleTokens(pNote->GetValue(), obj->m_group));
+		}
+			break;
+		default:
+			break;
+	}
+}
+
+bool CConCadDoc::IsColorableSelected()
+{
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		if ((*it)->CanColor())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CConCadDoc::GetSelectionColor(COLORREF &c)
+{
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		if ((*it)->CanColor() && (*it)->m_use_color)
+		{
+			c = (*it)->m_color;
+			return true;
+		}
+	}
+	return false;
+}
+
+// Undoable; objects that cannot be coloured are left alone
+void CConCadDoc::SetSelectionColor(BOOL use, COLORREF c)
+{
+	if (!IsColorableSelected())
+	{
+		return;
+	}
+
+	BeginNewChangeSet();
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		CDrawingObject *obj = *it;
+		if (IsSelected(obj) && obj->CanColor())
+		{
+			MarkChangeForUndo(obj);
+			obj->m_use_color = use;
+			obj->m_color = use ? c : RGB(0, 0, 0);
+		}
+	}
+	SetModifiedFlag(TRUE);
+	Invalidate();
+}
+
+// Frame the selected modules and the module open for editing
+void CConCadDoc::PaintGroupFrames(CContext &dc)
+{
+	std::set<int> groups;
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		if (IsInClosedGroup(*it))
+		{
+			groups.insert((*it)->m_group);
+		}
+	}
+
+	const double margin = 3;
+	CDRect r;
+	m_group_frames_shown = false;
+	dc.SelectBrush();
+	for (std::set<int>::iterator g = groups.begin(); g != groups.end(); ++g)
+	{
+		if (GetGroupExtent(*g, r))
+		{
+			dc.SelectPen(PS_DOT, 1, cSELECT);
+			dc.Rectangle(CDRect(r.left - margin, r.top - margin, r.right + margin, r.bottom + margin));
+			m_group_frames_shown = true;
+		}
+	}
+	if (m_open_group != 0 && GetGroupExtent(m_open_group, r))
+	{
+		dc.SelectPen(PS_DASH, 1, RGB(255, 128, 0));
+		dc.Rectangle(CDRect(r.left - margin, r.top - margin, r.right + margin, r.bottom + margin));
+		m_group_frames_shown = true;
+	}
 }

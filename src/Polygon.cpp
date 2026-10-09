@@ -78,6 +78,7 @@ void CDrawPolygon::SaveXML(CXMLWriter &xml)
 		xml.addAttribute(_T("style"), Style);
 		xml.addAttribute(_T("fill"), Fill);
 		xml.addAttribute(_T("polygon"), Close);
+		SaveColorXML(xml);
 
 		arcpointCollection::iterator it = m_handles.begin();
 		while (it != m_handles.end())
@@ -116,6 +117,8 @@ void CDrawPolygon::LoadXML(CXMLReader &xml)
 		xml.getAttribute(_T("polygon"), Close);
 	}
 
+
+	LoadColorXML(xml);
 
 	m_handles.erase(m_handles.begin(), m_handles.end());
 
@@ -1161,6 +1164,9 @@ void CDrawPolygon::FlatternPath()
 // Display the line on the screen!
 void CDrawPolygon::Paint(CContext&dc, paint_options options)
 {
+	// Own colour (Object -> Colour): outline only, fills keep their colour
+	CForcedColorScope own_color(dc, m_use_color && options == draw_normal, m_color, FALSE);
+
 	dc.SelectPen(m_pDesign->GetOptions()->GetStyle(Style), options);
 	dc.SetROP2(R2_COPYPEN);
 

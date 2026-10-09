@@ -22,6 +22,8 @@
 #include "LibraryStore.h"
 #include "ConCadDoc.h"
 #include "ConCadMultiSymbolDoc.h"
+#include "ConCadMultiModuleDoc.h"
+#include "StreamMemory.h"
 
 // The constructor
 CLibraryStore::CLibraryStore()
@@ -169,8 +171,16 @@ void CLibraryStore::SaveXML(const TCHAR *filename, int id)
 
 	// Open the file for saving as a CFile for a CArchive
 	BOOL r = theFile.Open(filename, CFile::modeCreate | CFile::modeWrite);
+	if (!r)
+	{
+		CString msg;
+		msg.Format(_T("Could not create %s"), filename);
+		AfxMessageBox(msg, MB_ICONEXCLAMATION);
+		return;
+	}
 
-	if (r)
+	int symbols = 0;
+	int modules = 0;
 	{
 		// Create the XML stream writer
 		CStreamFile stream(&theFile, CArchive::store);
@@ -192,10 +202,23 @@ void CLibraryStore::SaveXML(const TCHAR *filename, int id)
 
 		while (it != m_Symbols.end())
 		{
-			// Modules are not exported: this format goes through the symbol
-			// editor, which would drop the module's objects.
 			const bool is_module = it->second.GetNumRecords() > 0 && it->second.GetRecord(0).is_module;
-			if ((id == -1 || id == it->first) && !is_module)
+			if ((id == -1 || id == it->first) && is_module)
+			{
+				// A module: its name-set details plus its objects as a
+				// <TinyCAD> document (read back by LoadXML as a module)
+				CLibraryStoreNameSet &module = it->second;
+				CConCadMultiModuleDoc temp_doc(this, module);
+				if (temp_doc.IsLoaded())
+				{
+					xml.addTag(_T("MODULE"));
+					module.SaveXML(xml);
+					temp_doc.WriteModuleXML(xml);
+					xml.closeTag();
+					++modules;
+				}
+			}
+			else if (id == -1 || id == it->first)
 			{
 				CLibraryStoreNameSet &symbol = it->second;
 				CConCadMultiSymbolDoc temp_doc(this, symbol);
@@ -209,6 +232,7 @@ void CLibraryStore::SaveXML(const TCHAR *filename, int id)
 				temp_doc.SaveXML(xml);
 
 				xml.closeTag();
+				++symbols;
 			}
 
 			++it;
@@ -217,6 +241,10 @@ void CLibraryStore::SaveXML(const TCHAR *filename, int id)
 		xml.closeTag();
 
 	}
+
+	CString msg;
+	msg.Format(_T("Exported %d symbol(s) and %d module(s) to\n%s"), symbols, modules, filename);
+	AfxMessageBox(msg, MB_ICONINFORMATION);
 }
 
 // Import library symbols from an XML file
@@ -245,6 +273,9 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 		}
 		xml.intoTag();
 
+		int symbols = 0;
+		int modules = 0;
+		int skipped = 0;
 		CConCadApp::SetLockOutSymbolRedraw(true);
 		while (xml.nextTag(name))
 		{
@@ -261,11 +292,76 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 
 				// ... and store the symbol
 				Store(&s, temp_doc);
+				++symbols;
+			}
+			else if (name == "MODULE")
+			{
+				// Name-set details and a <TinyCAD> document with the objects
+				CLibraryStoreNameSet s;
+				CLibraryStoreNameSet empty;
+				CConCadMultiModuleDoc temp_doc(NULL, empty);
+				CString tag;
+				xml.intoTag();
+				while (xml.nextTag(tag))
+				{
+					if (tag == _T("PPP"))
+					{
+						xml.getChildData(s.ppp);
+					}
+					else if (tag == _T("ORIENTATION"))
+					{
+						xml.getChildData(s.orientation);
+					}
+					else if (tag == _T("DETAILS"))
+					{
+						CLibraryStoreSymbol r;
+						xml.intoTag();
+						r.LoadXML(xml);
+						xml.outofTag();
+						s.PushBackRecord(r);
+					}
+					else if (tag == _T("TinyCAD"))
+					{
+						temp_doc.ReadModuleXML(xml);
+					}
+				}
+				xml.outofTag();
+
+				if (s.GetNumRecords() > 0 && temp_doc.IsLoaded())
+				{
+					CStreamMemory data;
+					{
+						CXMLWriter w(&data);
+						temp_doc.WriteModuleXML(w);
+					}
+					for (int i = 0; i < s.GetNumRecords(); i++)
+					{
+						s.GetRecord(i).is_module = TRUE;
+					}
+					s.lib = this;
+					if (StoreModule(&s, data))
+					{
+						++modules;
+					}
+					else
+					{
+						++skipped;
+					}
+				}
 			}
 		}
 		xml.outofTag();
 
 		CConCadApp::SetLockOutSymbolRedraw(false);
 
+		CString msg;
+		msg.Format(_T("Imported %d symbol(s) and %d module(s)."), symbols, modules);
+		if (skipped > 0)
+		{
+			CString more;
+			more.Format(_T("\n\n%d module(s) were not imported: modules can only be stored in SQLite libraries (.TCLib)."), skipped);
+			msg += more;
+		}
+		AfxMessageBox(msg, MB_ICONINFORMATION);
 	}
 }

@@ -73,6 +73,7 @@ void CEditToolbar::Create(CWnd *pParent)
 	m_PolygonEdit.Create();
 	m_HierarchicalEdit.Create();
 	m_NoteTextEdit.Create();
+	m_ModuleEdit.Create();
 
 	setDlg(&m_NoTool);
 

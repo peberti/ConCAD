@@ -86,6 +86,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnClose();
+	afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 	afx_msg void OnViewAnnotationtoolbar();
 	afx_msg void OnViewEdittoolbar();
 	afx_msg void OnViewFiletoolbar();

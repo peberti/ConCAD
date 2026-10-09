@@ -158,6 +158,7 @@ public:
 	//=====================================================================
 public:
 	static void EditSymbol(CLibraryStore* pLib, CLibraryStoreNameSet& symbol);
+	static void EditModule(CLibraryStore* pLib, CLibraryStoreNameSet& module);
 	static void EditLibrary(CLibraryStore* pLib);
 	static void ResetAllSymbols();
 	static void SaveAll();

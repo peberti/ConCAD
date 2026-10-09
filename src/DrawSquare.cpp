@@ -162,6 +162,7 @@ void CDrawSquare::SaveXML(CXMLWriter &xml)
 	xml.addAttribute(_T("b"), CDPoint(m_point_b));
 	xml.addAttribute(_T("style"), Style);
 	xml.addAttribute(_T("fill"), Fill);
+	SaveColorXML(xml);
 
 	xml.closeTag();
 }
@@ -172,6 +173,7 @@ void CDrawSquare::LoadXML(CXMLReader &xml)
 	xml.getAttribute(_T("b"), m_point_b);
 	xml.getAttribute(_T("style"), Style);
 	xml.getAttribute(_T("fill"), Fill);
+	LoadColorXML(xml);
 
 	Style = m_pDesign->GetOptions()->GetNewStyleNumber(Style);
 
@@ -385,6 +387,9 @@ BOOL CDrawSquare::IsInside(double left, double right, double top, double bottom)
 
 void CDrawSquare::Paint(CContext &dc, paint_options options)
 {
+	// Own colour (Object -> Colour): outline only, fills keep their colour
+	CForcedColorScope own_color(dc, m_use_color && options == draw_normal, m_color, FALSE);
+
 
 	CDPoint sma = m_point_a;
 	CDPoint smb = m_point_b;

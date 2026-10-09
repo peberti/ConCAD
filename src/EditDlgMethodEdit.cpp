@@ -181,11 +181,11 @@ void CEditDlgMethodEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 	SetDlgItemText(METHODBOX_REF, pMethod->m_fields[CDrawMethod::Ref].m_value);
 	SetDlgItemText(METHODBOX_PPP, Buffer);
 
-	// Enable the Color button only for symbols flagged as connectors.
+	// Any component can have its own colour (hierarchical symbols cannot)
 	CWnd* pColorBtn = GetDlgItem(METHODBOX_COLOR);
 	if (pColorBtn != NULL)
 	{
-		pColorBtn->EnableWindow(pMethod->IsConnector());
+		pColorBtn->EnableWindow(pMethod->CanColor());
 	}
 
 	ReadFields();
@@ -196,7 +196,7 @@ void CEditDlgMethodEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 void CEditDlgMethodEdit::OnPickColor()
 {
 	CDrawMethod *pMethod = static_cast<CDrawMethod*> (getObject());
-	if (pMethod == NULL || !pMethod->IsConnector())
+	if (pMethod == NULL || !pMethod->CanColor())
 	{
 		return;
 	}

@@ -26,6 +26,7 @@
 #include "LibraryView.h"
 #include "LibraryDoc.h"
 #include "ConCadMultiSymbolDoc.h"
+#include "ConCadMultiModuleDoc.h"
 #include "ConCadMultiDoc.h"
 #include "LibraryDb.h"
 #include "LibrarySQLite.h"
@@ -43,6 +44,7 @@
 #include <iostream>
 #include <fstream>
 #include <shlwapi.h>		// for SHCopyKey (registry migration)
+#include "ShortcutsDlg.h"
 #pragma comment(lib, "shlwapi.lib")
 
 
@@ -310,6 +312,70 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
 //=========================================================================
+// The keyboard manager restores the shortcut table saved in the registry
+// (Workspace\Keyboard-*), which includes the user's own shortcuts
+// (Options > Keyboard Shortcuts) but not the defaults added by a newer
+// build.  Each new default is applied once, replacing whatever used that
+// key.  Add an entry (and raise 'latest') whenever the accelerator table
+// in ConCad.rc changes.
+static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
+{
+	struct Change
+	{
+		int version;
+		BYTE fVirt;
+		WORD key;
+		WORD cmd;
+	};
+	static const Change changes[] =
+	{
+		{ 1, FVIRTKEY | FCONTROL, 'G', IDM_OBJECT_GROUP },
+		{ 1, FVIRTKEY | FCONTROL | FSHIFT, 'G', IDM_MODULE_UNGROUP },
+		{ 2, FVIRTKEY | FCONTROL, 'F', IDM_EDITFLIP },
+	};
+	const int latest = 2;
+
+	CWinApp *pApp = AfxGetApp();
+	const int saved = pApp->GetProfileInt(_T("Keyboard"), _T("Version"), 0);
+	if (saved >= latest)
+	{
+		return;
+	}
+
+	HACCEL h = pFrame->m_hAccelTable;
+	int n = h != NULL ? ::CopyAcceleratorTable(h, NULL, 0) : 0;
+	if (n > 0 && afxKeyboardManager != NULL)
+	{
+		std::vector<ACCEL> accels(n);
+		::CopyAcceleratorTable(h, &accels[0], n);
+		for (int c = 0; c < _countof(changes); c++)
+		{
+			if (changes[c].version <= saved)
+			{
+				continue;
+			}
+			ACCEL a;
+			a.fVirt = (BYTE)(changes[c].fVirt | FNOINVERT);
+			a.key = changes[c].key;
+			a.cmd = changes[c].cmd;
+			for (std::vector<ACCEL>::iterator it = accels.begin(); it != accels.end();)
+			{
+				if (CShortcutsDlg::SameKey(*it, a))
+				{
+					it = accels.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+			accels.push_back(a);
+		}
+		afxKeyboardManager->UpdateAccelTable(NULL, &accels[0], (int)accels.size(), pFrame);
+	}
+	pApp->WriteProfileInt(_T("Keyboard"), _T("Version"), latest);
+}
+
 BOOL CConCadApp::InitInstance()
 {
 
@@ -439,6 +505,10 @@ BOOL CConCadApp::InitInstance()
 	}
 
 	if (!pMainFrame->LoadFrame(IDR_MAINFRAME)) return FALSE;
+
+	// LoadFrame restored the saved shortcut table; add the new default
+	// shortcuts of this build to it
+	ApplyNewDefaultShortcuts(pMainFrame);
 
 	m_pMainWnd = pMainFrame;
 
@@ -796,6 +866,23 @@ void CConCadApp::EditSymbol(CLibraryStore* pLib, CLibraryStoreNameSet &symbol)
 
 	CFrameWnd *pFrame = m_pDocTemplate->CreateNewFrame(pMulti, NULL);
 	m_pDocTemplate->InitialUpdateFrame(pFrame, pMulti, TRUE);
+}
+
+//-------------------------------------------------------------------------
+// Edit a library module (library window -> Edit): a design window whose
+// Save stores the module back into the library
+void CConCadApp::EditModule(CLibraryStore* pLib, CLibraryStoreNameSet &module)
+{
+	CConCadMultiModuleDoc *pDoc = new CConCadMultiModuleDoc(pLib, module);
+	if (!pDoc->IsLoaded())
+	{
+		AfxMessageBox(_T("The module could not be read from the library."), MB_ICONEXCLAMATION);
+		delete pDoc;
+		return;
+	}
+
+	CFrameWnd *pFrame = m_pDocTemplate->CreateNewFrame(pDoc, NULL);
+	m_pDocTemplate->InitialUpdateFrame(pFrame, pDoc, TRUE);
 }
 
 //-------------------------------------------------------------------------

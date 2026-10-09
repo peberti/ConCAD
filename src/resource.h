@@ -503,6 +503,25 @@
 #define IDM_FILE_EDITFILE               32911
 #define IDM_EDIT_REVISIONHISTORY        32912
 #define IDM_SPECIAL_CREATEMODULE        32913
+#define IDM_MODULE_EDIT                 32914
+#define IDM_MODULE_UNGROUP              32915
+#define IDM_MODULE_FINISHEDIT           32916
+#define IDM_OBJECT_GROUP                32917
+#define IDM_COLOR_CONSAT                32918
+#define IDM_COLOR_FACTORY               32919
+#define IDM_COLOR_CUSTOM                32920
+#define IDM_COLOR_DEFAULT               32921
+#define IDM_OPTIONS_SHORTCUTS           32922
+#define IDD_SHORTCUTS                   187
+#define IDD_MODULE_EDIT                 188
+#define IDC_OPT_CONSAT_COLOR            40060
+#define IDC_OPT_FACTORY_COLOR           40061
+#define IDC_SC_LIST                     40062
+#define IDC_SC_KEY                      40063
+#define IDC_SC_ASSIGN                   40064
+#define IDC_SC_REMOVE                   40065
+#define IDC_SC_RESET                    40066
+#define IDC_SC_INFO                     40067
 #define IDC_SCALING                     40000
 #define IDS_NOCLEANUP                   40001
 #define POSITIONBOX_GRIDSIZE            40002
@@ -564,9 +583,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        187
-#define _APS_NEXT_COMMAND_VALUE         32914
-#define _APS_NEXT_CONTROL_VALUE         40060
+#define _APS_NEXT_RESOURCE_VALUE        189
+#define _APS_NEXT_COMMAND_VALUE         32923
+#define _APS_NEXT_CONTROL_VALUE         40068
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

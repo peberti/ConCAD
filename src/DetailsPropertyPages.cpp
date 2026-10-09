@@ -305,11 +305,11 @@ void CDetailsPropertyPage1::CollectReferencedTokenNames(std::vector<CString>& ou
 				case xTextEx:
 				case xTextEx2:
 					blob += _T('\n');
-					blob += static_cast<CDrawText*>(pObj)->GetValue();
+					blob += pSheet->ResolveModuleTokens(static_cast<CDrawText*>(pObj)->GetValue(), pObj->m_group); // a module's parameters are not design variables
 					break;
 				case xNoteText:
 					blob += _T('\n');
-					blob += static_cast<CDrawNoteText*>(pObj)->GetValue();
+					blob += pSheet->ResolveModuleTokens(static_cast<CDrawNoteText*>(pObj)->GetValue(), pObj->m_group);
 					break;
 				default:
 					break;
@@ -656,11 +656,11 @@ void CDetailsPropertyPage3::MergeReferencedTokens()
 				case xTextEx:
 				case xTextEx2:
 					blob += _T('\n');
-					blob += static_cast<CDrawText*>(pObj)->GetValue();
+					blob += pSheet->ResolveModuleTokens(static_cast<CDrawText*>(pObj)->GetValue(), pObj->m_group); // a module's parameters are not design variables
 					break;
 				case xNoteText:
 					blob += _T('\n');
-					blob += static_cast<CDrawNoteText*>(pObj)->GetValue();
+					blob += pSheet->ResolveModuleTokens(static_cast<CDrawNoteText*>(pObj)->GetValue(), pObj->m_group);
 					break;
 				default:
 					break;

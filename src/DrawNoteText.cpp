@@ -442,7 +442,7 @@ void CDrawNoteText::Paint(CContext &dc, paint_options options)
 	formatOptions.iTabLength = m_tab_width_in_avg_char_widths;
 	formatOptions.uiLengthDrawn = 0;
 
-	CString sDraw = m_pDesign->GetDetails().Resolve(str);	//Substitute any {token} references before drawing
+	CString sDraw = m_pDesign->ResolveText(str, m_group);	//Substitute any {token} references (module parameters, design variables) before drawing
 	dc.DrawTextExW(sDraw, textRectangle, &formatOptions);	//Now draw the note text on top of the border rectangle
 }
 

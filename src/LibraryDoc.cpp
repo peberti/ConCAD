@@ -246,9 +246,7 @@ void CLibraryDoc::EditSymbol(int which)
 		{
 			if (IsModule(it->second))
 			{
-				AfxMessageBox(_T("A module cannot be opened in the symbol editor.\n\n")
-					_T("To change it, place it in a design, edit it there, and store it again with Special > Create Module. ")
-					_T("Use Properties to change its name or fields."), MB_ICONINFORMATION);
+				CConCadApp::EditModule(m_pLibrary, it->second);
 				return;
 			}
 			CConCadApp::EditSymbol(m_pLibrary, it->second);

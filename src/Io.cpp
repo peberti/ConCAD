@@ -8,6 +8,7 @@
 
 #include "stdafx.h"
 #include "ConCadView.h"
+#include "DrawModuleInfo.h"
 #include "option.h"
 #include "HeaderStamp.h"
 #include "ConCad.h"
@@ -149,6 +150,13 @@ void CConCadDoc::SaveXML(CXMLWriter &xml, drawingCollection &drawing, BOOL Detai
 
 			if (obj->GetType() != xError && (Details || !obj->IsConstruction() || (SaveOriginObject && obj->GetType() == xOrigin)) && (!Details || obj->GetType() != xOrigin) && (!SaveSelect || IsSelected(obj)))
 			{
+				// Module group of the object that follows (older builds skip this tag)
+				if (obj->m_group != 0)
+				{
+					xml.addTag(_T("GROUP"));
+					xml.addAttribute(_T("id"), obj->m_group);
+					xml.closeTag();
+				}
 
 				// Now save the actual object data
 				obj->SaveXML(xml);
@@ -518,6 +526,7 @@ BOOL CConCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &d
 
 		BOOL ResetMerge = TRUE;
 		CDPoint origin;
+		int group = 0; // from a <GROUP> tag, applies to the next object
 
 		xml.intoTag();
 
@@ -591,6 +600,10 @@ BOOL CConCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &d
 					ResetMerge = FALSE;
 				}
 				theOptions.LoadSymbolXML(xml);
+			}
+			else if (name == "GROUP")
+			{
+				xml.getAttribute(_T("id"), group);
 			}
 			else if (name == "OPTIONS")
 			{
@@ -692,11 +705,17 @@ BOOL CConCadDoc::ReadFileXML(CXMLReader &xml, BOOL Details, drawingCollection &d
 			{
 				obj = new CDrawRevisionHistory(this);
 			}
+			else if (name == CDrawModuleInfo::GetXMLTag())
+			{
+				obj = new CDrawModuleInfo(this);
+			}
 
 			if (obj != NULL)
 			{
 				// Load this object...
 				obj->LoadXML(xml);
+				obj->m_group = group;
+				group = 0;
 
 				// Now add object to linked list
 				if (!obj->IsEmpty())

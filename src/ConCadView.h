@@ -111,6 +111,19 @@ public:
 
 	// Special -> Create Module: store the selection in the module library
 	afx_msg void OnSpecialCreateModule();
+	afx_msg void OnModuleEdit();
+	afx_msg void OnModuleUngroup();
+	afx_msg void OnModuleFinishEdit();
+	afx_msg void OnObjectGroup();
+	afx_msg void OnUpdateObjectGroup(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateModuleGroupSelected(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateModuleFinishEdit(CCmdUI* pCmdUI);
+	afx_msg void OnColorConsat();
+	afx_msg void OnColorFactory();
+	afx_msg void OnColorCustom();
+	afx_msg void OnColorDefault();
+	afx_msg void OnUpdateColor(CCmdUI* pCmdUI);
+	afx_msg void OnOptionsShortcuts();
 	// Insert a module from the library, following the mouse until placed
 	void PlaceModule(CLibraryStoreSymbol* theModule);
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
@@ -270,7 +283,7 @@ protected:
 	afx_msg void OnEditUndo() { GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument())); GetCurrentDocument()->Undo(); }
 	afx_msg void OnEditRedo() { GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument())); GetCurrentDocument()->Redo(); }
 	afx_msg void OnEditLayer();
-	afx_msg void OnEditEdit() { GetCurrentDocument()->SelectObject(new CDrawEditItem(GetCurrentDocument())); }
+	afx_msg void OnEditEdit();
 	afx_msg void OnEditDelete();
 	afx_msg void OnEditMove() { GetCurrentDocument()->SelectObject(new CDrawBlockMove(GetCurrentDocument())); }
 	afx_msg void OnEditDrag() { GetCurrentDocument()->SelectObject(new CDrawBlockDrag(GetCurrentDocument())); }

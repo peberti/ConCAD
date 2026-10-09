@@ -27,6 +27,8 @@ const CString CConCadRegistry::M_SNEWTITLEBLOCK = "NewTitleBlock";
 const CString CConCadRegistry::M_SASKNEWTITLEBLOCK = "AskNewTitleBlock";
 const CString CConCadRegistry::M_SLASTREVISEDBY = "LastRevisedBy";
 const CString CConCadRegistry::M_SMODULELIBRARY = "ModuleLibrary";
+const CString CConCadRegistry::M_SCONSATCOLOR = "ConsatColor";
+const CString CConCadRegistry::M_SFACTORYCOLOR = "FactoryColor";
 
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
@@ -277,6 +279,16 @@ CString CConCadRegistry::GetModuleLibrary()
 	return CRegistry::GetString(M_SMODULELIBRARY, "");
 }
 //-------------------------------------------------------------------------
+//-- Colours of Object -> Colour -> Consat (blue) and Factory (red)
+COLORREF CConCadRegistry::GetConsatColor()
+{
+	return (COLORREF)CRegistry::GetInt(M_SCONSATCOLOR, (int)RGB(0, 0, 255));
+}
+COLORREF CConCadRegistry::GetFactoryColor()
+{
+	return (COLORREF)CRegistry::GetInt(M_SFACTORYCOLOR, (int)RGB(255, 0, 0));
+}
+//-------------------------------------------------------------------------
 
 
 //=========================================================================
@@ -348,6 +360,15 @@ void CConCadRegistry::SetLastRevisedBy(CString name)
 void CConCadRegistry::SetModuleLibrary(CString name)
 {
 	CConCadRegistry::Set(M_SMODULELIBRARY, name);
+}
+//-------------------------------------------------------------------------
+void CConCadRegistry::SetConsatColor(COLORREF c)
+{
+	CConCadRegistry::Set(M_SCONSATCOLOR, (int)c);
+}
+void CConCadRegistry::SetFactoryColor(COLORREF c)
+{
+	CConCadRegistry::Set(M_SFACTORYCOLOR, (int)c);
 }
 //-------------------------------------------------------------------------
 

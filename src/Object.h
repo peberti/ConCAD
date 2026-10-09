@@ -91,6 +91,9 @@ public:
 		is_junction = o.is_junction;
 		m_re_edit = o.m_re_edit;
 		m_network = o.m_network;
+		m_group = o.m_group;
+		m_use_color = o.m_use_color;
+		m_color = o.m_color;
 		return *this;
 	}
 
@@ -108,6 +111,10 @@ public:
 	virtual void LButtonDown(CDPoint, CDPoint);
 	virtual void DblLButtonDown(CDPoint, CDPoint);
 	virtual BOOL CanEdit()
+	{
+		return TRUE;
+	}
+	virtual BOOL CanColor()
 	{
 		return TRUE;
 	}
@@ -200,6 +207,10 @@ public:
 	virtual void TagResources();
 	virtual UINT getMenuID();
 	virtual BOOL CanEdit()
+	{
+		return TRUE;
+	}
+	virtual BOOL CanColor()
 	{
 		return TRUE;
 	}
@@ -459,6 +470,10 @@ public:
 	CString GetValue()
 	{
 		return str;
+	}
+	void SetValue(const CString &s)
+	{
+		str = s;
 	}
 	void NewFont(LOGFONT *); // Change the font
 	virtual void NewOptions();
@@ -816,6 +831,10 @@ public:
 	{
 		return TRUE;
 	}
+	virtual BOOL CanColor()
+	{
+		return TRUE;
+	}
 	virtual void LButtonUp(CDPoint, CDPoint); // The user has released the left hand button
 	virtual void LButtonDown(CDPoint, CDPoint);
 	bool IsSquare()
@@ -883,6 +902,7 @@ public:
 	CString Find(const TCHAR *); // Does this string match this text?
 	virtual CString GetName() const;
 	CString GetValue() const { return str; }	// The raw note text (for token discovery)
+	void SetValue(const CString &s) { str = s; }
 	virtual void BeginEdit(BOOL re_edit);
 	virtual void EndEdit();
 	virtual BOOL CanEdit();
@@ -1120,8 +1140,12 @@ class CDrawEditItem: public CDrawingObject
 	CDPoint OffsetDrag;
 	double AspectRatio;
 	CDragUtils m_drag_utils;
+	DWORD m_last_click_time; // to detect double clicks (the view gets no WM_LBUTTONDBLCLK)
+	CPoint m_last_click_pos;
 
 	CDrawingObject* GetClosestObject(CDPoint p);
+	bool GroupDoubleClick(CDPoint p, CDPoint no_snap_p);
+	void UpdateModulePanel(); // Tool Options shows a selected module's parameters
 
 	void ClickSelection(CDPoint p, CDPoint s);
 
@@ -1130,6 +1154,7 @@ public:
 	virtual void NewOptions();
 	virtual void EndEdit();
 	virtual void LButtonDown(CDPoint, CDPoint);
+	virtual void DblLButtonDown(CDPoint, CDPoint);
 	virtual BOOL RButtonDown(CDPoint, CDPoint);
 	virtual void LButtonUp(CDPoint, CDPoint);
 	virtual void Move(CDPoint, CDPoint no_snap_p);
@@ -1185,12 +1210,6 @@ protected:
 
 	double scaling_x; // The scaling of this symbol
 	double scaling_y;
-
-	// Per-instance color override (only meaningful when the library
-	// symbol has is_connector set). When m_use_connector_color is
-	// FALSE, the symbol renders with its own colors as usual.
-	BOOL m_use_connector_color;
-	COLORREF m_connector_color;
 
 	typedef std::vector<CDPoint> activePointsCollection;
 	activePointsCollection m_activePoints; //Cached Active Points list
@@ -1259,12 +1278,17 @@ public:
 
 	// Is this placed instance backed by a library symbol marked as a connector?
 	bool IsConnector();
-	bool UsesConnectorColor() const { return m_use_connector_color != FALSE; }
-	COLORREF GetConnectorColor() const { return m_connector_color; }
+	// Per-instance colour (any component; stored in m_use_color/m_color)
+	bool UsesConnectorColor() const { return m_use_color != FALSE; }
+	COLORREF GetConnectorColor() const { return m_color; }
 	void SetConnectorColor(BOOL use, COLORREF color)
 	{
-		m_use_connector_color = use;
-		m_connector_color = color;
+		m_use_color = use;
+		m_color = color;
+	}
+	virtual BOOL CanColor()
+	{
+		return TRUE;
 	}
 
 	virtual ObjType GetType(); // Get this object's type

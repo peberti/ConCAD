@@ -467,7 +467,7 @@ void CDrawText::Paint(CContext &dc, paint_options options)
 	CString sDraw = str;
 	if (xtype == xText || xtype == xTextEx || xtype == xTextEx2)
 	{
-		sDraw = m_pDesign->GetDetails().Resolve(str);
+		sDraw = m_pDesign->ResolveText(str, m_group); // module parameters, then design variables
 	}
 	dc.TextOut(sDraw, m_point_a, options, dir);
 

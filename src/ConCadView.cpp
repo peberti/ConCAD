@@ -27,6 +27,8 @@
 #include "DlgColours.h"
 #include "MainFrm.h"
 #include "ConCadRegistry.h"
+#include "ShortcutsDlg.h"
+#include "DrawModuleInfo.h"
 #include "diag.h"
 #include "EditToolbar.h"
 #include "DlgPositionBox.h"
@@ -121,6 +123,23 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_COMMAND(ID_FILE_SAVEASBITMAP, OnFileSaveasbitmap)
 	ON_COMMAND(IDM_SPECIAL_CREATEMODULE, OnSpecialCreateModule)
 	ON_UPDATE_COMMAND_UI(IDM_SPECIAL_CREATEMODULE, OnUpdateEditcopy)
+	ON_COMMAND(IDM_MODULE_EDIT, OnModuleEdit)
+	ON_COMMAND(IDM_MODULE_UNGROUP, OnModuleUngroup)
+	ON_COMMAND(IDM_MODULE_FINISHEDIT, OnModuleFinishEdit)
+	ON_COMMAND(IDM_OBJECT_GROUP, OnObjectGroup)
+	ON_UPDATE_COMMAND_UI(IDM_OBJECT_GROUP, OnUpdateObjectGroup)
+	ON_UPDATE_COMMAND_UI(IDM_MODULE_EDIT, OnUpdateModuleGroupSelected)
+	ON_UPDATE_COMMAND_UI(IDM_MODULE_UNGROUP, OnUpdateModuleGroupSelected)
+	ON_UPDATE_COMMAND_UI(IDM_MODULE_FINISHEDIT, OnUpdateModuleFinishEdit)
+	ON_COMMAND(IDM_COLOR_CONSAT, OnColorConsat)
+	ON_COMMAND(IDM_COLOR_FACTORY, OnColorFactory)
+	ON_COMMAND(IDM_COLOR_CUSTOM, OnColorCustom)
+	ON_COMMAND(IDM_COLOR_DEFAULT, OnColorDefault)
+	ON_UPDATE_COMMAND_UI(IDM_COLOR_CONSAT, OnUpdateColor)
+	ON_UPDATE_COMMAND_UI(IDM_COLOR_FACTORY, OnUpdateColor)
+	ON_UPDATE_COMMAND_UI(IDM_COLOR_CUSTOM, OnUpdateColor)
+	ON_UPDATE_COMMAND_UI(IDM_COLOR_DEFAULT, OnUpdateColor)
+	ON_COMMAND(IDM_OPTIONS_SHORTCUTS, OnOptionsShortcuts)
 	ON_COMMAND(IDM_EDIT_REVISIONHISTORY, OnEditRevisionHistory)
 	ON_UPDATE_COMMAND_UI(IDM_EDIT_REVISIONHISTORY, OnUpdateEditRevisionHistory)
 	ON_COMMAND(ID_FILE_EXPORTPDF, OnFileExportpdf)
@@ -2015,6 +2034,7 @@ static bool IsAllowedWhenWriteProtected(UINT nID)
 		case IDM_FILE_CREATEVERSION:
 		case IDM_FILE_EDITFILE:
 		case IDM_SPECIAL_CREATEMODULE:
+		case IDM_OPTIONS_SHORTCUTS:
 			return true;
 		default:
 			return false;
@@ -2140,6 +2160,24 @@ void CConCadView::OnSpecialCreateModule()
 	module.GetRecord(0).description = _T("");
 	module.GetRecord(0).reference = _T("");
 
+	// Storing a placed module again: start from its current parameters
+	const int group = pDoc->GetSelectedGroup();
+	CDrawModuleInfo *pInfo = pDoc->IsSelectionOneGroup(group) ? pDoc->GetModuleInfo(group) : NULL;
+	if (pInfo != NULL)
+	{
+		CSymbolRecord &r = module.GetRecord(0);
+		r.name = pInfo->m_fields[0].value;
+		r.reference = pInfo->m_fields[1].value;
+		for (size_t i = CDrawModuleInfo::FixedFields; i < pInfo->m_fields.size(); i++)
+		{
+			CSymbolField f;
+			f.field_name = pInfo->m_fields[i].name;
+			f.field_default = pInfo->m_fields[i].value;
+			f.field_type = default_show;
+			r.fields.push_back(f);
+		}
+	}
+
 	CDlgUpdateBox dlg(AfxGetMainWnd());
 	dlg.SetSymbol(&module);
 	dlg.SetModuleMode();
@@ -2169,8 +2207,25 @@ void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)
 	pDoc->BeginNewChangeSet();
 	pDoc->SelectObject(new CDrawEditItem(pDoc));
 	pDoc->SelectObject(NULL);
-	if (pDoc->Import(*pStream))
+	// The placed objects form one module (a group)
+	const int group = pDoc->GetNewGroupId();
+	if (pDoc->Import(*pStream, group))
 	{
+		// ... with its parameters: Name, Reference and the module's fields
+		CDrawModuleInfo *pInfo = new CDrawModuleInfo(pDoc);
+		pInfo->m_group = group;
+		pInfo->m_fields[0].value = theModule->name;
+		pInfo->m_fields[1].value = theModule->reference;
+		for (size_t i = 0; i < theModule->fields.size(); i++)
+		{
+			CDrawModuleInfo::Field f;
+			f.name = theModule->fields[i].field_name;
+			f.value = theModule->fields[i].field_default;
+			pInfo->m_fields.push_back(f);
+		}
+		pDoc->Add(pInfo);
+		pDoc->Select(pInfo);
+
 		pDoc->PostPaste();
 		CDrawBlockImport *pImport = new CDrawBlockImport(pDoc);
 		pDoc->SelectObject(pImport);
@@ -2181,4 +2236,115 @@ void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)
 		pDoc->SelectObject(new CDrawEditItem(pDoc));
 	}
 	delete pStream;
+}
+
+// Esc: back to the select tool; in the select tool it also finishes
+// editing an open group
+void CConCadView::OnEditEdit()
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	const bool finish_group = pDoc->GetOpenGroup() != 0 && pDoc->GetEdit() != NULL && pDoc->GetEdit()->GetType() == xEditItem;
+	pDoc->SelectObject(new CDrawEditItem(pDoc));
+	if (finish_group)
+	{
+		pDoc->CloseGroup();
+	}
+}
+
+// Object -> Create Group (Ctrl+G)
+void CConCadView::OnObjectGroup()
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	if (pDoc->GetEdit() == NULL || pDoc->GetEdit()->GetType() != xEditItem)
+	{
+		return;
+	}
+	g_EditToolBar.m_ModuleEdit.CloseIfShowing();
+	pDoc->GroupSelection();
+}
+
+void CConCadView::OnUpdateObjectGroup(CCmdUI* pCmdUI)
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	pCmdUI->Enable(pDoc->IsSelected() && !pDoc->IsSingleItemSelected());
+}
+
+void CConCadView::OnUpdateModuleGroupSelected(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(GetCurrentDocument()->GetSelectedGroup() != 0);
+}
+
+void CConCadView::OnUpdateModuleFinishEdit(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(GetCurrentDocument()->GetOpenGroup() != 0);
+}
+
+// Object -> Colour (also on the right-click menu)
+void CConCadView::OnColorConsat()
+{
+	GetCurrentDocument()->SetSelectionColor(TRUE, CConCadRegistry::GetConsatColor());
+}
+
+void CConCadView::OnColorFactory()
+{
+	GetCurrentDocument()->SetSelectionColor(TRUE, CConCadRegistry::GetFactoryColor());
+}
+
+void CConCadView::OnColorCustom()
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	if (!pDoc->IsColorableSelected())
+	{
+		return;
+	}
+	COLORREF c = RGB(0, 0, 0);
+	pDoc->GetSelectionColor(c);
+	CColorDialog dlg(c, CC_FULLOPEN | CC_RGBINIT, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		pDoc->SetSelectionColor(TRUE, dlg.GetColor());
+	}
+}
+
+void CConCadView::OnColorDefault()
+{
+	GetCurrentDocument()->SetSelectionColor(FALSE, RGB(0, 0, 0));
+}
+
+void CConCadView::OnUpdateColor(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(GetCurrentDocument()->IsColorableSelected());
+}
+
+void CConCadView::OnOptionsShortcuts()
+{
+	CShortcutsDlg dlg(AfxGetMainWnd());
+	dlg.DoModal();
+}
+
+// Edit Group (right-click or double-click a group / placed module): its
+// objects can be selected and changed one by one until an object outside
+// it is clicked, Esc is pressed or Finish Editing Group is chosen
+void CConCadView::OnModuleEdit()
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	int group = pDoc->GetSelectedGroup();
+	if (group != 0)
+	{
+		pDoc->SelectObject(new CDrawEditItem(pDoc));
+		pDoc->OpenGroup(group);
+	}
+}
+
+void CConCadView::OnModuleUngroup()
+{
+	g_EditToolBar.m_ModuleEdit.CloseIfShowing();
+	GetCurrentDocument()->UngroupSelection();
+}
+
+void CConCadView::OnModuleFinishEdit()
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	pDoc->SelectObject(new CDrawEditItem(pDoc));
+	pDoc->CloseGroup();
 }

@@ -117,6 +117,8 @@ protected:
 	BOOL m_change_set;
 	BOOL m_InUndoAddAction;
 	BOOL m_DuplicateObjectOnly;
+	int m_open_group; // Module group being edited, 0 = none
+	bool m_group_frames_shown; // PaintGroupFrames drew a frame last time
 
 public:
 	CDrawingObject* Dup(CDrawingObject *p);
@@ -200,6 +202,41 @@ public:
 	// Select all objects
 	void SelectAll();
 
+	// Module groups: the objects of a placed module share a non-zero
+	// m_group and are selected, moved and deleted together, unless that
+	// group is open for editing (Edit Module).
+	int GetNewGroupId();
+	int GetOpenGroup() const
+	{
+		return m_open_group;
+	}
+	void OpenGroup(int group);
+	void CloseGroup();
+	bool IsInClosedGroup(CDrawingObject *obj) const;
+	void SelectGroup(CDrawingObject *obj); // obj, or its whole module
+	void UnSelectGroup(CDrawingObject *obj);
+	void SelectWholeGroups(); // extend the selection to whole modules
+	int GetSelectedGroup(); // first closed module in the selection, or 0
+	bool GetGroupExtent(int group, CDRect &r);
+	void SetGroup(drawingCollection &objs, int group);
+	void RemapGroups(drawingCollection &objs); // give copied modules fresh ids
+	void UngroupSelection();
+	void GroupSelection(); // Create Group: the selection becomes one group
+
+	// Module parameters (CDrawModuleInfo, one per placed module)
+	class CDrawModuleInfo* GetModuleInfo(int group);
+	bool IsSelectionOneGroup(int group); // everything selected is in this group
+	CString ResolveModuleTokens(const CString &s, int group); // module {fields} only
+	CString ResolveText(const CString &s, int group); // module fields, then design variables
+	void BakeModuleTokens(CDrawingObject *obj); // write the values into a text of a module
+
+	// Object -> Colour: own colour for the selected components, wires,
+	// cables, polygons and rectangles (use = FALSE: back to normal colours)
+	bool IsColorableSelected();
+	bool GetSelectionColor(COLORREF &c); // first coloured object in the selection
+	void SetSelectionColor(BOOL use, COLORREF c);
+	void PaintGroupFrames(CContext &dc);
+
 	// Change the Z-order of the selected objects
 	void BringToFront();
 	void SendToBack();
@@ -228,7 +265,7 @@ public:
 	void Display(CContext &);
 
 	BOOL Import(BOOL select_import_object);
-	BOOL Import(CStream&);
+	BOOL Import(CStream&, int group = 0); // group != 0: the imported objects form that module
 	BOOL ReadFile(CStream &theArchive);
 	BOOL ReadFileXML(CXMLReader &xml, BOOL AlreadyStarted);
 	BOOL ReadFile(CStream &theArchive, BOOL Details, drawingCollection &drawing);

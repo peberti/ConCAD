@@ -47,8 +47,8 @@ CDrawMethod::CDrawMethod(CConCadDoc *pDesign, hSYMBOL symbol, int new_rotation) 
 	can_scale = FALSE;
 	show_power = FALSE;
 	rotate = (BYTE) new_rotation;
-	m_use_connector_color = FALSE;
-	m_connector_color = RGB(0, 0, 0);
+	m_use_color = FALSE;
+	m_color = RGB(0, 0, 0);
 
 	m_Symbol = symbol;
 
@@ -339,8 +339,8 @@ CDrawMethod::CDrawMethod(CConCadDoc *pDesign) :
 {
 	m_Symbol = 0;
 	rotate = 0;
-	m_use_connector_color = FALSE;
-	m_connector_color = RGB(0, 0, 0);
+	m_use_color = FALSE;
+	m_color = RGB(0, 0, 0);
 
 	m_point_a = m_point_b = CDPoint(0, 0);
 
@@ -758,10 +758,10 @@ void CDrawMethod::SaveXML(CXMLWriter &xml)
 	xml.addAttribute(_T("scale_x"), scaling_x);
 	xml.addAttribute(_T("scale_y"), scaling_y);
 
-	if (m_use_connector_color)
+	if (m_use_color)
 	{
 		xml.addAttribute(_T("use_color"), (int)1);
-		xml.addAttribute(_T("color"), (int)m_connector_color);
+		xml.addAttribute(_T("color"), (int)m_color);
 	}
 
 	// Now write out the fields
@@ -806,14 +806,14 @@ void CDrawMethod::LoadXML(CXMLReader &xml)
 	int useColor = 0;
 	if (xml.getAttribute(_T("use_color"), useColor) && useColor != 0)
 	{
-		m_use_connector_color = TRUE;
+		m_use_color = TRUE;
 		int color = 0;
 		xml.getAttribute(_T("color"), color);
-		m_connector_color = (COLORREF)color;
+		m_color = (COLORREF)color;
 	}
 	else
 	{
-		m_use_connector_color = FALSE;
+		m_use_color = FALSE;
 	}
 
 	xml.intoTag();
@@ -1412,9 +1412,9 @@ void CDrawMethod::Paint(CContext &dc, paint_options options)
 	// library flag is later toggled.
 	BOOL was_forced = dc.GetForceColor();
 	COLORREF prev_forced = dc.GetForcedColor();
-	if (m_use_connector_color && options == draw_normal)
+	if (m_use_color && options == draw_normal)
 	{
-		dc.SetForcedColor(TRUE, m_connector_color);
+		dc.SetForcedColor(TRUE, m_color);
 	}
 
 	drawingIterator it = method.begin();

@@ -323,6 +323,7 @@ CDesignFileSymbol *CLibraryStoreNameSet::GetDesignSymbol(CConCadDoc *pDesign, in
 	psymbol->name_type = r.name_type;
 	psymbol->ref_type = r.ref_type;
 	psymbol->fields = r.fields;
+	psymbol->is_connector = r.is_connector;
 	psymbol->FilePos = FilePos;
 
 	CStream *stream = GetMethodArchive();
@@ -501,6 +502,11 @@ void CDesignFileSymbol::SaveXML(CXMLWriter &xml, bool refpoints)
 	xml.addTag(_T("PPP"), ppp);
 	xml.addTag(_T("GUID"), Guid);
 
+	if (is_connector)
+	{
+		xml.addTag(_T("CONNECTOR"), (int)1);
+	}
+
 	// Save the fields associated with this symbol
 	for (unsigned int i = 0; i < fields.size(); i++)
 	{
@@ -580,6 +586,12 @@ void CDesignFileSymbol::LoadXML(CConCadDoc *pDesign, CXMLReader &xml)
 		else if (tag == _T("GUID"))
 		{
 			xml.getChildData(Guid);
+		}
+		else if (tag == _T("CONNECTOR"))
+		{
+			int v = 0;
+			xml.getChildData(v);
+			is_connector = (v != 0);
 		}
 		else if (tag == _T("FIELD"))
 		{

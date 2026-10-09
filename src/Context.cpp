@@ -50,6 +50,7 @@ CContext::CContext(CWnd *NewWindow, Transform NewTransform)
 	allGrey = FALSE;
 	m_force_color = FALSE;
 	m_forced_color = RGB(0, 0, 0);
+	m_force_brush = TRUE;
 
 	haveDrawingExtent = FALSE;
 }
@@ -72,6 +73,7 @@ CContext::CContext(CDC *NewDC, Transform NewTransform, CWnd *pWnd)
 	allGrey = FALSE;
 	m_force_color = FALSE;
 	m_forced_color = RGB(0, 0, 0);
+	m_force_brush = TRUE;
 
 	haveDrawingExtent = FALSE;
 }
@@ -357,7 +359,7 @@ BOOL CContext::SelectBrush(COLORREF Colour, int Index)
 	// If painting all back and if any other colour than white override the colour
 	if (allBlack && Colour != cWhite) Colour = cBlack;
 
-	if (m_force_color) Colour = m_forced_color;
+	if (m_force_color && m_force_brush) Colour = m_forced_color;
 
 	// Does this brush already exist?
 	brush_map::iterator itb = m_brushes.find(sBrush(Colour, Index));

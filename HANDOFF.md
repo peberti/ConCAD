@@ -1,6 +1,31 @@
 # Session handoff — schematic feature work
 
-## Latest session (2026-10-07) — start here
+## Latest session (2026-10-08) — start here
+
+**Built (Debug) but not committed or tested in the app yet:**
+- Connector flag now reaches placed symbols (`Symbol.cpp`; TODO.md).
+- Groups (TODO "Module behaviour", CHANGES.md §11): placed modules and
+  Create Group (Ctrl+G) selections act as one block; new Object menu;
+  double-click / Esc open/close a group; Ctrl+Shift+G ungroups; saved as
+  `<GROUP id>` tags. Ctrl+G no longer toggles grid size.
+
+- 2026-10-09: wires kept in groups (CDrawLine operator=), self-detected
+  double click, shortcuts merge; Ctrl+F = Flip; Options → Keyboard
+  Shortcuts…; Object → Colour (Consat/Factory/Custom/Default) — CHANGES.md
+  §12–13. **Open: a crash (iterator into a freed list, 0xDDDDDDDD) seen by
+  the user on 2026-10-09 — call stack not yet received.**
+
+- 2026-10-09: module parameters in Tool Options (`CDrawModuleInfo`,
+  `<MODULEINFO>`, `{Reference}` etc. in module texts) — CHANGES.md §11.
+
+- 2026-10-09: user confirmed module parameters work. Added: edit library
+  modules in a window (`CConCadMultiModuleDoc`), modules in library XML
+  export/import.
+
+**Next:** the user runs quick-test steps 11–18 in CHANGES.md, then commit.
+The 2026-10-07 list below still applies (items 1–2 are covered by 11–13).
+
+## Session 2026-10-07
 
 **Machine rebuilt** after a wipe: VS 2022 + v142 + MFC reinstalled, builds
 clean (see `SETUP.md`). Claude can compile-check from WSL via MSBuild.

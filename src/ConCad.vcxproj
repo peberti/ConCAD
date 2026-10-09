@@ -1177,6 +1177,10 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="ShortcutsDlg.cpp" />
+    <ClCompile Include="ConCadMultiModuleDoc.cpp" />
+    <ClCompile Include="DrawModuleInfo.cpp" />
+    <ClCompile Include="EditDlgModuleEdit.cpp" />
     <ClCompile Include="Paint.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -1574,6 +1578,10 @@
     <ClInclude Include="Option.h" />
     <ClInclude Include="OptionsPropertySheet.h" />
     <ClInclude Include="OptionsSheets.h" />
+    <ClInclude Include="ShortcutsDlg.h" />
+    <ClInclude Include="ConCadMultiModuleDoc.h" />
+    <ClInclude Include="DrawModuleInfo.h" />
+    <ClInclude Include="EditDlgModuleEdit.h" />
     <ClInclude Include="Registry.h" />
     <ClInclude Include="ResizeWnd.h" />
     <ClInclude Include="Resource.h" />

@@ -689,7 +689,7 @@ accidental edits; it does not secure the file.
 
 ---
 
-## 11. Module library (Special → Create Module)
+## 11. Module library and groups (Object → Create Module)
 
 A **module** is a reusable piece of schematic — wires, placed symbols,
 labels, text, … — stored in a library and inserted into a design like a
@@ -698,7 +698,8 @@ paste.
 - **Set the library:** Options → Settings → Drawing → *Module library*
   lists the attached SQLite libraries (`.TCLib`). Choose one; modules are
   stored there.
-- **Create:** select the objects, then **Special → Create Module…**. The
+- **Create:** select the objects, then **Object → Create Module…** (also on
+  the right-click menu of a selection). The
   usual store dialog opens (titled *Store Module*, without the Connector
   box): give the module a name, description and fields, then *Store*. The
   definitions of the symbols the module uses are stored with it, so it can
@@ -708,10 +709,43 @@ paste.
   preview). Double-click it: its objects follow the mouse; click to drop
   them (right-click cancels), exactly like Edit → Paste. Symbol references
   are kept as stored (re-annotate if needed).
-- **Library window:** *Edit* does not open a module in the symbol editor
-  (storing it from there would lose its objects) — place it, change it and
-  Create Module again. *Duplicate*, *Send to library* and *Properties*
-  copy the module data unchanged. Library XML export skips modules.
+- **A placed module is a group.** Any selection can also be made a group
+  with **Object → Create Group** (Ctrl+G, or right-click a selected
+  object). Create Group only groups objects on the sheet; Create Module
+  stores the selection in the module library. Clicking any object of a group (or touching one with a
+  selection box) selects the whole group, shown with a dotted frame; it
+  moves, rotates, copies and deletes as one block. Its objects are still
+  ordinary sheet objects, so wires, junctions and the netlist treat them
+  as usual. The **Object** menu and the right-click menu offer:
+  - **Edit Group** (or double-click the group) opens it (dashed orange
+    frame): its objects can now be selected and changed one by one, and
+    anything drawn, placed or pasted meanwhile joins the group. It closes
+    again with **Esc** (in the select tool), a click on an object outside
+    it, a double-click outside it, or **Finish Editing Group**.
+  - **Ungroup** (Ctrl+Shift+G) dissolves the group for good (undoable);
+    the objects become ordinary objects.
+  - Creating a group from a selection that contains groups merges them.
+  Copy/paste or duplicate of a group gives a new, separate group.
+  Ctrl+G used to toggle the grid size; that is now only on its toolbar
+  button.
+- **Library window:** **Edit** (or double-click) on a module opens it in
+  a design window titled *Module: name* — one sheet, no title block. Change
+  it like any design (draw, place symbols, add `{Reference}`-style texts).
+  **File → Save** (Ctrl+S) opens the Store Module dialog (name, reference,
+  description, fields) and stores it back into the library; closing with
+  changes asks first. Sheets, hierarchical symbols and Create Version are
+  disabled there. *Duplicate*, *Send to library* and *Properties* copy
+  the module data unchanged.
+- **Library XML export / import** include modules: **Export** writes a
+  `<MODULE>` element per module (the same `PPP`/`ORIENTATION`/`DETAILS`
+  as a `<SYMBOL>`, then a `<TinyCAD>` document with the objects and the
+  symbols, fonts and styles they use); **Import** stores them as modules
+  again (SQLite libraries only — others report them as skipped). *Export
+  symbol* on a single module works too. Both report how many symbols and
+  modules were exported/imported, and a file that cannot be created is
+  reported. Older builds ignore `<MODULE>` on import.
+  (`ConCadMultiModuleDoc.{h,cpp}` is the module window and also reads and
+  writes the module data for the export/import.)
 - Replace Symbol refuses a module.
 
 **Storage:** a module is a normal library record whose `[Type]` column is
@@ -719,6 +753,13 @@ paste.
 `[Symbol].[Data]` is a `<TinyCAD>` XML document with the selected objects
 plus the FONT/STYLE/FILL/IMAGE/SYMBOLDEF resources they use. Older
 ConCAD/TinyCAD builds only read `[Type]=0`, so they ignore modules.
+
+**Grouping on the sheet:** each object carries a module group id
+(`CDrawingObject::m_group`, 0 = none). It is saved as an empty
+`<GROUP id="n"/>` element written just before each grouped object;
+older builds skip the unknown tag and load the objects as ordinary ones.
+The id only has to be unique within the sheet (pasted modules get fresh
+ids).
 
 Also fixed: `CLibrarySQLite::GetMethodArchive` now reports database errors
 instead of letting the exception escape.
@@ -734,6 +775,116 @@ instead of letting the exception escape.
   `src/LibraryStore.cpp`, `src/DrawMethod.cpp` (module guards)
 - `src/OptionsSheets.{h,cpp}`, `src/ConCadRegistry.*` (`ModuleLibrary`),
   `src/ConCad.rc`, `src/resource.h`
+- Grouping: `src/DrawingObject.{h,cpp}` (`m_group`), `src/ConCadDoc.{h,cpp}`
+  (group selection, open/close, ungroup, frames, `Import(stream, group)`),
+  `src/Io.cpp` (`<GROUP>`), `src/Item.cpp` (click/box selection, context
+  menu, double-click), `src/Paint.cpp`, `src/ConCadView.{h,cpp}`
+  (Create Group/Edit/Ungroup/Finish, Esc), `src/DrawingObject.cpp`
+  (`operator==` compares the group, so Undo of a group change works),
+  `src/ConCad.rc` (Object menu, Ctrl+G / Ctrl+Shift+G)
+- `src/Object.h` / `src/DrawHierarchicalSymbol.cpp`: the hand-written
+  `operator=` of `CDrawLine` and `CDrawHierarchicalSymbol` now copy
+  `m_group` (without it wires dropped out of their group on Undo, on a
+  move that split a wire, etc.)
+- Double click: the view's window class has no `CS_DBLCLKS`, so
+  `CDrawEditItem::LButtonDown` detects double clicks itself (system
+  double-click time and distance) — the drawing tools are unaffected.
+- New default shortcuts reaching existing users: see §13.
+
+### Module parameters (Tool Options)
+
+A placed module has parameters like a component: **Name**, **Reference**
+and the fields given in the Store Module dialog (e.g. *Package*). Clicking
+the module shows them in **Tool Options** (*Module Tool Options*): click a
+value to change it, **Add** / **Delete** the module's own fields (Name and
+Reference stay). A text or note **inside the module** shows a value by
+its name in braces — `{Reference}`, `{Name}`, `{Package}` — and updates as
+soon as the value changes. Names are case-insensitive; a `{token}` that is
+not a module parameter is still a design variable (§1). Module
+parameters do not appear as design variables in Design Details.
+
+- Placing a module from the library fills the parameters from the
+  library record (its name, reference and fields).
+- Create Module on a placed module pre-fills the Store Module dialog with
+  its current parameters; the texts keep their `{tokens}`.
+- Undo: all changes made in the panel while the module stays selected are
+  one undo step.
+- **Ungroup** or **Create Group** on a module writes the current values
+  into its texts (the `{tokens}` are replaced) and drops the parameters.
+- Copy/paste and duplicate copy the parameters with the module.
+
+**Storage:** a `<MODULEINFO>` element in the module's group (after its
+`<GROUP id>` tag) with one `<FIELD name="..." value="..."/>` per
+parameter. It is a new drawing object, `CDrawModuleInfo` (`ObjType`
+`xModuleInfo = 145`): never drawn, not clickable, a "construction" object
+(so it is not printed and not stored in library modules). Older builds
+skip the tag: the texts then show the raw `{tokens}`.
+
+Files: `src/DrawModuleInfo.{h,cpp}`, `src/EditDlgModuleEdit.{h,cpp}`
+(new), `src/EditToolBar.{h,cpp}`, `src/Item.cpp`
+(`UpdateModulePanel`), `src/ConCadDoc.{h,cpp}` (`GetModuleInfo`,
+`ResolveText`, baking on Ungroup), `src/DrawText.cpp`,
+`src/DrawNoteText.cpp`, `src/DetailsPropertyPages.cpp`, `src/Io.cpp`,
+`src/ConCadView.cpp`, `src/ConCad.rc` (`IDD_MODULE_EDIT`).
+
+---
+
+## 12. Object colours (Object → Colour)
+
+Components, wires, cables, buses, lines, polygons and rectangles/ellipses
+can be given their own colour: select them (one or many), then
+**Object → Colour** or right-click → **Colour**:
+
+- **Consat** (blue) and **Factory** (red). The two shades are set under
+  Options → Settings → Drawing → *Object colours*; the default is pure
+  blue / red. The chosen RGB value is stored in the object, so changing
+  the setting later affects only objects coloured afterwards.
+- **Custom…** — any colour (colour dialog).
+- **Default Colour** — back to the normal colours.
+
+Undoable. Polygons and rectangles change their outline only; fills keep
+their colour. Components are tinted completely (as the old connector
+colour did). Any component can now be coloured — also from its
+properties panel; the library *Connector* flag is no longer needed for
+this (it is still stored). Hierarchical-design symbols cannot be
+coloured.
+
+**Storage:** the `use_color="1" color="<COLORREF>"` attributes that
+`<SYMBOL>` already had (§5) are now also written on `<WIRE>`, `<CABLE>`,
+`<BUS>`, `<LINE>`, `<POLYGON>`, `<RECTANGLE>`/`<ELLIPSE>` — only when set.
+Older builds ignore them and show the normal colour.
+
+**Code:** `CDrawingObject::m_use_color` / `m_color` (replaces
+`CDrawMethod::m_use_connector_color` / `m_connector_color`),
+`CanColor()`, `SaveColorXML` / `LoadColorXML`; `CForcedColorScope` and a
+fills-too flag on `CContext::SetForcedColor`; `CConCadDoc::SetSelectionColor`;
+Consat/Factory shades in `CConCadRegistry` (`ConsatColor`, `FactoryColor`).
+
+---
+
+## 13. Keyboard shortcuts (Options → Keyboard Shortcuts…)
+
+- **Ctrl+F is Flip** now. Find has no shortcut (Edit → Find…).
+- **Options → Keyboard Shortcuts…** lists every command — the menus
+  (in menu order), the toolbar buttons (drawing tools etc.) and anything
+  else that has a shortcut — with its shortcuts. Select a command, click
+  in *New shortcut*, press the keys, **Assign**. A key already in use asks
+  before it is moved. **Remove** deletes the command's shortcuts, **Reset
+  All** goes back to the defaults in `ConCad.rc`. OK applies and saves.
+- The menus (including right-click menus) show the current shortcuts,
+  not the text written in the menu resources (`CMainFrame::OnInitMenuPopup`).
+
+**Storage:** MFC's keyboard manager keeps the table under
+`HKCU\Software\ConCAD\ConCAD\Workspace\Keyboard-0` and restores it at
+start-up — so a newer build's new default shortcuts would never appear.
+`ApplyNewDefaultShortcuts` (`src/ConCad.cpp`) therefore applies each new
+default once (profile value `Keyboard\Version`), replacing whatever used
+that key and keeping the user's other shortcuts. **When you change the
+accelerator table in `ConCad.rc`, add the change to that list and raise
+`latest`.** (The previous build deleted the saved table once instead.)
+
+Files: `src/ShortcutsDlg.{h,cpp}` (new), `src/MainFrm.{h,cpp}`,
+`src/ConCad.cpp`, `src/ConCad.rc`, `src/resource.h`.
 
 ---
 
@@ -744,8 +895,9 @@ the modified build remain compatible with prior versions in the
 following sense:
 
 - New elements (`<USERTOKEN>`, `<CABLE>`, `<CONNECTOR>`,
-  `<TITLEBLOCK_SVG>`, the new `use_color`/`color` attributes on
-  `<SYMBOL>`, `write_protected` on `<TinyCADSheets>`) are emitted only when
+  `<TITLEBLOCK_SVG>`, `<GROUP>`, `<MODULEINFO>`, the new `use_color`/`color` attributes on
+  `<SYMBOL>`, wires/cables/lines, `<POLYGON>` and rectangles/ellipses,
+  `write_protected` on `<TinyCADSheets>`) are emitted only when
   the corresponding feature is in use.
 - A pre-existing file with no new elements loads unchanged.
 - Saving a file with the new build, then loading it in the new build
@@ -819,3 +971,60 @@ XML-saved files.
     removes it. Library → Libraries → Edit the module library: Edit on the
     module shows a message; Duplicate makes "Copy of Test module";
     Properties lets you rename it.
+12. **Groups** — the Object menu exists (Create Group, Ungroup, Edit
+    Group, Finish Editing Group, Create Module…) and Special no longer has
+    Create Module. Place `Test module`. Click one of its wires: the whole
+    module is selected with a dotted frame; drag it — everything moves,
+    wires connected from outside stretch. Box-select touching one symbol
+    of it selects all of it. Ctrl+R rotates it as one; Delete removes all
+    of it; Undo brings it back. Ctrl+C / Ctrl+V gives a second, separate
+    group. Double-click it: orange dashed frame; click single parts and
+    move/edit them; draw a wire inside — it joins the group. Esc → frame
+    gone, it is a block again (including the new wire). Double-click it
+    again, then double-click empty space → closed. Right-click → Edit
+    Group, then right-click → Finish Editing Group also works. Select a
+    few loose wires and a symbol, right-click one of them: Create Group
+    and Create Module… are offered; Ctrl+G groups them. Ctrl+Shift+G
+    ungroups → parts select individually; **Undo regroups all of them,
+    wires included**, and only that step is undone. Save, close, reopen —
+    still grouped. Open the saved file in an older ConCAD build: it loads,
+    ungrouped.
+13. **Component colour** — place any symbol (not marked as connector),
+    open its properties: the colour button is enabled; set a colour. Save,
+    reopen: colour kept.
+14. **Object colours** — Options → Settings → Drawing: *Object colours*
+    group with Consat/Factory buttons. Select a symbol, a wire, a cable,
+    a filled rectangle and a polygon; right-click one → Colour → Consat:
+    all blue, the rectangle's fill unchanged. Object → Colour → Factory:
+    red. Custom… → pick green. Undo steps back one colour at a time.
+    Default Colour → normal again. Selection highlight still shows while
+    selected. Save, reopen — colours kept. Print / Export PDF show them.
+15. **Shortcuts** — Ctrl+F flips the selection; Edit → Find… has no
+    shortcut shown. Options → Keyboard Shortcuts…: the list shows menu
+    commands and toolbar tools; give *Wire* (toolbar) Ctrl+W → Assign;
+    assign Ctrl+F to something else → asked whether to move it. OK: the
+    menus show the new keys, the keys work. Restart ConCAD: still there.
+    Reset All → defaults back.
+16. **Module parameters** — draw a small circuit with a text
+    `Ref: {Reference}  Pkg: {Package}`; select it, Create Module…: Name
+    `Test2`, Reference `M?`, add a field *Package* = `TO-220`, Store.
+    Place `Test2`, click it: Tool Options shows *Module Tool Options* with
+    Name, Reference, Package; the text shows `Ref: M?  Pkg: TO-220`.
+    Change Reference to `M1` → the text updates at once. Add a field
+    `Voltage`, type `{Voltage}` into a new text inside the module (Edit
+    Group) → shows the value. Undo reverts the panel changes. Copy/paste
+    the module: the copy has its own values. Design Details does not list
+    Reference/Package as variables. Save, reopen — values kept. Ungroup →
+    the text now literally reads `Ref: M1 ...`.
+17. **Edit a library module** — Library → Libraries → Edit the module
+    library; double-click `Test2`: window *Module: Test2* with its objects,
+    no title block. Move a symbol, add a wire, Ctrl+S → Store Module
+    dialog → Store. Place `Test2` in a design: the change is there. Close
+    the module window after another change → asked to save. The sheet-tab
+    menu cannot add sheets there.
+18. **Library XML** — in the module library window: File → Export
+    library: message "Exported 0 symbol(s) and N module(s)"; the .xml has
+    `<MODULE>` elements. Create a new empty .TCLib, attach it, open it,
+    Import that .xml: "Imported 0 symbol(s) and N module(s)"; place one
+    from there — identical. Export a normal symbol library: symbols count
+    matches and re-imports as before.

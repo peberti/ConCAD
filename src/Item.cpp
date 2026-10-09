@@ -26,6 +26,8 @@
 #include "option.h"
 #include "LineUtils.h"
 #include "JunctionUtils.h"
+#include "EditToolbar.h"
+#include "DrawModuleInfo.h"
 
 ////// The item edit object //////
 
@@ -38,6 +40,7 @@ CDrawEditItem::CDrawEditItem(CConCadDoc *pDesign) :
 	InMove = FALSE;
 	InSelectByDrag = FALSE;
 	LastPos = CDPoint(-1, -1);
+	m_last_click_time = 0;
 }
 
 void CDrawEditItem::BeginEdit(BOOL re_edit)
@@ -76,6 +79,7 @@ void CDrawEditItem::EndEdit()
 
 	m_drag_utils.End(false);
 	m_pDesign->UnSelect();
+	UpdateModulePanel();
 	m_segment = 1;
 
 	// Undo move action if we're still moving
@@ -288,6 +292,14 @@ void CDrawEditItem::ClickSelection(CDPoint p, CDPoint no_snap_p)
 	CDrawingObject *closest_object = GetClosestObject(no_snap_p);
 	bool changeset_started = false;
 
+	// Clicking an object outside the module being edited finishes editing it
+	if (closest_object != NULL && m_pDesign->GetOpenGroup() != 0 && closest_object->m_group != m_pDesign->GetOpenGroup())
+	{
+		EndSelection();
+		m_pDesign->CloseGroup();
+		closest_object = GetClosestObject(no_snap_p);
+	}
+
 	if (!ctrl_pressed)
 	{
 		if (!m_pDesign->IsSelected(closest_object))
@@ -316,11 +328,11 @@ void CDrawEditItem::ClickSelection(CDPoint p, CDPoint no_snap_p)
 			if (m_pDesign->IsSelected(closest_object))
 			{
 
-				m_pDesign->UnSelect(closest_object);
+				m_pDesign->UnSelectGroup(closest_object);
 			}
 			else
 			{
-				m_pDesign->Select(closest_object);
+				m_pDesign->SelectGroup(closest_object);
 			}
 		}
 		else
@@ -328,7 +340,7 @@ void CDrawEditItem::ClickSelection(CDPoint p, CDPoint no_snap_p)
 			// Move selected item to the head
 			m_pDesign->BeginNewChangeSet();
 			changeset_started = true;
-			m_pDesign->Select(closest_object);
+			m_pDesign->SelectGroup(closest_object);
 			m_pDesign->MarkChangeForUndo(closest_object);
 		}
 
@@ -359,13 +371,58 @@ void CDrawEditItem::ClickSelection(CDPoint p, CDPoint no_snap_p)
 		else
 		{
 			m_segment = 1;
+
+			// A module moves as a block: its wires move with both ends
+			CDRect ext;
+			if (m_pDesign->IsInClosedGroup(closest_object) && m_pDesign->GetGroupExtent(closest_object->m_group, ext))
+			{
+				m_drag_utils.Begin(CDPoint(ext.left, ext.top), CDPoint(ext.right, ext.bottom));
+			}
 		}
 	}
 
+	UpdateModulePanel();
+}
+
+// A selection that is exactly one placed module shows its parameters in
+// Tool Options; anything else closes that panel
+void CDrawEditItem::UpdateModulePanel()
+{
+	CEditDlgModuleEdit &panel = g_EditToolBar.m_ModuleEdit;
+	const int group = m_pDesign->GetSelectedGroup();
+	CDrawModuleInfo *pInfo = m_pDesign->IsSelectionOneGroup(group) ? m_pDesign->GetModuleInfo(group) : NULL;
+	if (pInfo == NULL)
+	{
+		panel.CloseIfShowing();
+	}
+	else if (!panel.IsShowing(m_pDesign, group))
+	{
+		// Parameter changes in the panel are one undo step
+		m_pDesign->BeginNewChangeSet();
+		m_pDesign->MarkChangeForUndo(pInfo);
+		panel.Open(m_pDesign, pInfo);
+	}
 }
 
 void CDrawEditItem::LButtonDown(CDPoint p, CDPoint no_snap_p)
 {
+	// The view's window class has no CS_DBLCLKS (adding it would change how
+	// the drawing tools see fast clicks), so detect a double click here
+	CPoint pos;
+	GetCursorPos(&pos);
+	const DWORD now = (DWORD) GetMessageTime();
+	const bool double_click = m_last_click_time != 0
+		&& now - m_last_click_time <= GetDoubleClickTime()
+		&& abs(pos.x - m_last_click_pos.x) <= GetSystemMetrics(SM_CXDOUBLECLK) / 2
+		&& abs(pos.y - m_last_click_pos.y) <= GetSystemMetrics(SM_CYDOUBLECLK) / 2;
+	m_last_click_time = double_click ? 0 : now;
+	m_last_click_pos = pos;
+	if (double_click && GroupDoubleClick(p, no_snap_p))
+	{
+		m_pDesign->ForceSetCursor();
+		return;
+	}
+
 	ClickSelection(p, no_snap_p);
 
 	// Was a selection found?
@@ -399,6 +456,42 @@ void CDrawEditItem::LButtonDown(CDPoint p, CDPoint no_snap_p)
 
 	m_pDesign->ForceSetCursor();
 	m_pDesign->ShowModifiedFlag();
+}
+
+// Double-click a group (placed module) to edit its objects one by one;
+// double-click outside the group being edited to close it again
+void CDrawEditItem::DblLButtonDown(CDPoint p, CDPoint no_snap_p)
+{
+	GroupDoubleClick(p, no_snap_p);
+}
+
+// Returns true when the double click opened or closed a group
+bool CDrawEditItem::GroupDoubleClick(CDPoint p, CDPoint no_snap_p)
+{
+	CDrawingObject *obj = GetClosestObject(no_snap_p);
+	if (m_pDesign->GetOpenGroup() != 0)
+	{
+		if (obj != NULL && obj->m_group == m_pDesign->GetOpenGroup())
+		{
+			return false;
+		}
+		InMove = FALSE;
+		EditMethodText = -1;
+		EndSelection();
+		m_pDesign->CloseGroup();
+		return true;
+	}
+	if (m_pDesign->IsInClosedGroup(obj))
+	{
+		InMove = FALSE;
+		EditMethodText = -1;
+		EndSelection();
+		m_pDesign->OpenGroup(obj->m_group);
+		ClickSelection(p, no_snap_p);
+		InMove = FALSE;
+		return true;
+	}
+	return false;
 }
 
 void CDrawEditItem::Paint(CContext &dc, paint_options options)
@@ -506,6 +599,7 @@ void CDrawEditItem::LButtonUp(CDPoint p, CDPoint no_snap_p)
 		// Select the items in the box (if any)
 		m_pDesign->Select(m_point_a, m_point_b);
 		m_drag_utils.Begin(m_point_a, m_point_b);
+		UpdateModulePanel();
 		m_point_a = m_point_b = CDPoint(0, 0);
 
 		// If only one item selected then start editing it!
@@ -526,6 +620,8 @@ void CDrawEditItem::ReleaseSelection()
 {
 	// If in the middle of a move then cancel it!
 	InMove = FALSE;
+
+	g_EditToolBar.m_ModuleEdit.CloseIfShowing();
 
 	// If necessary remove the edit item dialog
 	if (!m_segment && m_pDesign->IsSingleItemSelected())
@@ -609,7 +705,49 @@ BOOL CDrawEditItem::RButtonDown(CDPoint p, CDPoint s)
 	{
 		menu.LoadMenu(IDR_EDITTOOL);
 	}
-	menu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, mp.x, mp.y, AfxGetMainWnd(), NULL);
+
+	// Group and module commands (as in the Object menu)
+	CMenu *pPopup = menu.GetSubMenu(0);
+	const bool any_selected = m_pDesign->IsSelected() != FALSE;
+	const bool group_selected = m_pDesign->GetSelectedGroup() != 0;
+	const bool group_open = m_pDesign->GetOpenGroup() != 0;
+	if (any_selected || group_open)
+	{
+		pPopup->AppendMenu(MF_SEPARATOR);
+	}
+	if (any_selected && !m_pDesign->IsSingleItemSelected())
+	{
+		pPopup->AppendMenu(MF_STRING, IDM_OBJECT_GROUP, _T("Create Group\tCtrl+G"));
+	}
+	if (group_selected)
+	{
+		pPopup->AppendMenu(MF_STRING, IDM_MODULE_EDIT, _T("Edit Group\tDouble-click"));
+		pPopup->AppendMenu(MF_STRING, IDM_MODULE_UNGROUP, _T("Ungroup\tCtrl+Shift+G"));
+	}
+	if (group_open)
+	{
+		pPopup->AppendMenu(MF_STRING, IDM_MODULE_FINISHEDIT, _T("Finish Editing Group\tEsc"));
+	}
+	if (any_selected)
+	{
+		pPopup->AppendMenu(MF_STRING, IDM_SPECIAL_CREATEMODULE, _T("Create Module..."));
+	}
+
+	// Own colour for components, wires, cables, polygons and rectangles
+	if (m_pDesign->IsColorableSelected())
+	{
+		CMenu colour;
+		colour.CreatePopupMenu();
+		colour.AppendMenu(MF_STRING, IDM_COLOR_CONSAT, _T("Consat"));
+		colour.AppendMenu(MF_STRING, IDM_COLOR_FACTORY, _T("Factory"));
+		colour.AppendMenu(MF_STRING, IDM_COLOR_CUSTOM, _T("Custom..."));
+		colour.AppendMenu(MF_SEPARATOR);
+		colour.AppendMenu(MF_STRING, IDM_COLOR_DEFAULT, _T("Default Colour"));
+		pPopup->AppendMenu(MF_SEPARATOR);
+		pPopup->AppendMenu(MF_POPUP, (UINT_PTR)colour.Detach(), _T("Colour"));
+	}
+
+	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, mp.x, mp.y, AfxGetMainWnd(), NULL);
 
 	return TRUE;
 }
@@ -634,6 +772,7 @@ void CDrawEditItem::EndSelection()
 
 	// Unselect the last object
 	m_pDesign->UnSelect();
+	UpdateModulePanel();
 	m_segment = 1;
 }
 

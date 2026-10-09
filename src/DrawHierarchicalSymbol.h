@@ -48,6 +48,10 @@ public:
 	virtual CDrawingObject* Store();
 
 	virtual ObjType GetType(); // Get this object's type
+	virtual BOOL CanColor() // its XML has no colour attributes
+	{
+		return FALSE;
+	}
 	virtual UINT getMenuID();
 	virtual int GetContextMenu();
 	virtual void ContextMenu(CDPoint p, UINT id);

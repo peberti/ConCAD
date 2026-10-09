@@ -239,6 +239,7 @@ class CContext
 	BOOL allBlack; // Make all colours Black
 	BOOL allGrey; // Make all colours lighter
 	BOOL m_force_color; // Force every pen/brush colour to m_forced_color
+	BOOL m_force_brush; // ... including brushes (fills)
 	COLORREF m_forced_color;
 
 	CSize GetTextExtentI(CString);
@@ -398,15 +399,21 @@ public:
 		allBlack = NewBlack;
 	}
 	// When on, every subsequent SelectPen/SelectBrush/SetTextColor renders
-	// with the given colour.  Used by CDrawMethod to tint connector symbols.
-	void SetForcedColor(BOOL on, COLORREF color)
+	// with the given colour (brushes only when 'brush' is set).  Used for
+	// the per-object colour override (Object -> Colour).
+	void SetForcedColor(BOOL on, COLORREF color, BOOL brush = TRUE)
 	{
 		m_force_color = on;
 		m_forced_color = color;
+		m_force_brush = brush;
 	}
 	BOOL GetForceColor() const
 	{
 		return m_force_color;
+	}
+	BOOL GetForceBrush() const
+	{
+		return m_force_brush;
 	}
 	COLORREF GetForcedColor() const
 	{
@@ -572,6 +579,31 @@ public:
 	}
 
 	CRect GetDrawingExtent() { return drawingExtent; }
+};
+
+// Paints with an object's own colour (if it has one) and restores the
+// previous forced colour afterwards
+class CForcedColorScope
+{
+public:
+	CForcedColorScope(CContext &dc, BOOL apply, COLORREF color, BOOL brush) :
+		m_dc(dc), m_on(dc.GetForceColor()), m_color(dc.GetForcedColor()), m_brush(dc.GetForceBrush())
+	{
+		if (apply)
+		{
+			dc.SetForcedColor(TRUE, color, brush);
+		}
+	}
+	~CForcedColorScope()
+	{
+		m_dc.SetForcedColor(m_on, m_color, m_brush);
+	}
+
+private:
+	CContext &m_dc;
+	BOOL m_on;
+	COLORREF m_color;
+	BOOL m_brush;
 };
 
 #endif

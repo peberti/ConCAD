@@ -16,6 +16,7 @@
 #include "MainFrm.h"
 #include "NewTypes.h"
 #include "AutoSave.h"
+#include "ShortcutsDlg.h"
 
 #include <dde.h>
 
@@ -30,6 +31,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_SIZE()
 	ON_WM_MOVE()
 	ON_WM_CLOSE()
+	ON_WM_INITMENUPOPUP()
 	ON_WM_TIMER()
 	ON_COMMAND(ID_VIEW_ANNOTATIONTOOLBAR, OnViewAnnotationtoolbar)
 	ON_COMMAND(ID_VIEW_EDITTOOLBAR, OnViewEdittoolbar)
@@ -444,4 +446,41 @@ LRESULT CMainFrame::OnToolbarReset(WPARAM wp, LPARAM)
 	}
 
 	return 0;
+}
+// Show the current keyboard shortcuts (Options > Keyboard Shortcuts) in the
+// menus instead of the ones written in the menu resources
+void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
+{
+	CMDIFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
+	if (bSysMenu || pPopupMenu == NULL)
+	{
+		return;
+	}
+
+	for (int i = 0; i < (int)pPopupMenu->GetMenuItemCount(); i++)
+	{
+		const UINT id = pPopupMenu->GetMenuItemID(i);
+		if (id == 0 || id == (UINT)-1 || id >= 0xF000)
+		{
+			continue;
+		}
+
+		CString text;
+		pPopupMenu->GetMenuString(i, text, MF_BYPOSITION);
+		const int tab = text.Find(_T('\t'));
+		CString label = tab >= 0 ? text.Left(tab) : text;
+		CString keys = CShortcutsDlg::GetShortcutText(m_hAccelTable, id);
+		if (keys.IsEmpty() && (id == IDM_MODULE_EDIT || id == IDM_MODULE_FINISHEDIT) && tab >= 0)
+		{
+			keys = text.Mid(tab + 1); // "Double-click" / "Esc" hints, not shortcuts
+		}
+		CString wanted = keys.IsEmpty() ? label : label + _T("\t") + keys;
+		if (wanted != text)
+		{
+			MENUITEMINFO mii = { sizeof(MENUITEMINFO) };
+			mii.fMask = MIIM_STRING;
+			mii.dwTypeData = (LPTSTR)(LPCTSTR)wanted;
+			::SetMenuItemInfo(pPopupMenu->GetSafeHmenu(), i, TRUE, &mii);
+		}
+	}
 }

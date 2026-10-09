@@ -72,6 +72,9 @@ public:
 
 	//-- Library that Special -> Create Module stores into (library name; empty = none)
 	static CString GetModuleLibrary();
+	//-- Object -> Colour -> Consat / Factory
+	static COLORREF GetConsatColor();
+	static COLORREF GetFactoryColor();
 
 	//=====================================================================
 	//== Mutator for application settings                               ==
@@ -108,6 +111,8 @@ public:
 
 	//-- Changes the module library
 	static void SetModuleLibrary(CString name);
+	static void SetConsatColor(COLORREF c);
+	static void SetFactoryColor(COLORREF c);
 
 	// Get when TinyCAD was installed
 	static CString GetInstalledFileTime();
@@ -133,6 +138,8 @@ private:
 	static const CString M_SASKNEWTITLEBLOCK;
 	static const CString M_SLASTREVISEDBY;
 	static const CString M_SMODULELIBRARY;
+	static const CString M_SCONSATCOLOR;
+	static const CString M_SFACTORYCOLOR;
 };
 //=========================================================================
 

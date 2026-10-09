@@ -39,6 +39,30 @@ CDrawingObject::CDrawingObject(CConCadDoc *pDesign)
 	m_point_a = CDPoint(0, 0);
 	m_point_b = CDPoint(0, 0);
 	m_segment = 0;
+	m_group = 0;
+	m_use_color = FALSE;
+	m_color = RGB(0, 0, 0);
+}
+
+void CDrawingObject::SaveColorXML(CXMLWriter &xml)
+{
+	if (m_use_color)
+	{
+		xml.addAttribute(_T("use_color"), (int)1);
+		xml.addAttribute(_T("color"), (int)m_color);
+	}
+}
+
+void CDrawingObject::LoadColorXML(CXMLReader &xml)
+{
+	int use = 0;
+	int color = 0;
+	m_use_color = xml.getAttribute(_T("use_color"), use) && use != 0;
+	if (m_use_color)
+	{
+		xml.getAttribute(_T("color"), color);
+	}
+	m_color = (COLORREF)color;
 }
 
 BOOL CDrawingObject::IsConstruction()
@@ -312,6 +336,13 @@ bool CDrawingObject::operator==(const CDrawingObject &obj) const
 {
 	// Cheap test for unequality
 	if (m_point_a != obj.m_point_a || m_point_b != obj.m_point_b)
+	{
+		return false;
+	}
+
+	// The group is not part of the object's own XML, but a change of it is
+	// a real change (Undo of Ungroup / Create Group relies on this)
+	if (m_group != obj.m_group)
 	{
 		return false;
 	}

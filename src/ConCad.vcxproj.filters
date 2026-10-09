@@ -316,6 +316,18 @@
     <ClCompile Include="OptionsSheets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShortcutsDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConCadMultiModuleDoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawModuleInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditDlgModuleEdit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Paint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -661,6 +673,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OptionsPropertySheet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShortcutsDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConCadMultiModuleDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawModuleInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditDlgModuleEdit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OptionsSheets.h">

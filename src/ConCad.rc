@@ -130,9 +130,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Rotate Left\tCtrl+L",         IDM_EDITROTATELEFT
         MENUITEM "Rotate Right\tCtrl+R",        IDM_EDITROTATERIGHT
-        MENUITEM "Flip",                        IDM_EDITFLIP
+        MENUITEM "Flip\tCtrl+F",                IDM_EDITFLIP
         MENUITEM SEPARATOR
-        MENUITEM "&Find...\tCtrl+F",            ID_FIND_FIND
+        MENUITEM "&Find...",                    ID_FIND_FIND
         MENUITEM SEPARATOR
         MENUITEM "Zoom In\tPg Up",              IDM_VIEWZOOMIN
         MENUITEM "Zoom Out\tPg Dn",             IDM_VIEWZOOMOUT
@@ -141,6 +141,24 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Design Details...\tCtrl+D",  IDM_FILEDESIGN
         MENUITEM "&Revision History",           IDM_EDIT_REVISIONHISTORY
+    END
+    POPUP "&Object"
+    BEGIN
+        MENUITEM "Create &Group\tCtrl+G",       IDM_OBJECT_GROUP
+        MENUITEM "&Ungroup\tCtrl+Shift+G",      IDM_MODULE_UNGROUP
+        MENUITEM "&Edit Group\tDouble-click",   IDM_MODULE_EDIT
+        MENUITEM "&Finish Editing Group\tEsc",  IDM_MODULE_FINISHEDIT
+        MENUITEM SEPARATOR
+        POPUP "&Colour"
+        BEGIN
+            MENUITEM "&Consat",                     IDM_COLOR_CONSAT
+            MENUITEM "&Factory",                    IDM_COLOR_FACTORY
+            MENUITEM "C&ustom...",                  IDM_COLOR_CUSTOM
+            MENUITEM SEPARATOR
+            MENUITEM "&Default Colour",             IDM_COLOR_DEFAULT
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Create &Module...",           IDM_SPECIAL_CREATEMODULE
     END
     POPUP "&Library"
     BEGIN
@@ -157,12 +175,12 @@ BEGIN
         MENUITEM "&Generate Symbol References...", IDM_SPECIALANNOTATE
         MENUITEM "Create &Parts List...",       IDM_SPECIALBOM
         MENUITEM SEPARATOR
-        MENUITEM "Create &Module...",           IDM_SPECIAL_CREATEMODULE
         MENUITEM "Insert another design as symbol...", IDM_TOOLHIERARCHICAL
     END
     POPUP "&Options"
     BEGIN
         MENUITEM "&Settings",                   IDM_VIEW_OPTIONS
+        MENUITEM "&Keyboard Shortcuts...",      IDM_OPTIONS_SHORTCUTS
         MENUITEM "Colours",                     ID_OPTIONS_COLOURS
         MENUITEM SEPARATOR
         MENUITEM "Show &Position",              IDM_VIEWSHOWPOS
@@ -304,7 +322,7 @@ BEGIN
     "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
     "P",            ID_FILE_PRINT,          VIRTKEY, CONTROL, NOINVERT
     "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
-    "F",            ID_FIND_FIND,           VIRTKEY, CONTROL, NOINVERT
+    "F",            IDM_EDITFLIP,           VIRTKEY, CONTROL, NOINVERT
     "Q",            ID_OPTIONS_TOGGLE_UNITS, VIRTKEY, CONTROL, NOINVERT
     VK_F6,          ID_OPTIONS_TOOLBARS_SYMBOL, VIRTKEY, NOINVERT
     VK_F9,          IDM_BUSBACK,            VIRTKEY, NOINVERT
@@ -327,7 +345,8 @@ BEGIN
     "D",            IDM_FILEDESIGN,         VIRTKEY, CONTROL, NOINVERT
     "I",            IDM_FILEIMPORT,         VIRTKEY, CONTROL, NOINVERT
     "N",            IDM_SNAPTOGRID,         VIRTKEY, SHIFT, CONTROL, NOINVERT
-    "G",            IDM_TOGGLE_GRIDSIZE,    VIRTKEY, CONTROL, NOINVERT
+    "G",            IDM_OBJECT_GROUP,       VIRTKEY, CONTROL, NOINVERT
+    "G",            IDM_MODULE_UNGROUP,     VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_F10,         IDM_TOOLBUS,            VIRTKEY, NOINVERT
     VK_F7,          IDM_TOOLBUSNAME,        VIRTKEY, NOINVERT
     VK_F5,          IDM_TOOLCONNECT,        VIRTKEY, NOINVERT
@@ -485,7 +504,7 @@ BEGIN
     LTEXT           "mm",GRIDBOX_UNITS,127,70,19,8
 END
 
-IDD_OPTIONS_DRAWING DIALOGEX 6, 18, 190, 212
+IDD_OPTIONS_DRAWING DIALOGEX 6, 18, 190, 244
 STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Drawing"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
@@ -509,6 +528,26 @@ BEGIN
     GROUPBOX        "Modules",IDC_STATIC,10,178,166,30
     LTEXT           "Module library:",IDC_STATIC,18,192,52,8
     COMBOBOX        IDC_OPT_MODULE_LIB,72,190,98,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Object colours (Object > Colour)",IDC_STATIC,10,212,166,28
+    PUSHBUTTON      "Consat colour...",IDC_OPT_CONSAT_COLOR,18,224,72,12
+    PUSHBUTTON      "Factory colour...",IDC_OPT_FACTORY_COLOR,98,224,72,12
+END
+
+IDD_SHORTCUTS DIALOGEX 0, 0, 300, 228
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Keyboard Shortcuts"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    LTEXT           "Select a command, click in the box below, press the keys and click Assign.",IDC_STATIC,7,7,286,8
+    CONTROL         "",IDC_SC_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,19,286,146
+    LTEXT           "New shortcut:",IDC_STATIC,7,174,48,8
+    EDITTEXT        IDC_SC_KEY,58,172,116,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Assign",IDC_SC_ASSIGN,182,171,52,14
+    PUSHBUTTON      "&Remove",IDC_SC_REMOVE,241,171,52,14
+    LTEXT           "Remove deletes all shortcuts of the selected command.",IDC_SC_INFO,7,191,286,8
+    PUSHBUTTON      "Reset All",IDC_SC_RESET,7,207,60,14
+    DEFPUSHBUTTON   "OK",IDOK,182,207,52,14
+    PUSHBUTTON      "Cancel",IDCANCEL,241,207,52,14
 END
 
 IDD_NO_TOOL DIALOG 4, 16, 94, 18
@@ -548,6 +587,16 @@ BEGIN
     PUSHBUTTON      "Delete",IDC_DELETE,58,169,50,11
     CONTROL         "Show Power Pins",METHODBOX_SHOWPOWER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,36,71,10
     PUSHBUTTON      "Co&lor...",METHODBOX_COLOR,144,36,50,11
+END
+
+IDD_MODULE_EDIT DIALOGEX 6, 18, 200, 150
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Click a value to change it. A text in the module shows a value with its name in braces: {Name}, {Reference}, ...",IDC_STATIC,4,3,192,18
+    CONTROL         "",IDC_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,4,23,192,108
+    PUSHBUTTON      "Add",IDC_ADD,4,135,50,11
+    PUSHBUTTON      "Delete",IDC_DELETE,58,135,50,11
 END
 
 IDD_PAGESIZE DIALOGEX 0, 0, 209, 133
@@ -1217,6 +1266,15 @@ BEGIN
     IDM_FILE_EDITFILE       "Make an editable working copy of this write-protected version\nEdit file"
     IDM_EDIT_REVISIONHISTORY "Show or hide the revision history table on the first sheet\nRevision history"
     IDM_SPECIAL_CREATEMODULE "Store the selected objects as a module in the module library\nCreate module"
+    IDM_OBJECT_GROUP        "Make the selected objects one group that is selected and moved as a block\nCreate group"
+    IDM_COLOR_CONSAT        "Give the selected objects the Consat colour (Options > Settings > Drawing)\nConsat colour"
+    IDM_COLOR_FACTORY       "Give the selected objects the Factory colour (Options > Settings > Drawing)\nFactory colour"
+    IDM_COLOR_CUSTOM        "Give the selected objects a colour of your choice\nCustom colour"
+    IDM_COLOR_DEFAULT       "Give the selected objects their normal colours again\nDefault colour"
+    IDM_OPTIONS_SHORTCUTS   "Assign keyboard shortcuts to commands\nKeyboard shortcuts"
+    IDM_MODULE_UNGROUP      "Dissolve the selected groups into ordinary objects\nUngroup"
+    IDM_MODULE_EDIT         "Edit the objects of the selected group one by one\nEdit group"
+    IDM_MODULE_FINISHEDIT   "Finish editing the group; it is selected and moved as a block again\nFinish editing group"
     ID_OPTIONS_COLOURS      "Set the colours used in the drawing\nDrawing colours"
     ID_CONTEXT_DUPLICATESYMBOL 
                             "Make a copy of this symbol within this library"

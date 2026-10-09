@@ -83,6 +83,7 @@ enum ObjType {
 	xRefPoint = 142,
 	xCable = 143,
 	xRevisionHistory = 144,
+	xModuleInfo = 145,
 
 	// the value for undefined
 	xNULL = 255
@@ -105,6 +106,9 @@ public:
 	// the bounding box of the object
 
 	char m_segment; // Mode of current edit
+	int m_group; // Module group: objects of one placed module share a non-zero id (0 = none)
+	BOOL m_use_color; // Per-object colour override (Object -> Colour)
+	COLORREF m_color;
 
 	CDrawingObject(CConCadDoc *pDesign);
 	virtual ~CDrawingObject()
@@ -133,6 +137,12 @@ public:
 	virtual BOOL IsCompletelyInside(double left, double right, double top, double bottom); // Is this object completely inside this rectangle?
 
 	virtual BOOL CanEdit(); // Is this object editable after placed?
+	virtual BOOL CanColor() // Can the user give it its own colour (Object -> Colour)?
+	{
+		return FALSE;
+	}
+	void SaveColorXML(CXMLWriter &xml); // use_color/color attributes, only when set
+	void LoadColorXML(CXMLReader &xml);
 	virtual CString GetName() const; // Get the string name of this object
 	virtual ObjType GetType(); // Get this object's type
 

@@ -37,6 +37,7 @@
 #include "EditDlgDrawPolyEdit.h"
 #include "EditDlgHierarchicalEdit.h"
 #include "EditDlgNoteText.h"
+#include "EditDlgModuleEdit.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CEditToolbar window
@@ -81,6 +82,7 @@ public:
 	CEditDlgPolygon				m_PolygonEdit;			//Used to edit already existing annotation polygons
 	CEditDlgHierarchicalEdit	m_HierarchicalEdit;		//Used to edit hierarchical symbols
 	CEditDlgNoteText			m_NoteTextEdit;				//Used to edit multi-line NoteText
+	CEditDlgModuleEdit			m_ModuleEdit;			//Used to edit the parameters of a placed module
 	void changeSelected(CDrawingObject *previous, CDrawingObject *pObject);
 
 	// Generated message map functions

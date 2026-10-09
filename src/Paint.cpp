@@ -154,6 +154,12 @@ void CConCadView::OnDraw(CDC* pDC)
 			++it;
 		}
 
+		// Frame the selected modules and the module being edited
+		if (!pDC->IsPrinting())
+		{
+			GetCurrentDocument()->PaintGroupFrames(dc);
+		}
+
 		// Now draw the selectable object, so it stands out...
 		CDrawingObject *obj = GetCurrentDocument()->GetSelectable();
 		if (obj != NULL && !GetCurrentDocument()->IsSelected(obj))

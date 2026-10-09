@@ -390,6 +390,8 @@ void COptionsDrawing::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(COptionsDrawing, CPropertyPage)
 	ON_BN_CLICKED(IDC_OPT_WIRE_COLOR, OnWireColor)
 	ON_BN_CLICKED(IDC_OPT_CABLE_COLOR, OnCableColor)
+	ON_BN_CLICKED(IDC_OPT_CONSAT_COLOR, OnConsatColor)
+	ON_BN_CLICKED(IDC_OPT_FACTORY_COLOR, OnFactoryColor)
 	ON_BN_CLICKED(IDC_OPT_COMP_FONT, OnCompFont)
 END_MESSAGE_MAP()
 
@@ -402,6 +404,8 @@ BOOL COptionsDrawing::OnInitDialog()
 	m_noteRounded = pOpt->GetNoteDefaultRounded();
 	m_wireColor   = pOpt->GetUserColor().Get(CUserColor::WIRE);
 	m_cableColor  = pOpt->GetUserColor().Get(CUserColor::CABLE);
+	m_consatColor  = CConCadRegistry::GetConsatColor();
+	m_factoryColor = CConCadRegistry::GetFactoryColor();
 	m_compFont    = *pOpt->GetComponentLabelFont();
 	m_askTitleBlock = CConCadRegistry::GetAskNewTitleBlock();
 
@@ -468,6 +472,24 @@ void COptionsDrawing::OnCableColor()
 	}
 }
 
+void COptionsDrawing::OnConsatColor()
+{
+	CColorDialog dlg(m_consatColor, CC_FULLOPEN | CC_ANYCOLOR, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		m_consatColor = dlg.GetColor();
+	}
+}
+
+void COptionsDrawing::OnFactoryColor()
+{
+	CColorDialog dlg(m_factoryColor, CC_FULLOPEN | CC_ANYCOLOR, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		m_factoryColor = dlg.GetColor();
+	}
+}
+
 void COptionsDrawing::OnCompFont()
 {
 	CFontDialog dlg(&m_compFont, CF_SCREENFONTS | CF_NOSIZESEL, NULL, this);
@@ -498,6 +520,8 @@ BOOL COptionsDrawing::OnApply()
 	pOpt->SetComponentLabelFont(m_compFont);
 
 	CConCadRegistry::SetAskNewTitleBlock(m_askTitleBlock == TRUE);
+	CConCadRegistry::SetConsatColor(m_consatColor);
+	CConCadRegistry::SetFactoryColor(m_factoryColor);
 
 	const int sel = m_moduleLib.GetCurSel();
 	if (sel >= 0 && sel < (int)m_moduleLibNames.size())

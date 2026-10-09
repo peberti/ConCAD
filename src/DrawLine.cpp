@@ -114,6 +114,7 @@ void CDrawLine::SaveXML(CXMLWriter &xml)
 
 	xml.addAttribute(_T("a"), m_point_a);
 	xml.addAttribute(_T("b"), m_point_b);
+	SaveColorXML(xml);
 	xml.closeTag();
 }
 
@@ -143,6 +144,7 @@ void CDrawLine::LoadXML(CXMLReader &xml)
 
 	xml.getAttribute(_T("a"), m_point_a);
 	xml.getAttribute(_T("b"), m_point_b);
+	LoadColorXML(xml);
 }
 
 // Load the line from a file
@@ -716,6 +718,9 @@ int CDrawLine::SetCursorEdit(CDPoint p)
 // Display the line on the screen!
 void CDrawLine::Paint(CContext &dc, paint_options options)
 {
+	// Own colour (Object -> Colour): outline only, fills keep their colour
+	CForcedColorScope own_color(dc, m_use_color && options == draw_normal, m_color, FALSE);
+
 	if (m_use_default_style)
 	{
 		switch (xtype)
