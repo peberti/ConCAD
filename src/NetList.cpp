@@ -3092,12 +3092,12 @@ void CNetList::WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename)
 
 	symbolCollection::iterator sit = symbols.begin();
 
-	typedef std::set<CString> strings;
-	typedef std::vector<strings> string_collection;
-	string_collection prolog_lines;
-	string_collection epilog_lines;
-	prolog_lines.resize(10);
-	epilog_lines.resize(10);
+	// Prologues and epilogues, each included once, in drawing order.  Those
+	// of symbols without a SPICE model (the RUN node) go first (prologue)
+	// and last (epilogue).
+	typedef std::vector<CString> strings;
+	strings run_prolog, prolog_lines, epilog_lines, run_epilog;
+	std::set<CString> seen_prolog, seen_epilog;
 
 	/// Do this for all of the files in the imports list...
 	fileCollection::iterator fi = m_imports.begin();
@@ -3126,8 +3126,7 @@ void CNetList::WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename)
 
 					CString spice_prolog;
 					CString spice_epilog;
-					int spice_pro_priority = 5;
-					int spice_epi_priority = 5;
+					bool has_model = false;
 
 					for (int j = 0; j < pMethod->GetFieldCount(); j++)
 					{
@@ -3142,38 +3141,22 @@ void CNetList::WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename)
 							CNetListSymbol symbol( (*fi)->getFileNameIndex(), sheet, pMethod);
 							spice_epilog = expand_spice( (*fi)->getFileNameIndex(), sheet, symbol, labels, preferredLabel, pMethod->GetField(j));
 						}
-						else if (field.CompareNoCase(AttrSpicePrologPri) == 0)
+						else if (field.CompareNoCase(AttrSpice) == 0 && !pMethod->GetField(j).IsEmpty())
 						{
-							spice_pro_priority = _tstoi(pMethod->GetField(j));
-							if (spice_pro_priority < 0 || spice_pro_priority > 9)
-							{
-								spice_pro_priority = 5;
-							}
-						}
-						else if (field.CompareNoCase(AttrSpiceEpilogPri) == 0)
-						{
-							spice_epi_priority = _tstoi(pMethod->GetField(j));
-							if (spice_epi_priority < 0 || spice_epi_priority > 9)
-							{
-								spice_epi_priority = 5;
-							}
+							has_model = true;
 						}
 					}
 
-					/// Prologue...
-					strings &prolog = prolog_lines[spice_pro_priority];
-					if (prolog.find(spice_prolog) == prolog.end())
+					/// Prologue... (once)
+					if (!spice_prolog.IsEmpty() && seen_prolog.insert(spice_prolog).second)
 					{
-						/// Not included yet...
-						prolog.insert(spice_prolog);
+						(has_model ? prolog_lines : run_prolog).push_back(spice_prolog);
 					}
 
-					/// Epilog..
-					strings &epilog = epilog_lines[spice_pro_priority];
-					if (epilog.find(spice_epilog) == epilog.end())
+					/// Epilog... (once)
+					if (!spice_epilog.IsEmpty() && seen_epilog.insert(spice_epilog).second)
 					{
-						/// Not included yet...
-						epilog.insert(spice_epilog);
+						(has_model ? epilog_lines : run_epilog).push_back(spice_epilog);
 					}
 				}
 
@@ -3182,19 +3165,14 @@ void CNetList::WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename)
 		}
 	}
 
-	/// We have extracted the prologue, so now output it in the order of priority (0 being first...)
-	int priority;
-	for (priority = 0; priority < 10; priority++)
+	/// We have extracted the prologue, so now output it (RUN node first)
+	for (size_t i = 0; i < run_prolog.size(); i++)
 	{
-		CString temp;
-		strings &s = prolog_lines[priority];
-		strings::iterator i = s.begin();
-		while (i != s.end())
-		{
-			temp = *i;
-			_ftprintf(theFile, _T("%s\n"), (LPCTSTR)temp);
-			++i;
-		}
+		_ftprintf(theFile, _T("%s\n"), (LPCTSTR)run_prolog[i]);
+	}
+	for (size_t i = 0; i < prolog_lines.size(); i++)
+	{
+		_ftprintf(theFile, _T("%s\n"), (LPCTSTR)prolog_lines[i]);
 	}
 
 	/// We now have the netlist in the form we require it, so
@@ -3231,18 +3209,14 @@ void CNetList::WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename)
 		++sit;
 	}
 
-	/// Now write out the epilog
-	for (priority = 9; priority >= 0; priority--)
+	/// Now write out the epilog (RUN node last)
+	for (size_t i = 0; i < epilog_lines.size(); i++)
 	{
-		CString temp;
-		strings &s = epilog_lines[priority];
-		strings::iterator i = s.begin();
-		while (i != s.end())
-		{
-			temp = *i;
-			_ftprintf(theFile, _T("%s\n"), (LPCTSTR)temp);
-			++i;
-		}
+		_ftprintf(theFile, _T("%s\n"), (LPCTSTR)epilog_lines[i]);
+	}
+	for (size_t i = 0; i < run_epilog.size(); i++)
+	{
+		_ftprintf(theFile, _T("%s\n"), (LPCTSTR)run_epilog[i]);
 	}
 
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));

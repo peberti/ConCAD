@@ -44,10 +44,6 @@ void CDlgUpdateBox::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CDlgUpdateBox)
-	DDX_Control(pDX, IDC_PRO_SPIN, m_Pro_Spin);
-	DDX_Control(pDX, IDC_PRO_PRIORITY, m_Pro_Priority);
-	DDX_Control(pDX, IDC_EPI_SPIN, m_Epi_Spin);
-	DDX_Control(pDX, IDC_EPI_PRIORITY, m_Epi_Priority);
 	DDX_Control(pDX, IDC_SPICE_PROLOG, m_Spice_Prolog);
 	DDX_Control(pDX, IDC_SPICE_EPILOG, m_Spice_Epilog);
 	DDX_Control(pDX, IDC_STATIC4, m_Static4);
@@ -168,8 +164,6 @@ void CDlgUpdateBox::InitFromRecord()
 	AddSymbolField(f);
 
 	BOOL have_package = FALSE;
-	int pro_priority = 5;
-	int epi_priority = 5;
 
 	for (unsigned int i = 0; i < r.fields.size(); i++)
 	{
@@ -189,21 +183,10 @@ void CDlgUpdateBox::InitFromRecord()
 			// This is the spice includes
 			m_Spice_Epilog.SetWindowText(r.fields[i].field_default);
 		}
-		else if (field.CompareNoCase(AttrSpicePrologPri) == 0)
+		else if (field.Left(15).CompareNoCase(_T("$$SPICE_PROLOG_")) == 0 || field.Left(15).CompareNoCase(_T("$$SPICE_EPILOG_")) == 0)
 		{
-			pro_priority = _tstoi(r.fields[i].field_default);
-			if (pro_priority < 0 || pro_priority > 10)
-			{
-				pro_priority = 5;
-			}
-		}
-		else if (field.CompareNoCase(AttrSpiceEpilogPri) == 0)
-		{
-			epi_priority = _tstoi(r.fields[i].field_default);
-			if (epi_priority < 0 || epi_priority > 10)
-			{
-				epi_priority = 5;
-			}
+			// Priority fields of older libraries: no longer used, dropped
+			// when the symbol is stored again
 		}
 		else
 		{
@@ -215,17 +198,6 @@ void CDlgUpdateBox::InitFromRecord()
 			}
 		}
 	}
-
-	// Write the priority fields
-	CString s;
-	s.Format(_T("%d"), pro_priority);
-	m_Pro_Priority.SetWindowText(s);
-	s.Format(_T("%d"), epi_priority);
-	m_Epi_Priority.SetWindowText(s);
-
-	// Now set-up the spin controls
-	m_Pro_Spin.SetRange(0, 9);
-	m_Epi_Spin.SetRange(0, 9);
 
 	if (!have_package)
 	{
@@ -264,13 +236,9 @@ void CDlgUpdateBox::UpdateToRecord()
 	CString spice_model;
 	CString spice_prolog;
 	CString spice_epilog;
-	CString spice_pro_priority;
-	CString spice_epi_priority;
 	m_Spice_Model.GetWindowText(spice_model);
 	m_Spice_Prolog.GetWindowText(spice_prolog);
 	m_Spice_Epilog.GetWindowText(spice_epilog);
-	m_Pro_Priority.GetWindowText(spice_pro_priority);
-	m_Epi_Priority.GetWindowText(spice_epi_priority);
 	if (!spice_model.IsEmpty())
 	{
 		f.field_name = AttrSpice;
@@ -289,20 +257,6 @@ void CDlgUpdateBox::UpdateToRecord()
 	{
 		f.field_name = AttrSpiceEpilog;
 		f.field_default = spice_epilog;
-		f.field_type = always_hidden;
-		r.fields.push_back(f);
-	}
-	if (!spice_pro_priority.IsEmpty())
-	{
-		f.field_name = AttrSpicePrologPri;
-		f.field_default = spice_pro_priority;
-		f.field_type = always_hidden;
-		r.fields.push_back(f);
-	}
-	if (!spice_epi_priority.IsEmpty())
-	{
-		f.field_name = AttrSpiceEpilogPri;
-		f.field_default = spice_epi_priority;
 		f.field_type = always_hidden;
 		r.fields.push_back(f);
 	}
@@ -770,10 +724,6 @@ void CDlgUpdateBox::OnSelchangeTab1(NMHDR* pNMHDR, LRESULT* pResult)
 	m_Static2.ShowWindow(sel == 1);
 	m_Static3.ShowWindow(sel == 1);
 	m_Static4.ShowWindow(sel == 1);
-	m_Pro_Priority.ShowWindow(sel == 1);
-	m_Epi_Priority.ShowWindow(sel == 1);
-	m_Pro_Spin.ShowWindow(sel == 1);
-	m_Epi_Spin.ShowWindow(sel == 1);
 
 	*pResult = 0;
 }

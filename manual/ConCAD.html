@@ -1282,15 +1282,12 @@ suggest a new symbol, however, you can change the symbol by using the built in s
 <h2 id="the-spice-prologue-and-epilogue">The Spice Prologue and Epilogue</h2>
 <p>The SPICE Prologues and Epilogues for each symbol have identical syntax to the model template strings, except that you cannot use the pin numbers (the %() syntax) and may only use the attribute expansions (the $() syntax).</p>
 <p>Prologues and epilogues will only be included if they are not identical to any other, so you can include the symbol multiple times in your design but only get one prologue and one epilogue for each one.</p>
-<p>You can set the order in which the prologues and epilogues are included in the file by using the priorities. These are the numbers at the side the template strings in the Symbol properties dialogue.</p>
-<p>For the prologue, anything with a priority of zero will be put into the file first, and then everything with a priority of 1 and so on up to 9.</p>
-<p>For the epilogue, anything with a priority of zero will be put into the file last, and just before it anything with a priority of 1 and so on up to 9.</p>
-<p>The default priority for the prologue and epilogues is 5 (i.e. the middle).</p>
+<p>Prologues and epilogues are written in the order the symbols appear in the design. The prologue of a symbol without a SPICE model (the RUN node, see below) is always written first, and its epilogue always last.</p>
 <h2 id="the-spice-run-node">The SPICE RUN node</h2>
 <p>Normally a spice file contains not only the circuit but also commands to tell the SPICE simulator what to do with it.</p>
 <p>You can insert these special commands at the head and end of a file by using a special SPICE symbol called the “Run” node. As no SPICE symbols are included with TinyCAD you will have to create the Run node yourself.</p>
 <p>The RUN node is a normal TinyCAD symbol, except it has no pins and has no SPICE model. It does have a SPICE prologue and epilogue template.</p>
-<p>You must set a priority of 0 for both the prologue and epilogue. This means its prologue will always go first (assuming no other run nodes) and its epilogue will always go last.</p>
+<p>Because it has no SPICE model, its prologue will always go first (assuming no other run nodes) and its epilogue will always go last.</p>
 <p>This special symbol will then expand into your run-time parameters and place the correct epilogue for the SPICE file.</p>
 <p>If you want to add your special line at the head of the file, simply add it to the run node&#39;s prologue - remember it will expand any $(attributes) you put in.</p>
 <p>You must place one RUN node on every SPICE simulation circuit, and this will add the correct SPICE lines to for the SPICE engine.</p>

@@ -30,8 +30,6 @@ class CDrawMethod;
 
 #define AttrSpiceProlog		_T("$$SPICE_PROLOG")
 #define AttrSpiceEpilog		_T("$$SPICE_EPILOG")
-#define AttrSpicePrologPri	_T("$$SPICE_PROLOG_PRIORITY")
-#define AttrSpiceEpilogPri	_T("$$SPICE_EPILOG_PRIORITY")
 #define AttrSpice			_T("$$SPICE")
 
 class Counter

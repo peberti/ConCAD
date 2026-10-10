@@ -312,10 +312,6 @@
 #define IDC_ALL_SHEETS                  1078
 #define IDC_SPICE_EPILOG                1079
 #define IDC_ALL_HIERARCHICAL            1079
-#define IDC_PRO_PRIORITY                1080
-#define IDC_EPI_PRIORITY                1081
-#define IDC_PRO_SPIN                    1082
-#define IDC_EPI_SPIN                    1083
 #define IDC_STYLE1                      1086
 #define IDC_STYLE2                      1087
 #define IDC_STYLE3                      1088

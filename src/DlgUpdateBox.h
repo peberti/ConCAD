@@ -52,10 +52,6 @@ public:
 	{
 		IDD = IDD_UPDATE
 	};
-	CSpinButtonCtrl m_Pro_Spin;
-	CEdit m_Pro_Priority;
-	CSpinButtonCtrl m_Epi_Spin;
-	CEdit m_Epi_Priority;
 	CEdit m_Spice_Prolog;
 	CEdit m_Spice_Epilog;
 	CStatic m_Static4;

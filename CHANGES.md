@@ -888,6 +888,21 @@ Files: `src/ShortcutsDlg.{h,cpp}` (new), `src/MainFrm.{h,cpp}`,
 
 ---
 
+## 14. SPICE prologue/epilogue priorities removed
+
+The `$$SPICE_PROLOG_PRIORITY` / `$$SPICE_EPILOG_PRIORITY` fields are gone:
+the Store Symbol dialog no longer has the two priority boxes and no longer
+writes these fields into every symbol. The SPICE netlist writes
+prologues and epilogues in drawing order, each once; those of symbols
+without a SPICE model (the RUN node) come first / last, which is what the
+priority 0 was used for. Empty prologues no longer add blank lines.
+Existing symbols keep the old fields until they are stored again (the
+dialog drops them); they are ignored. Files: `src/Net.h`,
+`src/NetList.cpp`, `src/DlgUpdateBox.{h,cpp}`, `src/ConCad.rc`,
+`src/resource.h`, `manual/ConCAD.html`.
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
