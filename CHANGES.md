@@ -903,6 +903,31 @@ dialog drops them); they are ignored. Files: `src/Net.h`,
 
 ---
 
+## 15. Autosave and crash recovery
+
+The TinyCAD autosave (Options → Settings → Backup, every N minutes,
+default 10) is extended:
+
+- It writes only designs with **unsaved changes**, and never a
+  write-protected version.
+- A saved design backs up to `<name>.con.autosave` next to it, as before.
+  An **untitled** design now backs up too, to
+  `%APPDATA%\ConCAD\Recovery\Untitled-<pid>-<n>.con`.
+- The backup is **deleted** after a Save (not Save a Copy As) and when the
+  design is closed, so one is only left behind by a crash.
+- **Opening** a design whose `.autosave` is newer than the file asks
+  whether to open the autosaved changes (the design is then marked
+  changed — Save to keep them) or the file as last saved (the autosave is
+  deleted). An older `.autosave` is deleted silently.
+- **At start-up**, recovery files of untitled designs whose ConCAD is no
+  longer running are offered: Yes opens each as an untitled *Recovered N*
+  design; No deletes them. The process id in the name keeps a second
+  running ConCAD from offering another one's live files.
+
+Files: `src/ConCadMultiDoc.{h,cpp}`, `src/ConCad.cpp`.
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1043,3 +1068,14 @@ XML-saved files.
     Import that .xml: "Imported 0 symbol(s) and N module(s)"; place one
     from there — identical. Export a normal symbol library: symbols count
     matches and re-imports as before.
+19. **Autosave** — Options → Settings → Backup: every 1 minute. Open a
+    saved design, move something, wait a minute: `<name>.con.autosave`
+    appears; Ctrl+S: it disappears. Change again, wait, then end ConCAD
+    in Task Manager. Reopen the design: asked about the autosaved changes;
+    Yes shows them with the design marked changed. Leave a design open
+    unchanged for a minute: no autosave file.
+20. **Untitled recovery** — File → New, draw something, wait a minute:
+    a file appears in `%APPDATA%\ConCAD\Recovery`. Kill ConCAD, start it:
+    asked about 1 unsaved design; Yes opens *Recovered 1* with the
+    drawing; Save asks for a name and the recovery file is gone. Close a
+    changed untitled design with Don't Save: its recovery file is deleted.

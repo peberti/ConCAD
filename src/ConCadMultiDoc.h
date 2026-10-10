@@ -89,8 +89,32 @@ public:
 
 	virtual void SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU = TRUE);
 	virtual BOOL SaveModified();
+	virtual BOOL DoSave(LPCTSTR lpszPathName, BOOL bReplace = TRUE);
+	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+	virtual void OnCloseDocument();
+
+	// At start-up: offer the untitled designs autosaved by a ConCAD that
+	// did not exit normally, opening them through pTemplate
+	static void RecoverUnsavedDesigns(CDocTemplate* pTemplate);
 
 protected:
+	// The file this design autosaves to: "<path>.autosave" next to a saved
+	// design, or "Untitled-<pid>-<n>.con" in the recovery folder for an
+	// untitled one.  Empty until the first autosave; deleted on save/close.
+	CString m_sAutoSavePath;
+
+	// Set while an untitled design is opened from the recovery folder, so
+	// SetPathName leaves it untitled
+	bool m_bRecovered;
+
+	void DeleteAutoSave();
+	static CString GetRecoveryDir();
+	static CString NewRecoveryPath(const CString& dir);
+
+	// The recovery file being opened by RecoverUnsavedDesigns
+	static CString s_sRecovering;
+	static int s_nUntitled;
+
 	// Set by File -> Create version, cleared by File -> Edit file; saved as
 	// the write_protected attribute of <TinyCADSheets>.
 	bool m_bWriteProtected;

@@ -602,6 +602,9 @@ BOOL CConCadApp::InitInstance()
 
 		//Turn on the auto-save functionality
 		CAutoSave::Start();
+
+		// Offer untitled designs autosaved before an unexpected exit
+		CConCadMultiDoc::RecoverUnsavedDesigns(m_pDocTemplate);
 	}
 
 	return TRUE;

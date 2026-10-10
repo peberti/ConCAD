@@ -15,6 +15,18 @@
   §12–13. **Open: a crash (iterator into a freed list, 0xDDDDDDDD) seen by
   the user on 2026-10-09 — call stack not yet received.**
 
+- 2026-10-10: **Open, not reproducible:** out-of-memory crash (0xC00001AD in
+  TextInputFramework.dll, Debug build) at the first line of
+  `CConCadView::OnFileExportpdf` on a 2nd PDF export, after choosing a
+  title block between the two exports. The memory was gone before the export
+  began. The title-block code was reviewed and looks bounded (SVG re-parsed
+  per paint but freed). Main suspect: "Microsoft Print to PDF" driver holding
+  memory in-process across exports. If it returns, watch Task Manager memory
+  per export; fix would be exporting in a short-lived child process.
+
+- 2026-10-10: autosave/crash recovery (CHANGES.md §15, quick-test 19–20)
+  built, not yet app-tested or committed.
+
 - 2026-10-09: module parameters in Tool Options (`CDrawModuleInfo`,
   `<MODULEINFO>`, `{Reference}` etc. in module texts) — CHANGES.md §11.
 

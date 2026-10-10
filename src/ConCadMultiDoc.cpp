@@ -29,15 +29,22 @@
 #include "ConCadHierarchicalDoc.h"
 #include "ConCadRegistry.h"
 #include "SvgTitleBlock.h"
+#include <shlobj.h>
+
+static CString FileNamePart(const CString& path);
 
 /////////////////////////////////////////////////////////////////////////////
 // CConCadMultiDoc
 IMPLEMENT_DYNCREATE(CConCadMultiDoc, CMultiSheetDoc)
 
+CString CConCadMultiDoc::s_sRecovering;
+int CConCadMultiDoc::s_nUntitled = 0;
+
 CConCadMultiDoc::CConCadMultiDoc()
 {
 	m_active_doc = 0;
 	m_bWriteProtected = false;
+	m_bRecovered = false;
 }
 
 BOOL CConCadMultiDoc::OnNewDocument()
@@ -274,17 +281,37 @@ void CConCadMultiDoc::MoveSheet(int index, bool left)
 //-------------------------------------------------------------------------
 void CConCadMultiDoc::AutoSave()
 {
-	// We only backup files with a file name
-	if (GetPathName().IsEmpty())
+	// Nothing to protect, and a write-protected version is never edited
+	if (m_bWriteProtected || !IsModified())
 	{
 		return;
+	}
+
+	// A saved design backs up next to its file; an untitled one into the
+	// recovery folder, offered again at the next start
+	if (m_sAutoSavePath.IsEmpty())
+	{
+		if (!GetPathName().IsEmpty())
+		{
+			m_sAutoSavePath = GetPathName() + _T(".autosave");
+		}
+		else
+		{
+			CString dir = GetRecoveryDir();
+			if (dir.IsEmpty())
+			{
+				return;
+			}
+			SHCreateDirectoryEx(NULL, dir, NULL);
+			m_sAutoSavePath = NewRecoveryPath(dir);
+		}
 	}
 
 	// Show the busy icon
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
 	// Get the filename
-	CString theFileName = GetPathName() + ".autosave";
+	CString theFileName = m_sAutoSavePath;
 	CString theFileNameNew = theFileName + ".new";
 
 	// 
@@ -297,7 +324,8 @@ void CConCadMultiDoc::AutoSave()
 	{
 		BOOL saved = false;
 		{
-			// Now save the file
+			// Now save the file (re-tag resources, as a normal save does)
+			UnTag();
 			CStreamFile stream(&theFile, CArchive::store);
 			CXMLWriter xml(&stream);
 			saved = SaveXML(xml);
@@ -345,6 +373,182 @@ void CConCadMultiDoc::AutoSave()
 		Message(IDS_ABORTAUTOSAVE, MB_ICONEXCLAMATION);
 	}
 
+}
+
+//-------------------------------------------------------------------------
+// %APPDATA%\ConCAD\Recovery: autosaves of untitled designs
+CString CConCadMultiDoc::GetRecoveryDir()
+{
+	TCHAR appData[MAX_PATH] = { 0 };
+	if (FAILED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appData)))
+	{
+		return CString();
+	}
+	return CString(appData) + _T("\\ConCAD\\Recovery");
+}
+
+// "Untitled-<pid>-<n>.con": the process id tells a later ConCAD whether
+// the design's owner is still running
+CString CConCadMultiDoc::NewRecoveryPath(const CString& dir)
+{
+	CString path;
+	path.Format(_T("%s\\Untitled-%lu-%d.con"), (LPCTSTR)dir, GetCurrentProcessId(), ++s_nUntitled);
+	return path;
+}
+
+void CConCadMultiDoc::DeleteAutoSave()
+{
+	if (!m_sAutoSavePath.IsEmpty())
+	{
+		::DeleteFile(m_sAutoSavePath);
+		m_sAutoSavePath.Empty();
+	}
+}
+
+//-------------------------------------------------------------------------
+// After a real save the autosave is no longer needed.  Save a Copy As
+// (bReplace == FALSE) leaves the design itself unsaved, so it stays.
+BOOL CConCadMultiDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
+{
+	if (!CMultiSheetDoc::DoSave(lpszPathName, bReplace))
+	{
+		return FALSE;
+	}
+	if (bReplace)
+	{
+		DeleteAutoSave();
+	}
+	return TRUE;
+}
+
+// Closing (after Save or Don't Save) ends the need for the autosave; only
+// a crash leaves one behind.
+void CConCadMultiDoc::OnCloseDocument()
+{
+	DeleteAutoSave();
+	CMultiSheetDoc::OnCloseDocument();
+}
+
+//-------------------------------------------------------------------------
+BOOL CConCadMultiDoc::OnOpenDocument(LPCTSTR lpszPathName)
+{
+	const CString sPath = lpszPathName;
+
+	// An untitled design from the recovery folder: it stays untitled and
+	// keeps autosaving to the same file
+	if (!s_sRecovering.IsEmpty() && sPath.CompareNoCase(s_sRecovering) == 0)
+	{
+		if (!CMultiSheetDoc::OnOpenDocument(lpszPathName))
+		{
+			return FALSE;
+		}
+		m_sAutoSavePath = sPath;
+		m_bRecovered = true;
+		SetModifiedFlag(TRUE);
+		return TRUE;
+	}
+
+	// An autosave newer than the file means ConCAD stopped before the
+	// changes were saved
+	const CString sBackup = sPath + _T(".autosave");
+	CFileStatus backup, file;
+	if (CFile::GetStatus(sBackup, backup) && CFile::GetStatus(sPath, file))
+	{
+		if (backup.m_mtime > file.m_mtime)
+		{
+			CString msg;
+			msg.Format(_T("%s has unsaved changes from %s that were autosaved before ConCAD closed unexpectedly.\n\n")
+				_T("Yes\t- open the autosaved changes (save to keep them)\n")
+				_T("No\t- open the file as last saved and discard the autosave"),
+				(LPCTSTR)FileNamePart(sPath), (LPCTSTR)backup.m_mtime.Format(_T("%Y-%m-%d %H:%M")));
+			if (AfxMessageBox(msg, MB_YESNO | MB_ICONQUESTION) == IDYES)
+			{
+				if (!CMultiSheetDoc::OnOpenDocument(sBackup))
+				{
+					return FALSE;
+				}
+				m_sAutoSavePath = sBackup;
+				SetModifiedFlag(TRUE);
+				return TRUE;
+			}
+		}
+		// Discarded, or older than the file: of no further use
+		::DeleteFile(sBackup);
+	}
+
+	return CMultiSheetDoc::OnOpenDocument(lpszPathName);
+}
+
+//-------------------------------------------------------------------------
+static bool IsProcessRunning(DWORD pid)
+{
+	HANDLE h = OpenProcess(SYNCHRONIZE, FALSE, pid);
+	if (h == NULL)
+	{
+		// Exists but belongs to someone else: treat as running
+		return GetLastError() == ERROR_ACCESS_DENIED;
+	}
+	const bool running = WaitForSingleObject(h, 0) == WAIT_TIMEOUT;
+	CloseHandle(h);
+	return running;
+}
+
+void CConCadMultiDoc::RecoverUnsavedDesigns(CDocTemplate* pTemplate)
+{
+	const CString dir = GetRecoveryDir();
+	if (dir.IsEmpty() || pTemplate == NULL)
+	{
+		return;
+	}
+
+	// Files of a ConCAD that is still running are not orphans
+	std::vector<CString> files;
+	CFileFind finder;
+	BOOL more = finder.FindFile(dir + _T("\\Untitled-*.con"));
+	while (more)
+	{
+		more = finder.FindNextFile();
+		if (finder.IsDirectory())
+		{
+			continue;
+		}
+		const DWORD pid = _tcstoul(finder.GetFileName().Mid(9), NULL, 10);
+		if (pid != 0 && IsProcessRunning(pid))
+		{
+			continue;
+		}
+		files.push_back(finder.GetFilePath());
+	}
+	finder.Close();
+	if (files.empty())
+	{
+		return;
+	}
+
+	CString msg;
+	msg.Format(_T("ConCAD closed unexpectedly with %d unsaved design(s) that had never been saved.\n\n")
+		_T("Yes\t- open them (save each one to keep it)\n")
+		_T("No\t- delete them"), (int)files.size());
+	const bool open = AfxMessageBox(msg, MB_YESNO | MB_ICONQUESTION) == IDYES;
+
+	for (size_t i = 0; i < files.size(); ++i)
+	{
+		if (!open)
+		{
+			::DeleteFile(files[i]);
+			continue;
+		}
+		// Take the file over under this process's id, so another ConCAD
+		// does not offer it while it is open here
+		const CString sMine = NewRecoveryPath(dir);
+		if (!::MoveFile(files[i], sMine))
+		{
+			continue;
+		}
+		s_sRecovering = sMine;
+		pTemplate->OpenDocumentFile(sMine);
+		s_sRecovering.Empty();
+	}
 }
 
 //-------------------------------------------------------------------------
@@ -809,6 +1013,17 @@ void CConCadMultiDoc::SetVersionFields(const CString& sRevision, const CString& 
 // Show "[Write protected]" after the file name in the window titles.
 void CConCadMultiDoc::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
 {
+	// A design recovered from the recovery folder stays untitled
+	if (m_bRecovered)
+	{
+		m_bRecovered = false;
+		static int s_nRecovered = 0;
+		CString title;
+		title.Format(_T("Recovered %d"), ++s_nRecovered);
+		SetTitle(title);
+		return;
+	}
+
 	CMultiSheetDoc::SetPathName(lpszPathName, bAddToMRU);
 	if (m_bWriteProtected)
 	{
