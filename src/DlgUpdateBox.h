@@ -39,7 +39,17 @@ class CDlgUpdateBox: public CDialog
 	recordCollection m_records;
 	unsigned int m_current_record;
 
+	CFont m_smallFont; // module mode: the library file line
+
 	CLibraryStoreSymbol& getCurrentRecord();
+
+	// Rows of the parameter list that cannot be renamed or deleted:
+	// Reference, Name for a symbol; Reference, Partnumber, Type for a module
+	int FixedRows() const
+	{
+		return m_bModule ? 3 : 2;
+	}
+	void UpdateModuleLibraryName();
 
 public:
 
@@ -52,16 +62,9 @@ public:
 	{
 		IDD = IDD_UPDATE
 	};
-	CEdit m_Spice_Prolog;
-	CEdit m_Spice_Epilog;
-	CStatic m_Static4;
-	CStatic m_Static3;
-	CStatic m_Static2;
 	CStatic m_Static1;
 	CEdit m_Description;
 	CButton m_Add;
-	CEdit m_Spice_Model;
-	CTabCtrl m_Tab;
 	CButton m_Delete_Name;
 	CListBox m_List_Names;
 	CComboBox m_Orientation;
@@ -89,11 +92,29 @@ public:
 		m_NewSymbol = s;
 	}
 
-	// Store a module (Special -> Create Module) rather than a symbol
+	// Store a module (Object -> Create Module) rather than a symbol: uses
+	// the IDD_STORE_MODULE layout (Name, parameters, no orientation, names
+	// list)
 	void SetModuleMode()
 	{
 		m_bModule = true;
+		m_lpszTemplateName = MAKEINTRESOURCE(IDD_STORE_MODULE);
 	}
+
+	// A module's record: library name = Type, description = Name, so the
+	// library panel shows "<Type> - <Name>" (without a Type: name = Name,
+	// no description).  Name, Partnumber and Type are also fields.  Modules
+	// stored before had no such fields: their name is taken as the Type and
+	// their description as the Name.
+	static CString ModuleLibraryName(const CString& type, const CString& name); // "<Type> - <Name>"
+	static void SetModuleRecordName(CSymbolRecord& r, const CString& type, const CString& name);
+	static CString GetModuleField(const CSymbolRecord& r, const CString& field);
+	static CString GetModuleName(const CSymbolRecord& r);
+	static CString GetModuleType(const CSymbolRecord& r);
+	static void PrefixModuleName(CSymbolRecord& r, const CString& prefix);
+	// Fields of older modules that are not shown and dropped on Store:
+	// "$$..." (SPICE) and the automatic "Package" placeholder
+	static bool IsObsoleteModuleField(const CSymbolField& f);
 
 	// Implementation
 protected:
@@ -109,9 +130,9 @@ protected:
 	afx_msg void OnAddName();
 	afx_msg void OnDeleteName();
 	afx_msg void OnSelchangeListNames();
-	afx_msg void OnSelchangeTab1(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnKillfocusEdit();
 	afx_msg void OnKillfocusList();
+	afx_msg void OnChangeName();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

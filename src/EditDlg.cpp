@@ -94,7 +94,30 @@ static UINT FindShortcutCommand(const MSG* pMsg)
 // the dialog would take the copy/cut keys for the field's text. Send them to
 // the drawing instead, so they copy/cut the selected objects. Paste goes to
 // the drawing only when the clipboard holds ConCAD objects; plain text is
-// still pasted into the field.
+// still pasted into the field.  Delete deletes the object while the name
+// field of a text, label, pin or power symbol still has all its text
+// selected (as it has right after the object was clicked); once the caret
+// is placed in the field, Delete edits the text.
+// The focus is in the name field of a text, label, pin or power symbol and
+// all of its text is selected (or it is empty)
+bool CEditDlg::IsWholeNameFieldSelected()
+{
+	CWnd *pFocus = GetFocus();
+	if (pFocus == NULL || pFocus->GetParent() != this)
+	{
+		return false;
+	}
+	const int id = pFocus->GetDlgCtrlID();
+	if (id != TEXTBOX_TEXT && id != PINBOX_NAME && id != POWERBOX_TEXT)
+	{
+		return false;
+	}
+	CEdit *pEdit = static_cast<CEdit*>(pFocus);
+	int start = 0, end = 0;
+	pEdit->GetSel(start, end);
+	return start == 0 && end == pEdit->GetWindowTextLength();
+}
+
 BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 {
 	extern CConCadView *g_currentview;
@@ -104,6 +127,11 @@ BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 		UINT id = FindShortcutCommand(pMsg);
 		if (id == IDM_EDITCOPY || id == IDM_EDITCUT
 			|| (id == IDM_EDITPASTE && g_currentview->IsClipboardAvailable()))
+		{
+			g_currentview->SendMessage(WM_COMMAND, id, 0);
+			return TRUE;
+		}
+		if (id == IDM_EDITDELITEM && IsWholeNameFieldSelected())
 		{
 			g_currentview->SendMessage(WM_COMMAND, id, 0);
 			return TRUE;

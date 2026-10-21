@@ -36,7 +36,7 @@ CDlgPCBExport::CDlgPCBExport(CWnd* pParent /*=NULL*/) :
 	m_Prefix = FALSE;
 	//}}AFX_DATA_INIT
 
-	m_type = CConCadRegistry::GetInt("Netlist", 0);
+	m_type = CConCadRegistry::GetInt("NetlistFormat", 0); // 0 TinyCAD, 1 XML
 	m_Prefix = CConCadRegistry::GetBool("PrefixNetlist", 0);
 }
 
@@ -66,14 +66,9 @@ BOOL CDlgPCBExport::OnInitDialog()
 
 	m_Filetype.ResetContent();
 	m_Filetype.AddString(_T("TinyCAD"));
-	m_Filetype.AddString(_T("PADS-PCB"));
-	m_Filetype.AddString(_T("PADS-PCB-WITH-VALUE"));
-	m_Filetype.AddString(_T("Eagle SCR"));
-	m_Filetype.AddString(_T("Protel"));
-	m_Filetype.AddString(_T("gEDA PCB"));
 	m_Filetype.AddString(_T("XML"));
 
-	m_Filetype.SetCurSel(m_type);
+	m_Filetype.SetCurSel(m_type == 1 ? 1 : 0);
 
 	UpdateData(FALSE);
 
@@ -106,7 +101,7 @@ void CDlgPCBExport::OnOK()
 	UpdateData(TRUE);
 
 	m_type = m_Filetype.GetCurSel();
-	CConCadRegistry::Set("Netlist", m_type);
+	CConCadRegistry::Set("NetlistFormat", m_type);
 	CConCadRegistry::Set("PrefixNetlist", m_Prefix);
 
 	CDialog::OnOK();
@@ -142,17 +137,7 @@ CString CDlgPCBExport::GetExtension()
 	{
 		case 0: // TinyCAD
 			return ".net";
-		case 1: // PADS
-			return ".net";
-		case 2: // PADS
-			return ".net";
-		case 3: // Eagle
-			return ".scr";
-		case 4: // Protel
-			return ".net";
-		case 5: // PCB
-			return ".net";
-		case 6: // XML
+		case 1: // XML
 			return ".net.xml";
 	}
 

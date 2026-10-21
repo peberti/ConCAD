@@ -129,7 +129,9 @@ void CEditDlgModuleEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 
 	m_index = hit.iItem;
-	const bool own = m_index >= CDrawModuleInfo::FixedFields; // Name and Reference are fixed
+	CDrawModuleInfo *pInfo = GetInfo();
+	const bool own = pInfo != NULL && m_index >= CDrawModuleInfo::FixedFields && m_index < (int)pInfo->m_fields.size()
+		&& !CDrawModuleInfo::IsStandardField(pInfo->m_fields[m_index].name); // Name, Reference, Partnumber, Type are fixed
 	m_Delete.EnableWindow(own);
 
 	// Values can always be changed, names only of the module's own fields
@@ -238,7 +240,8 @@ void CEditDlgModuleEdit::OnAdd()
 void CEditDlgModuleEdit::OnDelete()
 {
 	CDrawModuleInfo *pInfo = GetInfo();
-	if (pInfo == NULL || m_index < CDrawModuleInfo::FixedFields || m_index >= (int)pInfo->m_fields.size())
+	if (pInfo == NULL || m_index < CDrawModuleInfo::FixedFields || m_index >= (int)pInfo->m_fields.size()
+		|| CDrawModuleInfo::IsStandardField(pInfo->m_fields[m_index].name))
 	{
 		return;
 	}

@@ -114,8 +114,6 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_UPDATE_COMMAND_UI(ID_CONTEXT_ZORDER_BRINGTOFRONT, OnUpdateContextZorderBringtofront)
 	ON_UPDATE_COMMAND_UI(ID_CONTEXT_ZORDER_SENDTOBACK, OnUpdateContextZorderSendtoback)
 	ON_UPDATE_COMMAND_UI(IDM_EDITDUPLICATE, OnUpdateEditduplicate)
-	ON_COMMAND(ID_SPECIAL_CREATESPICEFILE, OnSpecialCreatespicefile)
-	ON_COMMAND(ID_SPECIAL_VHDL, OnSpecialVHDL)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_COPYTO, OnUpdateEditCopyto)
 	ON_COMMAND(ID_EDIT_COPYTO, OnEditCopyto)
 	ON_COMMAND(ID_CONTEXT_MAKEHORIZONTAL, OnContextMakehorizontal)
@@ -232,8 +230,6 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_COMMAND( IDM_SPECIALANNOTATE, OnSpecialAnnotate )
 	ON_COMMAND( IDM_SPECIALBOM, OnSpecialBom )
 	ON_COMMAND( IDM_SPECIALNET, OnSpecialNet )
-	ON_COMMAND( IDM_SPECIALCHECK, OnSpecialCheck )
-	ON_COMMAND( IDM_SPECIALVHDLCHECK, OnSpecialVHDLCheck)
 
 	// The Repeat Menu
 	ON_COMMAND( IDM_REPEATNAMEUP, OnRepeatNameUp )
@@ -2027,8 +2023,6 @@ static bool IsAllowedWhenWriteProtected(UINT nID)
 		case ID_FILE_EXPORTPDF:
 		case IDM_SPECIALNET:
 		case IDM_SPECIALBOM:
-		case ID_SPECIAL_CREATESPICEFILE:
-		case ID_SPECIAL_VHDL:
 		case ID_FILE_CLOSE:
 		case ID_FILE_SAVE_AS:
 		case IDM_FILE_CREATEVERSION:
@@ -2211,17 +2205,31 @@ void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)
 	const int group = pDoc->GetNewGroupId();
 	if (pDoc->Import(*pStream, group))
 	{
-		// ... with its parameters: Name, Reference and the module's fields
+		// ... with its parameters: Name, Reference, Partnumber, Type and the
+		// module's fields.  The Name is the record's "Name" field (the
+		// library name is "<Type> - <Name>").
 		CDrawModuleInfo *pInfo = new CDrawModuleInfo(pDoc);
 		pInfo->m_group = group;
-		pInfo->m_fields[0].value = theModule->name;
+		pInfo->m_fields[0].value = CDlgUpdateBox::GetModuleName(*theModule);
 		pInfo->m_fields[1].value = theModule->reference;
 		for (size_t i = 0; i < theModule->fields.size(); i++)
 		{
+			if (theModule->fields[i].field_name.CompareNoCase(_T("Name")) == 0 || CDlgUpdateBox::IsObsoleteModuleField(theModule->fields[i]))
+			{
+				continue;
+			}
 			CDrawModuleInfo::Field f;
 			f.name = theModule->fields[i].field_name;
 			f.value = theModule->fields[i].field_default;
 			pInfo->m_fields.push_back(f);
+		}
+		pInfo->EnsureStandardFields();
+		for (size_t i = 0; i < pInfo->m_fields.size(); i++)
+		{
+			if (pInfo->m_fields[i].name.CompareNoCase(_T("Type")) == 0 && pInfo->m_fields[i].value.IsEmpty())
+			{
+				pInfo->m_fields[i].value = CDlgUpdateBox::GetModuleType(*theModule); // older module: its name
+			}
 		}
 		pDoc->Add(pInfo);
 		pDoc->Select(pInfo);

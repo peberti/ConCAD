@@ -22,11 +22,16 @@ public:
 		CString value;
 	};
 
-	std::vector<Field> m_fields; // [0] Name, [1] Reference, then the module's own fields
+	std::vector<Field> m_fields; // [0] Name, [1] Reference, then Partnumber, Type and the module's own fields
 	enum
 	{
 		FixedFields = 2
 	};
+
+	// Name, Reference, Partnumber and Type: cannot be renamed or deleted
+	static bool IsStandardField(const CString& name);
+	// Add Partnumber and Type (empty) after Reference if missing
+	void EnsureStandardFields();
 
 	CDrawModuleInfo(CConCadDoc *pDesign);
 

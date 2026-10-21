@@ -510,6 +510,7 @@
 #define IDM_OPTIONS_SHORTCUTS           32922
 #define IDD_SHORTCUTS                   187
 #define IDD_MODULE_EDIT                 188
+#define IDD_STORE_MODULE                189
 #define IDC_OPT_CONSAT_COLOR            40060
 #define IDC_OPT_FACTORY_COLOR           40061
 #define IDC_SC_LIST                     40062
@@ -560,6 +561,8 @@
 #define IDC_OPT_ASK_TITLEBLOCK          40053
 #define IDC_VERSION_EDIT                40054
 #define IDC_VERSION_FILENAME            40055
+#define IDC_MODULE_LIBNAME              40068
+#define IDC_LIBFILE_LABEL               40069
 #define IDC_VERSION_HISTORY             40056
 #define IDC_DESIGNBOX_DESCRIPTION       40057
 #define IDC_VERSION_REVISEDBY           40058
@@ -579,9 +582,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        189
+#define _APS_NEXT_RESOURCE_VALUE        190
 #define _APS_NEXT_COMMAND_VALUE         32923
-#define _APS_NEXT_CONTROL_VALUE         40068
+#define _APS_NEXT_CONTROL_VALUE         40070
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

@@ -30,9 +30,8 @@
 //This is a minor command line parser support class
 //It allows us to define custom command line arguments that can be passed in when TinyCAD is started
 //Possible extensions include 
-//	1.  Generate a SPICE netlist
-//	2.  Generate an XML netlist
-//	3.  Anything else that you think that you might want to access from a build script or automation script
+//	1.  Generate an XML netlist
+//	2.  Anything else that you think that you might want to access from a build script or automation script
 //
 	
 class CConCadCommandLineInfo : public CCommandLineInfo
@@ -56,7 +55,6 @@ class CConCadCommandLineInfo : public CCommandLineInfo
 	//			CCommandLineInfo::FileNothing   Turns off the display of a new MDI child window on startup. By design, Application Wizard-generated MDI applications display a new child window on startup. To turn off this feature, an application can use CCommandLineInfo::FileNothing as the shell command when calling ProcessShellCommand. ProcessShellCommand is called by the InitInstance( ) of all CWinAppEx derived classes.
 
 	//for convenience maintain a variable for each custom command line option to indicate the param passed. 
-	BOOL m_bGenerateSpiceFile;     //for /s	This allows the user to generate Spice netlist files from a script processor
 	BOOL m_bGenerateXMLNetlistFile;	//for /x	This allows the user to generate XML netlist files from a script processor
 	BOOL m_bOutputDirectory;	//for --output_dir  This allows the user to specify an output directory separately from the input directory or the working directory
 	BOOL m_bConsoleIORequired;
@@ -64,7 +62,6 @@ class CConCadCommandLineInfo : public CCommandLineInfo
 	{
 		TCFlag_Unknown=0,
 		TCFlag_OutputDirectory=1,
-		TCFlag_GenerateSpiceFile=2,
 		TCFlag_GenerateXMLNetListFile=3
 	};
 	TCFlag m_eLastFlag;
@@ -74,7 +71,6 @@ class CConCadCommandLineInfo : public CCommandLineInfo
 public:
 	CConCadCommandLineInfo();	//Constructor
 	BOOL IsShellOpen();
-	BOOL IsGenerateSpiceFile();
 	BOOL IsGenerateXMLNetlistFile();
 	BOOL IsConsoleApp();
 	BOOL m_bConsoleAcquired;

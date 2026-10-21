@@ -173,7 +173,7 @@ void CDlgGetFindBox::BuildTree()
 
 			if (pSymbol->IsMatching(m_search_string))
 			{
-				HTREEITEM hItem = m_Tree.InsertItem(pSymbol->name + " - " + pSymbol->description, hLib);
+				HTREEITEM hItem = m_Tree.InsertItem((pSymbol->description.IsEmpty() ? pSymbol->name : pSymbol->name + " - " + pSymbol->description), hLib);
 				m_Tree.SetItemData(hItem, (DWORD_PTR) pSymbol);
 				nMatches++;
 			}

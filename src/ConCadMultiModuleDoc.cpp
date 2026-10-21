@@ -54,7 +54,8 @@ END_MESSAGE_MAP()
 
 void CConCadMultiModuleDoc::UpdateTitle()
 {
-	SetTitle(_T("Module: ") + m_moduleedit.GetRecord(0).name);
+	const CSymbolRecord& r = m_moduleedit.GetRecord(0);
+	SetTitle(_T("Module: ") + CDlgUpdateBox::ModuleLibraryName(CDlgUpdateBox::GetModuleType(r), CDlgUpdateBox::GetModuleName(r)));
 }
 
 bool CConCadMultiModuleDoc::ReadModule(CStream &stream)
@@ -142,7 +143,8 @@ BOOL CConCadMultiModuleDoc::SaveModified()
 	}
 
 	CString prompt;
-	AfxFormatString1(prompt, AFX_IDP_ASK_TO_SAVE, m_moduleedit.GetRecord(0).name);
+	const CSymbolRecord& r = m_moduleedit.GetRecord(0);
+	AfxFormatString1(prompt, AFX_IDP_ASK_TO_SAVE, CDlgUpdateBox::ModuleLibraryName(CDlgUpdateBox::GetModuleType(r), CDlgUpdateBox::GetModuleName(r)));
 	switch (AfxMessageBox(prompt, MB_YESNOCANCEL, AFX_IDP_ASK_TO_SAVE))
 	{
 		case IDCANCEL:

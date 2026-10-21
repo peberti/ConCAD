@@ -81,7 +81,7 @@ void CLibraryStore::AddToListBox(const TCHAR *theString, CListBox *theListBox)
 			CLibraryStoreSymbol &r = pSymbol->GetRecord(i);
 			if (r.IsMatching(theString))
 			{
-				int index = theListBox->AddString(r.name + " - " + r.description);
+				int index = theListBox->AddString((r.description.IsEmpty() ? r.name : r.name + " - " + r.description));
 				theListBox->SetItemDataPtr(index, &r);
 			}
 		}
@@ -103,7 +103,7 @@ void CLibraryStore::AddToTreeCtrl(const TCHAR *theString, CTreeCtrl* Tree, HTREE
 			CLibraryStoreSymbol &r = pSymbol->GetRecord(i);
 			if (r.IsMatching(theString))
 			{
-				HTREEITEM hItem = Tree->InsertItem(r.name + " - " + r.description, hLib);
+				HTREEITEM hItem = Tree->InsertItem((r.description.IsEmpty() ? r.name : r.name + " - " + r.description), hLib);
 				Tree->SetItemData(hItem, (DWORD_PTR) &r);
 			}
 		}

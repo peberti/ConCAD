@@ -44,22 +44,18 @@ void CDlgUpdateBox::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CDlgUpdateBox)
-	DDX_Control(pDX, IDC_SPICE_PROLOG, m_Spice_Prolog);
-	DDX_Control(pDX, IDC_SPICE_EPILOG, m_Spice_Epilog);
-	DDX_Control(pDX, IDC_STATIC4, m_Static4);
-	DDX_Control(pDX, IDC_STATIC3, m_Static3);
-	DDX_Control(pDX, IDC_STATIC2, m_Static2);
 	DDX_Control(pDX, IDC_STATIC1, m_Static1);
 	DDX_Control(pDX, UPDATE_DESCRIPTION, m_Description);
 	DDX_Control(pDX, IDC_ADD, m_Add);
-	DDX_Control(pDX, IDC_SPICE_MODEL, m_Spice_Model);
-	DDX_Control(pDX, IDC_TAB1, m_Tab);
-	DDX_Control(pDX, IDC_DELETE_NAME, m_Delete_Name);
-	DDX_Control(pDX, IDC_LIST_NAMES, m_List_Names);
-	DDX_Control(pDX, IDC_ORIENTATION, m_Orientation);
 	DDX_Control(pDX, IDC_DELETE, m_Delete);
 	DDX_Control(pDX, IDC_UPDATE_LIST, m_list);
 	//}}AFX_DATA_MAP
+	if (!m_bModule) // not in the IDD_STORE_MODULE layout
+	{
+		DDX_Control(pDX, IDC_DELETE_NAME, m_Delete_Name);
+		DDX_Control(pDX, IDC_LIST_NAMES, m_List_Names);
+		DDX_Control(pDX, IDC_ORIENTATION, m_Orientation);
+	}
 }
 
 CDlgUpdateBox::~CDlgUpdateBox()
@@ -76,9 +72,9 @@ BEGIN_MESSAGE_MAP( CDlgUpdateBox, CDialog )
 	ON_BN_CLICKED(IDC_ADD_NAME, OnAddName)
 	ON_BN_CLICKED(IDC_DELETE_NAME, OnDeleteName)
 	ON_LBN_SELCHANGE(IDC_LIST_NAMES, OnSelchangeListNames)
-	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, OnSelchangeTab1)
 	ON_EN_KILLFOCUS(101, OnKillfocusEdit)
 	ON_CBN_KILLFOCUS(102, OnKillfocusList)
+	ON_EN_CHANGE(UPDATE_DESCRIPTION, OnChangeName)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -86,18 +82,32 @@ BOOL CDlgUpdateBox::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	SetDlgItemText(UPDATE_LIBFILE, NameLength( (m_NewSymbol->GetLibName()), 30));
-	SetDlgItemInt(UPDATE_PPP, m_NewSymbol->ppp);
-
 	m_index = -1;
 	m_Delete.EnableWindow(FALSE);
 
-	m_Orientation.ResetContent();
-	m_Orientation.AddString(_T("Up"));
-	m_Orientation.AddString(_T("Down"));
-	m_Orientation.AddString(_T("Left"));
-	m_Orientation.AddString(_T("Right"));
-	m_Orientation.SetCurSel(m_NewSymbol->orientation);
+	if (m_bModule)
+	{
+		// Library file in a smaller font, as in the module dialog design
+		SetDlgItemText(UPDATE_LIBFILE, m_NewSymbol->GetLibName());
+		LOGFONT lf;
+		GetFont()->GetLogFont(&lf);
+		lf.lfHeight = lf.lfHeight * 2 / 3;
+		m_smallFont.CreateFontIndirect(&lf);
+		GetDlgItem(IDC_LIBFILE_LABEL)->SetFont(&m_smallFont);
+		GetDlgItem(UPDATE_LIBFILE)->SetFont(&m_smallFont);
+	}
+	else
+	{
+		SetDlgItemText(UPDATE_LIBFILE, NameLength( (m_NewSymbol->GetLibName()), 30));
+		SetDlgItemInt(UPDATE_PPP, m_NewSymbol->ppp);
+
+		m_Orientation.ResetContent();
+		m_Orientation.AddString(_T("Up"));
+		m_Orientation.AddString(_T("Down"));
+		m_Orientation.AddString(_T("Left"));
+		m_Orientation.AddString(_T("Right"));
+		m_Orientation.SetCurSel(m_NewSymbol->orientation);
+	}
 
 	m_current_record = 0;
 
@@ -113,37 +123,175 @@ BOOL CDlgUpdateBox::OnInitDialog()
 	m_list.InsertColumn(1, _T("Display Method"), LVCFMT_LEFT, 170);
 	m_list.InsertColumn(2, _T("Default Value"), LVCFMT_LEFT, 150);
 
-	// Update the names list box
-	m_List_Names.ResetContent();
-
-	for (unsigned int i = 0; i < m_records.size(); i++)
+	if (!m_bModule)
 	{
-		CSymbolRecord &r = m_records[i];
-		m_List_Names.AddString(r.name);
+		// Update the names list box
+		m_List_Names.ResetContent();
+
+		for (unsigned int i = 0; i < m_records.size(); i++)
+		{
+			CSymbolRecord &r = m_records[i];
+			m_List_Names.AddString(r.name);
+		}
+		m_List_Names.SetCurSel(m_current_record);
+
+		// Update the delete name button
+		m_Delete_Name.EnableWindow(m_records.size() > 1);
 	}
-	m_List_Names.SetCurSel(m_current_record);
-
-	// Update the delete name button
-	m_Delete_Name.EnableWindow(m_records.size() > 1);
-
-	// Create the two tabs
-	m_Tab.InsertItem(0, _T("Attributes"));
-	m_Tab.InsertItem(1, _T("SPICE"));
 
 	InitFromRecord();
 
-	if (m_bModule)
-	{
-		SetWindowText(_T("Store Module"));
-		GetDlgItem(IDC_IS_CONNECTOR)->ShowWindow(SW_HIDE);
-	}
-
 	return TRUE;
+}
+
+CString CDlgUpdateBox::ModuleLibraryName(const CString& type, const CString& name)
+{
+	CString t = type;
+	t.Trim();
+	CString n = name;
+	n.Trim();
+	return t.IsEmpty() ? n : t + _T(" - ") + n;
+}
+
+CString CDlgUpdateBox::GetModuleField(const CSymbolRecord& r, const CString& field)
+{
+	for (size_t i = 0; i < r.fields.size(); i++)
+	{
+		if (r.fields[i].field_name.CompareNoCase(field) == 0)
+		{
+			return r.fields[i].field_default;
+		}
+	}
+	return CString();
+}
+
+static bool HasModuleField(const CSymbolRecord& r, const TCHAR* field)
+{
+	for (size_t i = 0; i < r.fields.size(); i++)
+	{
+		if (r.fields[i].field_name.CompareNoCase(field) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+CString CDlgUpdateBox::GetModuleName(const CSymbolRecord& r)
+{
+	if (HasModuleField(r, _T("Name")))
+	{
+		return GetModuleField(r, _T("Name"));
+	}
+	// Modules stored before the Name field: "<name> - <description>"
+	return r.description.IsEmpty() ? r.name : r.description;
+}
+
+CString CDlgUpdateBox::GetModuleType(const CSymbolRecord& r)
+{
+	if (HasModuleField(r, _T("Type")))
+	{
+		return GetModuleField(r, _T("Type"));
+	}
+	return HasModuleField(r, _T("Name")) || r.description.IsEmpty() ? CString() : r.name;
+}
+
+void CDlgUpdateBox::SetModuleRecordName(CSymbolRecord& r, const CString& type, const CString& name)
+{
+	CString t = type;
+	t.Trim();
+	CString n = name;
+	n.Trim();
+	r.name = t.IsEmpty() ? n : t;
+	r.description = t.IsEmpty() ? CString() : n;
+}
+
+bool CDlgUpdateBox::IsObsoleteModuleField(const CSymbolField& f)
+{
+	return f.field_name.Left(2) == _T("$$")
+		|| (f.field_name.CompareNoCase(_T("Package")) == 0 && f.field_default == _T("package name for PCB layout"));
+}
+
+// Duplicate in the library window: "Copy of <Name>"
+void CDlgUpdateBox::PrefixModuleName(CSymbolRecord& r, const CString& prefix)
+{
+	const CString type = GetModuleType(r);
+	const CString name = prefix + GetModuleName(r);
+	for (size_t i = 0; i < r.fields.size(); i++)
+	{
+		if (r.fields[i].field_name.CompareNoCase(_T("Name")) == 0)
+		{
+			r.fields[i].field_default = name;
+		}
+	}
+	SetModuleRecordName(r, type, name);
+}
+
+// The line at the top of the module dialog: the name the module gets in
+// the library, "<Type> - <Name>"
+void CDlgUpdateBox::UpdateModuleLibraryName()
+{
+	if (!m_bModule || m_list.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+	CString name;
+	GetDlgItemText(UPDATE_DESCRIPTION, name);
+	const CString type = m_list.GetItemCount() > 2 ? m_list.GetItemText(2, 2) : CString();
+	SetDlgItemText(IDC_MODULE_LIBNAME, ModuleLibraryName(type, name));
+}
+
+void CDlgUpdateBox::OnChangeName()
+{
+	UpdateModuleLibraryName();
 }
 
 void CDlgUpdateBox::InitFromRecord()
 {
 	CSymbolRecord &r = getCurrentRecord();
+
+	if (m_bModule)
+	{
+		// Name field, then the fixed rows Reference, Partnumber, Type and the
+		// module's own fields
+		m_list.DeleteAllItems();
+		CSymbolField f;
+		f.field_name = _T("Reference");
+		f.field_type = r.ref_type;
+		f.field_default = r.reference;
+		AddSymbolField(f);
+
+		const TCHAR* const standard[] = { _T("Partnumber"), _T("Type") };
+		for (int s = 0; s < 2; s++)
+		{
+			f.field_name = standard[s];
+			f.field_type = default_show;
+			f.field_default = s == 1 ? GetModuleType(r) : CString();
+			for (size_t i = 0; i < r.fields.size(); i++)
+			{
+				if (r.fields[i].field_name.CompareNoCase(standard[s]) == 0)
+				{
+					f = r.fields[i];
+					f.field_name = standard[s];
+				}
+			}
+			AddSymbolField(f);
+		}
+
+		for (size_t i = 0; i < r.fields.size(); i++)
+		{
+			const CString& field = r.fields[i].field_name;
+			if (field.CompareNoCase(_T("Name")) != 0 && field.CompareNoCase(_T("Partnumber")) != 0 && field.CompareNoCase(_T("Type")) != 0
+				&& !IsObsoleteModuleField(r.fields[i]))
+			{
+				AddSymbolField(r.fields[i]);
+			}
+		}
+
+		SetDlgItemText(UPDATE_DESCRIPTION, GetModuleName(r));
+		UpdateModuleLibraryName();
+		return;
+	}
 
 	SetDlgItemText(UPDATE_DESCRIPTION, r.description);
 	CheckDlgButton(IDC_IS_CONNECTOR, r.is_connector ? BST_CHECKED : BST_UNCHECKED);
@@ -163,56 +311,51 @@ void CDlgUpdateBox::InitFromRecord()
 	f.field_default = r.name;
 	AddSymbolField(f);
 
-	BOOL have_package = FALSE;
-
 	for (unsigned int i = 0; i < r.fields.size(); i++)
 	{
 		CString field = r.fields[i].field_name;
-		if (field.CompareNoCase(AttrSpice) == 0)
+		if (field.Left(9).CompareNoCase(_T("$$SPICE_P")) == 0 || field.Left(9).CompareNoCase(_T("$$SPICE_E")) == 0
+			|| field.CompareNoCase(AttrSpice) == 0)
 		{
-			// This is the spice model
-			m_Spice_Model.SetWindowText(r.fields[i].field_default);
-		}
-		else if (field.CompareNoCase(AttrSpiceProlog) == 0)
-		{
-			// This is the spice includes
-			m_Spice_Prolog.SetWindowText(r.fields[i].field_default);
-		}
-		else if (field.CompareNoCase(AttrSpiceEpilog) == 0)
-		{
-			// This is the spice includes
-			m_Spice_Epilog.SetWindowText(r.fields[i].field_default);
-		}
-		else if (field.Left(15).CompareNoCase(_T("$$SPICE_PROLOG_")) == 0 || field.Left(15).CompareNoCase(_T("$$SPICE_EPILOG_")) == 0)
-		{
-			// Priority fields of older libraries: no longer used, dropped
-			// when the symbol is stored again
+			// SPICE data of older symbols: not shown (SPICE was removed);
+			// UpdateToRecord keeps it unchanged
 		}
 		else
 		{
 			AddSymbolField(r.fields[i]);
-
-			if (r.fields[i].field_name.CompareNoCase(_T("Package")) == 0)
-			{
-				have_package = TRUE;
-			}
 		}
 	}
-
-	if (!have_package)
-	{
-		f.field_name = _T("Package");
-		f.field_type = default_hidden;
-		f.field_default = _T("package name for PCB layout");
-		AddSymbolField(f);
-	}
-
 }
 
 void CDlgUpdateBox::UpdateToRecord()
 {
 	CSymbolField f;
 	CSymbolRecord &r = getCurrentRecord();
+
+	if (m_bModule)
+	{
+		CString name;
+		GetDlgItemText(UPDATE_DESCRIPTION, name);
+		name.Trim();
+
+		f = GetSymbolField(0);
+		r.reference = f.field_default;
+		r.ref_type = f.field_type;
+
+		r.fields.clear();
+		CSymbolField n;
+		n.field_name = _T("Name");
+		n.field_default = name;
+		n.field_type = always_hidden;
+		r.fields.push_back(n);
+		for (int i = 1; i < m_list.GetItemCount(); i++)
+		{
+			r.fields.push_back(GetSymbolField(i));
+		}
+
+		SetModuleRecordName(r, GetSymbolField(2).field_default, name);
+		return;
+	}
 
 	// Get the reference
 	f = GetSymbolField(0);
@@ -229,37 +372,18 @@ void CDlgUpdateBox::UpdateToRecord()
 	// Get the orientation
 	m_NewSymbol->orientation = m_Orientation.GetCurSel();
 
-	// Clear out all of the other fields
-	r.fields.erase(r.fields.begin(), r.fields.end());
-
-	// Write back the spice data
-	CString spice_model;
-	CString spice_prolog;
-	CString spice_epilog;
-	m_Spice_Model.GetWindowText(spice_model);
-	m_Spice_Prolog.GetWindowText(spice_prolog);
-	m_Spice_Epilog.GetWindowText(spice_epilog);
-	if (!spice_model.IsEmpty())
+	// Clear out all of the other fields, except the SPICE data of older
+	// symbols, which is kept as it was
+	std::vector<CSymbolField> kept;
+	for (size_t i = 0; i < r.fields.size(); i++)
 	{
-		f.field_name = AttrSpice;
-		f.field_default = spice_model;
-		f.field_type = always_hidden;
-		r.fields.push_back(f);
+		const CString& field = r.fields[i].field_name;
+		if (field.CompareNoCase(AttrSpice) == 0 || field.CompareNoCase(AttrSpiceProlog) == 0 || field.CompareNoCase(AttrSpiceEpilog) == 0)
+		{
+			kept.push_back(r.fields[i]);
+		}
 	}
-	if (!spice_prolog.IsEmpty())
-	{
-		f.field_name = AttrSpiceProlog;
-		f.field_default = spice_prolog;
-		f.field_type = always_hidden;
-		r.fields.push_back(f);
-	}
-	if (!spice_epilog.IsEmpty())
-	{
-		f.field_name = AttrSpiceEpilog;
-		f.field_default = spice_epilog;
-		f.field_type = always_hidden;
-		r.fields.push_back(f);
-	}
+	r.fields = kept;
 
 	// Now write back the rest of the fields
 	for (int i = 2; i < m_list.GetItemCount(); i++)
@@ -276,6 +400,23 @@ void CDlgUpdateBox::OnOK()
 	if (m_capture)
 	{
 		EndEdit();
+		return;
+	}
+
+	if (m_bModule)
+	{
+		CString name;
+		GetDlgItemText(UPDATE_DESCRIPTION, name);
+		name.Trim();
+		if (name.IsEmpty())
+		{
+			AfxMessageBox(_T("Enter a name for the module."), MB_ICONEXCLAMATION);
+			m_Description.SetFocus();
+			return;
+		}
+		UpdateToRecord();
+		m_NewSymbol->SetRecords(m_records);
+		EndDialog(IDOK);
 		return;
 	}
 
@@ -350,7 +491,7 @@ void CDlgUpdateBox::OnAdd()
 
 void CDlgUpdateBox::OnDelete()
 {
-	if (m_index != 0)
+	if (m_index >= FixedRows())
 	{
 		m_list.DeleteItem(m_index);
 		m_index = -1;
@@ -412,8 +553,8 @@ void CDlgUpdateBox::OnClickUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 	m_list.SetItem(&item);
 	m_index = index;
 
-	// If this index is over 2 then we can enable delete...
-	m_Delete.EnableWindow(m_index >= 2);
+	// Only the rows after the fixed ones can be deleted...
+	m_Delete.EnableWindow(m_index >= FixedRows());
 
 	// Which column did the user click in?
 	CRect rect;
@@ -456,7 +597,7 @@ void CDlgUpdateBox::OnClickUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 		case 0: //parameter name
 		case 2: //parameter value
 			// Now create the edit control
-			if (m_index >= 2 || m_column > 0)
+			if (m_index >= FixedRows() || m_column > 0)
 			{
 				DWORD style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL;
 
@@ -608,10 +749,15 @@ void CDlgUpdateBox::EndEdit()
 		v.ReleaseBuffer();
 
 		// .. if this was the name, then we update the list box...
-		if (m_index == 1 && m_column == 2)
+		if (!m_bModule && m_index == 1 && m_column == 2)
 		{
 			m_List_Names.DeleteString(m_current_record);
 			m_List_Names.InsertString(m_current_record, v);
+		}
+		// .. or the module's library name (from Type)
+		if (m_bModule && m_index == 2 && m_column == 2)
+		{
+			UpdateModuleLibraryName();
 		}
 	}
 
@@ -703,27 +849,4 @@ void CDlgUpdateBox::OnSelchangeListNames()
 
 	// Read in the new data
 	InitFromRecord();
-}
-
-void CDlgUpdateBox::OnSelchangeTab1(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	// Remove edit box
-	EndEdit();
-
-	int sel = m_Tab.GetCurSel();
-
-	m_Add.ShowWindow(sel == 0);
-	m_Delete.ShowWindow(sel == 0);
-	m_list.ShowWindow(sel == 0);
-	m_Description.ShowWindow(sel == 0);
-	m_Static1.ShowWindow(sel == 0);
-
-	m_Spice_Prolog.ShowWindow(sel == 1);
-	m_Spice_Epilog.ShowWindow(sel == 1);
-	m_Spice_Model.ShowWindow(sel == 1);
-	m_Static2.ShowWindow(sel == 1);
-	m_Static3.ShowWindow(sel == 1);
-	m_Static4.ShowWindow(sel == 1);
-
-	*pResult = 0;
 }

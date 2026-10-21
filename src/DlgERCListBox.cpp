@@ -33,10 +33,6 @@
 BEGIN_MESSAGE_MAP( CDlgERCListBox, CDialog )
 	ON_LBN_SELCHANGE(ERCLIST_LIST , OnClick )
 	ON_BN_CLICKED(IDOK , Close )
-	ON_BN_CLICKED(IDOK2 , ReCheck )
-	ON_BN_CLICKED(IDC_BUTTON_ANNOTATE, &CDlgERCListBox::OnBnClickedButtonAnnotate)
-	ON_BN_CLICKED(IDC_BUTTON_PCB_NETLIST, &CDlgERCListBox::OnBnClickedButtonPcbNetlist)
-	ON_BN_CLICKED(IDC_BUTTON_SPICE_NETLIST, &CDlgERCListBox::OnBnClickedButtonSpiceNetlist)
 END_MESSAGE_MAP()
 
 CDlgERCListBox::CDlgERCListBox()
@@ -53,12 +49,6 @@ void CDlgERCListBox::Open(CMultiSheetDoc *pDesign, CConCadView *pView)
 	if (!open)
 	{
   	Create(IDD_ERCLIST,AfxGetMainWnd());
-
-		if (!m_pView)
-		{
-		CWnd *wnd = GetDlgItem (IDOK2);
-			wnd->ShowWindow(SW_HIDE);
-		}
 	}
   theListBox = (CListBox *)GetDlgItem(ERCLIST_LIST);
 	theListBox->ResetContent();
@@ -86,24 +76,6 @@ void CDlgERCListBox::Close()
 void CDlgERCListBox::OnCancel()
 {
 	CDlgERCListBox::Close();
-}
-
-// Re-check for ERC errors
-void CDlgERCListBox::ReCheck()
-{
-	if (open)
-	{
-		// Remove all previous errors from the design
-		for (int i = 0; i < m_pDesign->GetNumberOfSheets(); i++)
-		{
-			m_pDesign->GetSheet(i)->DeleteErrors();
-		}
-
-		if (m_pView)
-		{
-			m_pView->DoSpecialCheck();
-		}
-	}
 }
 
 void CDlgERCListBox::AddString(CString NewString)
@@ -181,17 +153,3 @@ void CDlgERCListBox::OnClick()
 	}
 }
 
-void CDlgERCListBox::OnBnClickedButtonAnnotate()
-{
-	m_pView->OnSpecialAnnotate();
-}
-
-void CDlgERCListBox::OnBnClickedButtonPcbNetlist()
-{
-	m_pView->OnSpecialNet();
-}
-
-void CDlgERCListBox::OnBnClickedButtonSpiceNetlist()
-{
-	m_pView->OnSpecialCreatespicefile();
-}

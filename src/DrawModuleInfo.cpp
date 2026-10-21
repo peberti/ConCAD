@@ -55,6 +55,40 @@ void CDrawModuleInfo::LoadXML(CXMLReader &xml)
 		f.name = m_fields.empty() ? _T("Name") : _T("Reference");
 		m_fields.push_back(f);
 	}
+	EnsureStandardFields();
+}
+
+bool CDrawModuleInfo::IsStandardField(const CString& name)
+{
+	return name.CompareNoCase(_T("Name")) == 0 || name.CompareNoCase(_T("Reference")) == 0
+		|| name.CompareNoCase(_T("Partnumber")) == 0 || name.CompareNoCase(_T("Type")) == 0;
+}
+
+void CDrawModuleInfo::EnsureStandardFields()
+{
+	const TCHAR* const standard[] = { _T("Partnumber"), _T("Type") };
+	size_t pos = FixedFields;
+	for (int s = 0; s < 2; s++)
+	{
+		bool found = false;
+		for (size_t i = 0; i < m_fields.size(); i++)
+		{
+			if (m_fields[i].name.CompareNoCase(standard[s]) == 0)
+			{
+				found = true;
+				pos = i + 1;
+				break;
+			}
+		}
+		if (!found)
+		{
+			Field f;
+			f.name = standard[s];
+			pos = min(pos, m_fields.size());
+			m_fields.insert(m_fields.begin() + pos, f);
+			++pos;
+		}
+	}
 }
 
 CDrawingObject* CDrawModuleInfo::Store()

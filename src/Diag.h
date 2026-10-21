@@ -101,16 +101,12 @@ public:
 	CDlgERCListBox();
 	void Open(CMultiSheetDoc *pDesign, CConCadView *pView);
 	void Close();
-	void ReCheck();
 	void AddString(CString);
 	void SetSelect(int);
 	void OnClick();
 
 	DECLARE_MESSAGE_MAP()
 	virtual void OnCancel();
-	afx_msg void OnBnClickedButtonAnnotate();
-	afx_msg void OnBnClickedButtonPcbNetlist();
-	afx_msg void OnBnClickedButtonSpiceNetlist();
 };
 
 ////////// The rebar edit dialogs //////////
@@ -137,6 +133,7 @@ protected:
 	//}}AFX_VIRTUAL
 	void OnCancel() override;
 	BOOL PreTranslateMessage(MSG* pMsg) override;
+	bool IsWholeNameFieldSelected();
 
 private:
 	CDrawingObject *m_pObject;

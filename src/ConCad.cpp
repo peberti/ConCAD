@@ -58,7 +58,6 @@ CConCadRegistry * g_pRegistry = NULL;
 
 CConCadCommandLineInfo::CConCadCommandLineInfo()
 { //Constructor
-	m_bGenerateSpiceFile = FALSE;
 	m_bGenerateXMLNetlistFile = FALSE;
 	m_eLastFlag=TCFlag_Unknown;
 	m_OutputDirectory = _T("");
@@ -73,11 +72,6 @@ CConCadCommandLineInfo::~CConCadCommandLineInfo()
 BOOL CConCadCommandLineInfo::IsShellOpen()
 {
 	return m_nShellCommand == FileOpen; //This flag is parsed by the base class and is set to FileOpen solely if there is a file name on the command line and no other conflicting options.
-}
-
-BOOL CConCadCommandLineInfo::IsGenerateSpiceFile()
-{
-	return m_bGenerateSpiceFile;
 }
 
 BOOL CConCadCommandLineInfo::IsGenerateXMLNetlistFile()
@@ -172,14 +166,7 @@ void CConCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL 
 		}
 
 		//Note that options have been stripped by Windows of the leading '/' or '-' that signifies that this is an option
-		if ((optionName.CompareNoCase(_T("s")) == 0) || (optionName.CompareNoCase(_T("-gen_spice_netlist")) == 0))
-		{
-			m_bGenerateSpiceFile = TRUE;
-			m_eLastFlag = TCFlag_GenerateSpiceFile;
-			m_bConsoleIORequired = TRUE;
-			ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found command line option /s or --gen_spice_netlist\n");
-		}
-		else if ((optionName.CompareNoCase(_T("x")) == 0) || (optionName.CompareNoCase(_T("-gen_xml_netlist")) == 0))
+		if ((optionName.CompareNoCase(_T("x")) == 0) || (optionName.CompareNoCase(_T("-gen_xml_netlist")) == 0))
 		{
 			m_bGenerateXMLNetlistFile = TRUE;
 			m_eLastFlag = TCFlag_GenerateXMLNetListFile;
@@ -204,8 +191,6 @@ void CConCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL 
 			fwprintf(stderr, _T("Correct usage is:\n"));
 			fwprintf(stderr,_T("ConCAD <design file name with optional path and mandatory file type extension (.con for design files)> [options]\n"));
 			fwprintf(stderr,_T("Optional command line options:\n"));
-			fwprintf(stderr,_T("\t/s                         Generate Spice netlist file with same base name as the design file\n"));
-			fwprintf(stderr,_T("\t--gen_spice_netlist        Generate Spice netlist file with same base name as the design file\n"));
 			fwprintf(stderr,_T("\t/x                         Generate XML netlist file with same base name as the design file\n"));
 			fwprintf(stderr,_T("\t--gen_xml_netlist          Generate XML netlist file with same base name as the design file\n"));
 			fwprintf(stderr,_T("\t--out_directory=<filepath> Specify a full or partial file path to use for generated netlist file(s)\n\t                           A trailing '\\' is optional\n"));
@@ -236,7 +221,6 @@ void CConCadCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL 
 					ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found unexpected command line parameter \"%S\" following option --out_directory\n", pszParam);
 				}
 				break;
-			case TCFlag_GenerateSpiceFile:
 			case TCFlag_GenerateXMLNetListFile:
 				ATLTRACE2("CConCadCommandLineInfo::ParseParam():  Found unexpected command line parameter \"%S\".  Discarding parameter and continuing.\n", pszParam);
 				break;
@@ -539,7 +523,7 @@ BOOL CConCadApp::InitInstance()
 
 	if (!successful)
 	{
-		if (cmdInfo.IsGenerateSpiceFile() || cmdInfo.IsGenerateXMLNetlistFile())
+		if (cmdInfo.IsGenerateXMLNetlistFile())
 		{
 			if ((cmdInfo.m_nShellCommand == cmdInfo.FileNew) || (cmdInfo.m_nShellCommand == cmdInfo.FileOpen))
 			{
@@ -560,24 +544,8 @@ BOOL CConCadApp::InitInstance()
 
 	if (cmdInfo.IsConsoleApp())
 	{
-		if (cmdInfo.IsGenerateSpiceFile() || cmdInfo.IsGenerateXMLNetlistFile())
+		if (cmdInfo.IsGenerateXMLNetlistFile())
 		{ //This is a TinyCAD specific custom command line argument
-			if (cmdInfo.IsGenerateSpiceFile())
-			{ //Run spice netlister here in hidden mode since this has been invoked from a command prompt
-				TRACE("CConCad::InitInstance() received ConCad command argument to run the Spice netlister.\n");
-
-				// The main window has been initialized, so show and update it in hidden display mode.
-				pMainFrame->ShowWindow(m_nCmdShow);
-				pMainFrame->UpdateWindow();
-
-				//Retrieve a pointer to the newly opened CConCadMultiDoc (i.e., the dsn file that the command prompt just opened)
-				POSITION localPosition = m_pDocTemplate->GetFirstDocPosition(); //The open design is the only design file in the template collection at this point
-				pDesign = static_cast<CConCadMultiDoc *> (m_pDocTemplate->GetNextDoc(localPosition));
-
-				static_cast<CConCadView *> (pMainFrame->GetActiveView())->CommandPromptCreatespicefile(pDesign, cmdInfo.m_strFileName, cmdInfo.getOutputDirectory()); //create the spice file
-				retCode = pMainFrame->consoleAppRetCode; //Save the return code so it can be used for console mode after the mainframe document is destroyed.
-			}
-			else
 			{ //Run XML netlister here!
 				TRACE("CConCad::InitInstance() received ConCad command argument to run the XML netlister.\n");
 				//retCode = pMainFrame->consoleAppRetCode; //Save the return code so it can be used for console mode after the mainframe document is destroyed.

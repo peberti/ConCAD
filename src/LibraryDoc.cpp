@@ -54,7 +54,7 @@ static void StoreModuleCopy(CLibraryStoreNameSet& src, CLibraryStore* target, bo
 		{
 			copy.GetRecord(i).NameID = (DWORD) -1;
 		}
-		copy.GetRecord(0).name = namePrefix + copy.GetRecord(0).name;
+		CDlgUpdateBox::PrefixModuleName(copy.GetRecord(0), namePrefix);
 	}
 
 	bool store = true;

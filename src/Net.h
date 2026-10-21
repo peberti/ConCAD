@@ -408,41 +408,17 @@ protected:
 	// Create netlist and output as a PCB file (TinyCAD v1.xx)
 	void WriteNetListFileTinyCAD(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
-	// Create netlist and output as a PCB file (PADS-PCB)
-	void WriteNetListFilePADS(CConCadMultiDoc *pDesign, const TCHAR *filename, bool withValue);
-
-	// Create netlist and output as a Eagle PCB script
-	void WriteNetListFileEagle(CConCadMultiDoc *pDesign, const TCHAR *filename);
-
-	// Create netlist and output as a Protel PCB script
-	void WriteNetListFileProtel(CConCadMultiDoc *pDesign, const TCHAR *filename);
-
-	// Create netlist and output as a PCB GPLEDA PCB script
-	void WriteNetListFilePCB(CConCadMultiDoc *pDesign, const TCHAR *filename);
-
 	// Create netlist and output as an XML file)
 	void WriteNetListFileXML(CConCadMultiDoc *pDesign, const TCHAR *filename);
 
 	// Perform the work of making a netlist from a single sheet in this design...
 	void MakeNetForSheet(fileCollection &imports, int import_index, int sheet, Counter& file_counter);
 
-	// Expand a spice line
-	typedef std::map<int, CString> labelCollection;
-	CString expand_spice(int file_name_index, int sheet, CNetListSymbol &symbol, labelCollection &labels, labelCollection &preferredLabel, CString spice);
-	bool eval_spice_macro(int file_name_index, int sheet, CNetListSymbol &symbol, labelCollection &labels, labelCollection &preferredLabel, CString &spice_line, CString macro);
-
-	// Get a netlist name from a pin number
-	bool get_pin_by_number_or_name(CNetListSymbol &symbol, labelCollection &labels, labelCollection &preferredLabel, CString pin, int &nodes, CString &r, int &net);
-	bool get_pin_by_number(CNetListSymbol &symbol, labelCollection &labels, labelCollection &preferredLabel, CString pin, int &nodes, CString &r, int &net);
-
 public:
 	// Get a netlist label name for this power symbol
 	CString get_power_label(CDrawPower *power);
 
 protected:
-	// Get a attribute value from an attribute name
-	bool get_attr(int file_name_index, int sheet, CNetListSymbol &symbol, CString attr, CString &r);
-
 	// Clear out the imports etc..
 	void clear();
 
@@ -455,22 +431,6 @@ private:
 
 	// Worker function used to debug the netlist linker
 	void dumpNetListObjects();
-
-	// For iterating over the library components of the design
-	class ComponentIterator {
-	public:
-		CConCadMultiDoc *pDesign;
-		fileCollection::iterator fi;
-		int sheet;
-		CConCadMultiDoc *dsn;
-		drawingIterator drawing;
-		bool end;
-	} m_ComponentIterator;
-
-	void componentsBegin(CConCadMultiDoc *pDesign);
-	void componentsNext();
-	CDrawMethod *currentComponent();
-	bool componentsEnd();
 
 public:
 	// Get a hierarchical reference path from a symbol.
@@ -498,79 +458,8 @@ public:
 	// Tell all of the wires what network they are associated with
 	void WriteWires();
 
-	// Create netlist and output as a PCB file
+	// Create the netlist file of Special > Create Netlist: type 0 TinyCAD, 1 XML
 	void WriteNetListFile(int type, CConCadMultiDoc *pDesign, const TCHAR *filename);
-
-	// Create netlist and output as a VHDL file
-	void WriteVHDLFile(CConCadMultiDoc *pDesign, const TCHAR *filename);
-
-	// Create netlist and output as a SPICE file
-	void WriteSpiceFile(CConCadMultiDoc *pDesign, const TCHAR *filename);
-};
-
-// The structure which defines which errors/warnings are in use
-struct ErrorTest 
-{
-	int DupRef	                : 1;		// Duplicated references 0
-	int UnConnect	            : 1;		// Unconnected items 1
-	int NoConnect	            : 1;		// Mode than one item on a no-connect net 2
-	int Power	                : 1;		// Power connected to power 3
-	int OutputPwr	            : 1;		// Power connected to an output 4
-	int Output	                : 1;		// Output connected to an output 5
-	int NoOutput	            : 1;		// No outputs driving inputs 6
-	int UnConnected             : 1;		// Unconnected nets 7
-	int MultipleNetNames        : 1;        // Multiple net names on same net 8
-	int NonCaseDistinctNetNames : 1;        // Non-case distinct net names (i.e., Vcc and VCC) 9
-	int UnAssignedRefDes        : 1;        // Unassigned reference designators (i.e., U?) 10
-};
-
-// The type of nets that exist
-enum NetType 
-{	
-		nUnknown, 			// The net has not been evaluated yet						0
-		nPassive,			// The net only contains passive connections				1
-		nInput,				// The net only contains inputs								2
-		nOutput,			// The net contains an output and some inputs/passives		3
-		nBiDir,				// The net contains a bi-dir/inputs/passives/tri-state		4
-		nPower,				// The net contains a power item and some inputs/passives	5
-		nNoConnect,			// The net contains a no-connect and one other item			6
-};
-
-// The dialog for the electrical rules check box
-class CDlgERCBox: public CDialog
-{
-	ErrorTest theErrorTest;
-
-public:
-	CDlgERCBox(CWnd *pParentWnd = NULL) :
-		CDialog(IDD_ERCBOX, pParentWnd)
-	{
-	}
-	
-	BOOL OnInitDialog();
-	virtual void OnOK();
-
-	void SetErrorTest(ErrorTest NewErrorTest)
-	{
-		theErrorTest = NewErrorTest;
-	}
-	
-	ErrorTest GetErrorTest()
-	{
-		return theErrorTest;
-	}
-};
-
-class Bus_Properties {
-public:
-	enum bus_type { internal, input, output, dont_know };
-	Bus_Properties(CString &ref, bus_type t = dont_know);
-	Bus_Properties() {}
-	CString name;
-	int start = 0;
-	int end = 0;
-	bool is_bus = false;	// note that a bus with start==end is still a bus (a bus member)
-	bus_type type = internal;
 };
 
 #endif

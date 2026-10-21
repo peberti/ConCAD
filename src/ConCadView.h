@@ -334,16 +334,11 @@ protected:
 	afx_msg void OnSelectGet();
 
 	// The Special Menu
-public:	//The following 3 commands have convenience functionality added to the ERCListBox object, thus need public visibility
+public:
 	afx_msg void OnSpecialAnnotate();
 	afx_msg void OnSpecialNet();
-	afx_msg void OnSpecialCreatespicefile();
-	afx_msg void OnSpecialVHDL();
-	void CommandPromptCreatespicefile(CConCadMultiDoc *pDesign, CString fileName, CString outputDirectoryName);	//This supports creating a Spice netlist file from a command line option
 protected:
 	afx_msg void OnSpecialBom();
-	afx_msg void OnSpecialCheck();
-	afx_msg void OnSpecialVHDLCheck();
 
 	// The Repeat Menu
 	afx_msg void OnRepeatNameUp();
@@ -367,8 +362,6 @@ public:
 	afx_msg void OnContextReloadsymbolfromdesign();
 	void SelectSheet(int sheet);
 	void ChangeDir(int dir);
-	int DoSpecialCheck(bool alwaysShowList = true);
-	int DoSpecialVHDLCheck(bool alwaysShowList = true);
 };
 
 inline CMultiSheetDoc* CConCadView::GetDocument()

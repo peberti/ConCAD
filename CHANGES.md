@@ -946,6 +946,11 @@ Files: `src/ConCadMultiDoc.{h,cpp}`, `src/ConCad.cpp`.
   drawing too when the clipboard holds ConCAD objects; plain text is still
   pasted into the field. To copy part of a field's text, use the field's
   right-click menu.
+- **Delete** likewise deletes the selected text, label, pin or power
+  symbol while its name field still has all its text selected (as right
+  after clicking the object). Once you click into the field to place the
+  caret, Delete edits the text again; Backspace always edits the text.
+  Fields in the component/module parameter lists are not affected.
 - A **Design Details** button on the main toolbar, after Print.
 - New bundled title block `templates/title-blocks/Design-Details.svg`:
   like Drawing-Details plus a Customer row, titled
@@ -978,6 +983,82 @@ Also fixed: the Variables list on the Design tab missed a token that
 followed an unclosed `{Name` (e.g. `{Vehicle_Length` on one line and
 `{No_of_Doors}` on the next — the scan read them as one invalid name).
 Now the scan restarts at the next brace. (`src/DetailsPropertyPages.cpp`)
+
+## 18. New Store Module dialog
+
+Storing a module (Object → Create Module, Save in a module window,
+Properties in the library window) uses its own, simpler dialog
+(`IDD_STORE_MODULE`, laid out from the user's *Store-Module-dialog-updated.svg*)
+instead of the Store Symbol dialog: no parts-per-package, orientation,
+names list or SPICE tab.
+
+- **Name** field, and a parameter list whose first rows are fixed:
+  **Reference**, **Partnumber**, **Type** (new modules start with them
+  empty); Add / Delete for the module's own parameters.
+- The library record gets **name = Type** and **description = Name**, so
+  the library panel shows **`<Type> - <Name>`** (the panel always shows
+  "name - description"; without a Type: just the Name). The line at the
+  top of the dialog shows that text as you type; the module window title
+  is *Module: <Type> - <Name>*. A name is required.
+- Name, Partnumber and Type are also stored as fields of the record;
+  placing the module uses them for `{Name}`, `{Partnumber}`, `{Type}`.
+  Modules stored before have no such fields: their library name is read
+  as the Type and their description as the Name (the convention already
+  used, e.g. `Harness` / `CVC01 Audio harness`).
+- Fields that older modules got from the symbol dialog — `$$SPICE_…` and
+  the automatic `Package` = "package name for PCB layout" — are not shown
+  and are dropped when the module is stored again (a Package with a real
+  value is kept). The panel no longer shows a trailing " - " for items
+  without a description.
+- Partnumber and Type are standard module parameters: Module Tool
+  Options lists them after Reference (added empty to modules that lack
+  them) and, like Name and Reference, they cannot be renamed or deleted.
+  Texts in the module can show `{Partnumber}` and `{Type}`.
+- Duplicate in the library window gives `<Type> - Copy of <Name>`.
+
+Files: `src/DlgUpdateBox.{h,cpp}` (module mode), `src/ConCad.rc` /
+`src/resource.h` (`IDD_STORE_MODULE`, `IDC_MODULE_LIBNAME`,
+`IDC_LIBFILE_LABEL`), `src/DrawModuleInfo.{h,cpp}` (`IsStandardField`,
+`EnsureStandardFields`), `src/EditDlgModuleEdit.cpp`, `src/ConCadView.cpp`
+(`PlaceModule`), `src/LibraryDoc.cpp`.
+
+## 19. PCB, design-rule, SPICE and VHDL features removed
+
+ConCAD is used for wiring/system schematics, not PCB design or
+simulation, so these TinyCAD features are gone:
+
+- **Special → Check Design Rules** (the ERC dialog and its checks). The
+  *Design Markers* window that listed the errors is now only used by
+  **Edit → Find…** and is titled *Find Results* (Close only — no
+  Re-check / Generate buttons).
+- **SPICE:** the SPICE netlist, the `/s` (`--gen_spice_netlist`) command
+  line option and the **SPICE tab** of the Store Symbol dialog (now a
+  plain *Attributes* frame). SPICE data already in library symbols is
+  not shown but kept unchanged when a symbol is stored again.
+- **PCB netlist formats** PADS-PCB, PADS-PCB-with-value, Eagle SCR,
+  Protel and gEDA PCB.
+- **VHDL** netlist and VHDL design check.
+- The **Package** field ("package name for PCB layout") is no longer
+  added automatically to symbols in the Store Symbol dialog (existing
+  Package fields stay).
+
+Kept: **Special → Generate Symbol References…**, **Special → Create
+Parts List…**, and the netlist — now on the menu as **Special → Create
+Netlist…** (before, it was only reachable from the design-rule window),
+in the **TinyCAD** (text: components, then each net with its ref/pins)
+and **XML** formats, with *Prefix symbol references with sheet number*.
+The format choice is a new registry value `NetlistFormat` (0 TinyCAD, 1
+XML). Pin electrical types (input/output/power…) stay in the pin editor
+but are no longer checked. No file-format change. §14 (SPICE
+priorities) is obsolete.
+
+Files: `src/Net.cpp` (only `OnSpecialNet` left), `src/NetList.cpp`,
+`src/Net.h`, `src/DlgPCBExport.cpp`, `src/DlgERCListBox.cpp`, `src/Diag.h`,
+`src/ConCadView.{h,cpp}`, `src/ConCad.{h,cpp}` (command line),
+`src/DlgUpdateBox.{h,cpp}`, `src/ConCad.rc`, `manual/ConCAD.html` (pages
+*Exporting to PCB programs*, *Using SPICE*, *Using VHDL*, the Package
+attribute, Check Design Rules and FAQ 1 removed; Special → Create Netlist
+rewritten; stray PCB/SPICE/ERC sentences reworded).
 
 ---
 
@@ -1056,14 +1137,14 @@ XML-saved files.
     the open design updates. Save, reopen — position, visibility and rows
     are kept.
 11. **Modules** — Options → Settings → Drawing: pick a `.TCLib` as Module
-    library. Select a few wires and two placed symbols, Special → Create
+    library. Select a few wires and two placed symbols, Object → Create
     Module…: dialog titled *Store Module*; name it `Test module`, Store.
     It appears in the library panel with a preview. Open another design,
     double-click it: the objects follow the mouse, click to drop; the
     symbols draw correctly; title block, grid and colours unchanged. Undo
-    removes it. Library → Libraries → Edit the module library: Edit on the
-    module shows a message; Duplicate makes "Copy of Test module";
-    Properties lets you rename it.
+    removes it. Library → Libraries → Edit the module library: Duplicate
+    makes "Copy of Test module"; Properties lets you rename it (Edit is
+    step 17).
 12. **Groups** — the Object menu exists (Create Group, Ungroup, Edit
     Group, Finish Editing Group, Create Module…) and Special no longer has
     Create Module. Place `Test module`. Click one of its wires: the whole
@@ -1137,6 +1218,9 @@ XML-saved files.
     text *object* follows the mouse. Click a label, Ctrl+X: the label is
     removed; Ctrl+V brings it back. Copy some words in Notepad, click a
     text, Ctrl+V: the words are pasted into its field (plain text).
+    Click a label, press Delete: the label is deleted (Undo restores it).
+    Click a text, click into its field, press Delete: one character of the
+    text is deleted, not the object.
 22. **Design Details button** — the main toolbar has a new button after
     Print (page with a blue title block); it opens Design Details and is
     greyed on a write-protected version. If the button is missing, the
@@ -1148,8 +1232,9 @@ XML-saved files.
     Variables lists `Project_prefix`, `Project_number` and `Customer`; give
     them values, OK: the title row reads `<prefix>_<number> — <Title>` and
     Customer shows. Create Version fills Revised by, revision and date.
-24. **SPICE prologues** — Store Symbol dialog has no priority boxes. On a
-    design with a few SPICE symbols, Special → Create SPICE file: each
+24. *(Obsolete — SPICE was removed, §19.)* **SPICE prologues** — Store Symbol dialog has no priority boxes. On a
+    design with a few SPICE symbols, Special → Check Design Rules → Check →
+    Design Markers → Generate SPICE Netlist: each
     symbol's prologue/epilogue appears once, in drawing order, the RUN
     node's first/last, and no blank lines from empty prologues.
 25. **Empty tokens** — pick the `Design-Details` title block on a design
@@ -1166,3 +1251,31 @@ XML-saved files.
 27. **Unclosed token** — a Note with `{Abc` on one line and `{Def}` on the
     next: Design Details → Design lists `Def` under Variables; giving it a
     value shows in the Note; `{Abc` stays as typed.
+28. **Store Module dialog** — select objects, Object → Create Module…: the
+    new dialog (Name, list with Reference / Partnumber / Type, Add / Delete,
+    small library-file line, Cancel / Store). Store with an empty Name →
+    refused. Type `Front camera` as Name and `Camera` as Type: the top
+    line shows `Camera - Front camera`; Store → the library panel lists
+    `Camera - Front camera` (once), the library window shows `Camera`
+    with `Front camera` below. Properties on an old module (e.g.
+    `Harness` / `CVC01 Audio harness`): Name `CVC01 Audio harness`, Type
+    `Harness`, no `$$SPICE` or placeholder Package rows. Place it: Module Tool Options shows Name
+    `Front camera`, Reference, Partnumber, Type (these cannot be deleted or
+    renamed); a text `{Type}: {Name}` in the module shows
+    `Camera: Front camera`. Edit the module in the library window and
+    Save: the dialog shows the same values. Duplicate → `Camera - Copy of
+    Front camera`. A module stored before this build still places with its
+    old name, and gets empty Partnumber / Type.
+29. **Removed features** — the Special menu has Generate Symbol References,
+    Create Netlist, Create Parts List and Insert another design as
+    symbol; no Check Design Rules. Store Symbol dialog: no SPICE tab, an
+    *Attributes* frame instead, and a new symbol gets no Package field;
+    store a symbol that had SPICE data and check (Library XML export) the
+    `$$SPICE` fields are still there. Edit → Find…: results window titled
+    *Find Results* with only Close; clicking a result still shows the item.
+30. **Netlist** — Special → Create Netlist…: dialog *Create Netlist*,
+    formats TinyCAD and XML only; the file name extension follows the
+    format (`.net` / `.net.xml`). TinyCAD: the components, then `NET`
+    lines with the connected ref/pins — cables connect like wires. XML
+    opens as XML. The choice is remembered. Prefix with sheet number
+    works on a multi-sheet design.

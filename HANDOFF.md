@@ -2,6 +2,15 @@
 
 ## Latest session (2026-10-08) — start here
 
+- 2026-10-21 (later): version is now 0.<release>.<commit count> with
+  RELEASE / RELEASE_TYPE at the top of `src/gitbranch.bat` (CHANGES §17);
+  new Store Module dialog with Type/Name naming (§18); PCB, design-rule
+  (ERC), SPICE and VHDL features removed, netlist on Special → Create
+  Netlist, manual cleaned (§19); Delete on a selected text deletes the
+  object (§16). `FEATURES.md` is the tester's guide. A test release
+  installer was built and tagged (see git tags v0.1.*). Steps 11–30 of
+  the quick test plan are not yet app-tested.
+
 - 2026-10-21: from the new TODO.md items — Ctrl+C/X on a selected text,
   label etc. now copies/cuts the object (the Tool Options dialogs pass
   these keys on to the drawing), and a Design Details button on the main
