@@ -3,8 +3,11 @@ REM Regenerate BuildId.h on every build.  Defines:
 REM   GIT_BRANCH       current branch (or "master" if git is unavailable)
 REM   CONCAD_BUILD     monotonically increasing commit count on the current
 REM                    branch (0 if git is unavailable)
-REM   CONCAD_VERSION_STR  "0.<CONCAD_BUILD>" - the version shown in About,
-REM                    the .exe file properties and the installer
+REM   CONCAD_RELEASE   the release number set by hand below
+REM   CONCAD_RELEASE_TYPE  "Test" or "Production" (set by hand below)
+REM   CONCAD_VERSION_STR  "0.<CONCAD_RELEASE>.<CONCAD_BUILD>" - the version
+REM                    shown in About, the .exe file properties and the
+REM                    installer
 REM   BUILD_UUID       a fresh per-build UUID
 REM
 REM MSBuild's pre-build event runs cmd with the system PATH, which often
@@ -14,6 +17,11 @@ REM Visual Studio (via the VSINSTALLDIR / DevEnvDir build environment
 REM variables), so no separate Git-for-Windows install is required.
 
 setlocal enabledelayedexpansion
+
+REM ---- Set by hand when a new release is handed out ----------------------
+set "RELEASE=1"
+set "RELEASE_TYPE=Test"
+REM ------------------------------------------------------------------------
 
 set "GIT_EXE="
 where git >nul 2>nul
@@ -44,7 +52,9 @@ if defined GIT_EXE (
 
 > BuildId.h echo #define GIT_BRANCH "!BRANCH!"
 >> BuildId.h echo #define CONCAD_BUILD !BUILD!
->> BuildId.h echo #define CONCAD_VERSION_STR "0.!BUILD!"
+>> BuildId.h echo #define CONCAD_RELEASE !RELEASE!
+>> BuildId.h echo #define CONCAD_RELEASE_TYPE "!RELEASE_TYPE!"
+>> BuildId.h echo #define CONCAD_VERSION_STR "0.!RELEASE!.!BUILD!"
 for /f %%a in ('"uuidgen"') do echo #define BUILD_UUID "%%a" >> BuildId.h
 
 endlocal

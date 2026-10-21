@@ -10,7 +10,7 @@ ConCAD is a fork of TinyCAD (https://www.tinycad.net), an open-source schematic-
 
 - Open `ConCad.sln` at the repo root in **Visual Studio 2019 or 2022 (Community edition is fine) with the MFC C++ component installed**. Build → Build Solution (Ctrl+Shift+B). There is no CMake / no command-line build flow checked in.
 - Configurations: `Debug|Win32` and `Release|Win32`. There is no x64 config.
-- Pre-build step: `src/gitbranch.bat` runs on every build and (re)writes `src/BuildId.h` with `GIT_BRANCH`, `CONCAD_BUILD` (git commit count), `CONCAD_VERSION_STR` ("0.<count>" — used by About, the version resource in `res/ConCad.rc2`, and the NSIS script) and a fresh `BUILD_UUID`. `BuildId.h` is intentionally regenerated — do not commit hand edits to it.
+- Pre-build step: `src/gitbranch.bat` runs on every build and (re)writes `src/BuildId.h` with `GIT_BRANCH`, `CONCAD_BUILD` (git commit count), `CONCAD_RELEASE` / `CONCAD_RELEASE_TYPE` (set by hand at the top of the .bat), `CONCAD_VERSION_STR` ("0.<release>.<count>" — used by About, the version resource in `res/ConCad.rc2`, and the NSIS script) and a fresh `BUILD_UUID`. `BuildId.h` is intentionally regenerated — do not commit hand edits to it.
 - Installer: NSIS script at `installer/ConCAD.nsi` (not invoked by msbuild; run NSIS separately after a Release build).
 - Tests: there is **no test project / no automated test suite**. Verification is manual — load a `.con` (or legacy `.dsn`) design and exercise the affected UI paths (the bundled `examples/` tree was removed from the repo). `CHANGES.md` has a "Quick test plan" section that lists the smoke tests for the recent fork features.
 

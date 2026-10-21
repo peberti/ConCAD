@@ -10,14 +10,13 @@
 /////////////////////////////////////////////////////////////////////////////
 // Add manually edited resources here...
 
-// Version: the build number is the git commit count, written into
-// BuildId.h by gitbranch.bat before every build (same as Help > About and
-// the installer).
+// Version 0.<release>.<git commit count>, written into BuildId.h by
+// gitbranch.bat before every build (same as Help > About and the installer).
 #include "BuildId.h"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,CONCAD_BUILD,0,0
- PRODUCTVERSION 0,CONCAD_BUILD,0,0
+ FILEVERSION 0,CONCAD_RELEASE,CONCAD_BUILD,0
+ PRODUCTVERSION 0,CONCAD_RELEASE,CONCAD_BUILD,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x3L

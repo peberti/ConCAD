@@ -645,11 +645,9 @@ bool CConCadApp::IsLibInUse(CLibraryStore* pLib)
 //-------------------------------------------------------------------------
 CString CConCadApp::GetVersion()
 {
-	// ConCAD versioning: major is always 0; the build number is the git
-	// commit count emitted into BuildId.h by gitbranch.bat at pre-build.
-	CString sReturn;
-	sReturn.Format(_T("0.%d"), CONCAD_BUILD);
-	return sReturn;
+	// ConCAD versioning: 0.<release>.<git commit count>, emitted into
+	// BuildId.h by gitbranch.bat at pre-build (release set by hand there).
+	return CString(CONCAD_VERSION_STR);
 }
 //-------------------------------------------------------------------------
 CString CConCadApp::GetReleaseType()
@@ -658,7 +656,7 @@ CString CConCadApp::GetReleaseType()
 	// otherwise use the branch name
 	if (strcmp(GIT_BRANCH, "master")==0)
 	{
-		return "Production Release";
+		return CONCAD_RELEASE_TYPE " Release";   // "Test Release" / "Production Release"
 	}
 	return GIT_BRANCH;
 }

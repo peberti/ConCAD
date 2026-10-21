@@ -958,17 +958,20 @@ Files: `src/EditDlg.cpp`, `src/Diag.h` (`CEditDlg::PreTranslateMessage`),
 
 ---
 
-## 17. One version number: 0.<git commit count>
+## 17. One version number: 0.<release>.<git commit count>
 
 The About box, the splash, the `.exe` file properties and the installer
-now all show the same version, `0.<number of commits>` (e.g. 0.713).
-`src/gitbranch.bat` writes `CONCAD_BUILD` and `CONCAD_VERSION_STR` into
+now all show the same version, `0.<release>.<number of commits>` (e.g.
+0.1.715) and the release type, "Test Release" or "Production Release".
+The release number and type are set by hand at the top of
+`src/gitbranch.bat` (`RELEASE`, `RELEASE_TYPE`), which writes them with
+`CONCAD_BUILD` and `CONCAD_VERSION_STR` into
 `src/BuildId.h` before every build; the version resource moved from
 `ConCad.rc` to `res/ConCad.rc2` (so the resource editor cannot rewrite
 it) and reads them from there; `installer/ConCAD.nsi` reads
 `CONCAD_VERSION_STR` from the same file (`!searchparse`), so build ConCAD
 (Release) before running NSIS. The installer is named
-`ConCAD_0.<n>_Production_Release.exe`. The number only changes when a
+`ConCAD_0.<release>.<n>_<Test|Production>_Release.exe`. The number only changes when a
 commit is made; uncommitted builds repeat the last number.
 
 Also fixed: the Variables list on the Design tab missed a token that
@@ -1155,9 +1158,10 @@ XML-saved files.
     empty shows `{Author}`. Fill them in → the values show. Before the
     first Create Version, Revised by / date show `{RevisedBy}` / `{Date}`;
     the revision table's empty rows stay blank.
-26. **Version** — Help → About and the splash show `0.<n>`; Explorer →
-    ConCAD.exe → Properties → Details shows File/Product version `0.<n>`.
-    After a Release build, NSIS produces `ConCAD_0.<n>_Production_Release.exe`
+26. **Version** — Help → About shows `ConCAD 0.1.<n> [Test Release]`, the
+    splash `Version 0.1.<n>`; Explorer → ConCAD.exe → Properties → Details
+    shows File/Product version `0.1.<n>`. After a Release build, NSIS
+    produces `ConCAD_0.1.<n>_Test_Release.exe`
     and Programs and Features lists that version.
 27. **Unclosed token** — a Note with `{Abc` on one line and `{Def}` on the
     next: Design Details → Design lists `Def` under Variables; giving it a

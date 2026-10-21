@@ -77,11 +77,13 @@ not invoke it. The script is `installer/ConCAD.nsi`.
    makensis ConCAD.nsi
    ```
 
-The output is `installer\ConCAD_<version>_Production_Release.exe`, a
-self-contained installer that installs ConCAD plus DLLs, the manual, and
-the SVG title block, runs the VC++ redist, registers `.con` files, and
-creates shortcuts. The version string is set by `PRODUCT_VERSION` at the
-top of `ConCAD.nsi` — bump it per release. The installer does not bundle
+The output is `installer\ConCAD_<version>_<Test|Production>_Release.exe`,
+a self-contained installer that installs ConCAD plus DLLs, the manual, and
+the SVG title blocks, runs the VC++ redist, registers `.con` files, and
+creates shortcuts. The version is `0.<release>.<git commit count>`; the
+installer reads it from `src\BuildId.h`, written by the Release build. To
+hand out a new release, raise `RELEASE` (and set `RELEASE_TYPE`) at the top
+of `src\gitbranch.bat`, commit, build Release, then compile the script. The installer does not bundle
 symbol libraries; a fresh install starts empty and users add their own.
 
 ## Repository layout
