@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="art/concad-logo.png" alt="ConCAD logo" width="200">
+  <img src="src/res/icon.png" alt="ConCAD icon" width="160">
 </p>
 
 # ConCAD
@@ -103,11 +103,12 @@ change the coordinates in `CDlgStartUpWindow::OnPaint` too.
 | Path           | What it is                                              |
 |----------------|--------------------------------------------------------|
 | `src/`         | Application source (MFC Doc/View). Vendored SQLite and rapidxml under `src/SQLite/` and `src/rapidxml-1.13/`. |
-| `templates/`   | Drawing templates.                                     |
+| `templates/`   | Title-block and revision-table templates (SVG).        |
+| `Libraries/`   | Symbol and module libraries bundled by the installer.  |
 | `manual/`      | User documentation.                                    |
 | `installer/`   | NSIS installer script and supporting files.            |
-| `art/`         | Logo / icon sources and the icon generator.            |
 | `CHANGES.md`   | Fork feature documentation and test plan.              |
+| `FEATURES.md`  | Features and how to test them, for testers.            |
 | `CLAUDE.md`    | Architecture notes and contribution guidance.          |
 
 ## License

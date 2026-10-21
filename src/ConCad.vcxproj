@@ -1673,7 +1673,6 @@
     <None Include="..\docs\Spice Description.html" />
     <None Include="..\docs\Symbol menu.html" />
     <None Include="License.TXT" />
-    <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="ConCAD.manifest" />

@@ -29,7 +29,6 @@
 #include "DlgPositionBox.h"
 #include "DlgGetFindBox.h"
 #include "FolderFrame.h"
-#include "WinXPToolbar.h"
 
 
 class CMainFrame: public CMDIFrameWndEx

@@ -893,9 +893,6 @@
     <None Include="..\docs\printing.html">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="ReadMe.txt">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="License.TXT">
       <Filter>Resource Files</Filter>
     </None>

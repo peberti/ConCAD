@@ -98,11 +98,8 @@ is the user's call.
 
 **Repo hygiene note:** this is a WSL/DrvFs checkout, so git sees every file
 as mode-changed (100644→100755). `git config core.fileMode false` is set
-locally to ignore that; without it `git status` is unusable. Untracked
-working files left in the tree on purpose: `test_file.dsn`, `tCad1.dsn`,
-`*.svg`, `*.png`, `art/`, `src/ConCad.aps`, `src/ConCad.vcxproj.user`,
-and a junk file literally named `src/nul) do set ...` (a stray from a
-`gitbranch.bat` redirect — safe to delete).
+locally to ignore that; without it `git status` is unusable. (The tree
+was cleaned of stray files on 2026-10-21.)
 
 ### Added this session (all committed)
 - **Tokens everywhere**: `{name}` now substitutes in free Text and Note
