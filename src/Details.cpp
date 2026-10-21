@@ -339,7 +339,10 @@ bool CDetails::IsBuiltInToken(const CString& sName)
 // Resolve {token} occurrences in sInput.  User-defined tokens override
 // built-ins (Title, Author, Revision, DocNo, Organisation, Sheets, Date).
 // Substitutions are re-applied so a token value can reference other tokens,
-// up to a fixed expansion depth which protects against cycles.
+// up to a fixed expansion depth which protects against cycles.  A token
+// whose value is empty stays as written ("{Organisation}"), so unfilled
+// fields show in the drawing -- except the revision-history row tokens,
+// whose unused rows stay blank.
 CString CDetails::Resolve(const CString& sInput) const
 {
 	// Fast path: nothing to substitute if there is no opening brace.  This
@@ -376,6 +379,7 @@ CString CDetails::Resolve(const CString& sInput) const
 					sName.Trim();
 					CString sValue;
 					bool bResolved = false;
+					bool bHistory = false;
 
 					CDetailsTokenMap::const_iterator it = m_oUserTokens.find(sName);
 					if (it != m_oUserTokens.end())
@@ -404,8 +408,17 @@ CString CDetails::Resolve(const CString& sInput) const
 					else
 					{
 						bResolved = ResolveHistoryToken(sName, sValue);
+						bHistory = bResolved;
 					}
 
+					if (bResolved && sValue.IsEmpty() && !bHistory)
+					{
+						// Keep "{Name}" as written; not a change, so it
+						// does not force another pass.
+						sNext += sResult.Mid(i, j - i + 1);
+						i = j + 1;
+						continue;
+					}
 					if (bResolved)
 					{
 						sNext += sValue;

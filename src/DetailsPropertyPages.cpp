@@ -95,6 +95,13 @@ static void AppendReferencedNames(const CString& text, std::vector<CString>& out
 		}
 		CString name = text.Mid(pos + 1, end - pos - 1);
 		name.Trim();
+		if (!IsValidTokenName(name))
+		{
+			// e.g. an unclosed "{Name" before a later "{Other}": rescan from
+			// the next brace so "{Other}" is still found.
+			pos = pos + 1;
+			continue;
+		}
 		pos = end + 1;
 
 		if (IsValidTokenName(name) && !IsReservedTokenName(name) && !VecContainsNoCase(out, name))
@@ -678,6 +685,11 @@ void CDetailsPropertyPage3::MergeReferencedTokens()
 		}
 		CString name = blob.Mid(pos + 1, end - pos - 1);
 		name.Trim();
+		if (!IsValidTokenName(name))
+		{
+			pos = pos + 1;   // unclosed "{Name": rescan from the next brace
+			continue;
+		}
 		pos = end + 1;
 
 		if (IsValidTokenName(name)

@@ -87,6 +87,14 @@ somewhere it is substituted, and drops off when no longer referenced.
    under Variables; type its value (e.g. `PRJ-001`) and click OK.
 3. Everywhere `{ProjectCode}` appears now renders `PRJ-001`.
 
+A token whose value is **empty** is drawn as written — e.g. `{Organisation}`
+or `{ProjectCode}` — so unfilled fields are visible in the drawing (and in
+prints/PDFs) until they are filled in. This applies to the built-ins and
+the user variables alike; only the revision-history row tokens
+(`{Rev1Desc}` etc.) stay blank so unused table rows stay empty. The
+classic built-in title box (no SVG) prints its fields directly and is
+unchanged. (`src/Details.cpp`, `CDetails::Resolve`.)
+
 Token names use letters, digits and underscores and cannot start with a
 digit; reserved built-in names (below) are rejected.
 
@@ -950,6 +958,26 @@ Files: `src/EditDlg.cpp`, `src/Diag.h` (`CEditDlg::PreTranslateMessage`),
 
 ---
 
+## 17. One version number: 0.<git commit count>
+
+The About box, the splash, the `.exe` file properties and the installer
+now all show the same version, `0.<number of commits>` (e.g. 0.713).
+`src/gitbranch.bat` writes `CONCAD_BUILD` and `CONCAD_VERSION_STR` into
+`src/BuildId.h` before every build; the version resource moved from
+`ConCad.rc` to `res/ConCad.rc2` (so the resource editor cannot rewrite
+it) and reads them from there; `installer/ConCAD.nsi` reads
+`CONCAD_VERSION_STR` from the same file (`!searchparse`), so build ConCAD
+(Release) before running NSIS. The installer is named
+`ConCAD_0.<n>_Production_Release.exe`. The number only changes when a
+commit is made; uncommitted builds repeat the last number.
+
+Also fixed: the Variables list on the Design tab missed a token that
+followed an unclosed `{Name` (e.g. `{Vehicle_Length` on one line and
+`{No_of_Doors}` on the next — the scan read them as one invalid name).
+Now the scan restarts at the next brace. (`src/DetailsPropertyPages.cpp`)
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1111,3 +1139,26 @@ XML-saved files.
     greyed on a write-protected version. If the button is missing, the
     toolbar layout saved in the registry wins: right-click the toolbar →
     Customize… → Toolbars → select it → Reset.
+23. **Design-Details title block** — Edit → Design Details → Title Block →
+    pick `Design-Details` → OK. The panel is headed DESIGN DETAILS, with a
+    Customer row between the title and Description. On the Design tab,
+    Variables lists `Project_prefix`, `Project_number` and `Customer`; give
+    them values, OK: the title row reads `<prefix>_<number> — <Title>` and
+    Customer shows. Create Version fills Revised by, revision and date.
+24. **SPICE prologues** — Store Symbol dialog has no priority boxes. On a
+    design with a few SPICE symbols, Special → Create SPICE file: each
+    symbol's prologue/epilogue appears once, in drawing order, the RUN
+    node's first/last, and no blank lines from empty prologues.
+25. **Empty tokens** — pick the `Design-Details` title block on a design
+    with Organisation empty and `Customer` without a value: the panel shows
+    `{Organisation}` and `{Customer}`. A free Text `{Author}` with Author
+    empty shows `{Author}`. Fill them in → the values show. Before the
+    first Create Version, Revised by / date show `{RevisedBy}` / `{Date}`;
+    the revision table's empty rows stay blank.
+26. **Version** — Help → About and the splash show `0.<n>`; Explorer →
+    ConCAD.exe → Properties → Details shows File/Product version `0.<n>`.
+    After a Release build, NSIS produces `ConCAD_0.<n>_Production_Release.exe`
+    and Programs and Features lists that version.
+27. **Unclosed token** — a Note with `{Abc` on one line and `{Def}` on the
+    next: Design Details → Design lists `Def` under Variables; giving it a
+    value shows in the Note; `{Abc` stays as typed.

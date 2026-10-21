@@ -3,6 +3,8 @@ REM Regenerate BuildId.h on every build.  Defines:
 REM   GIT_BRANCH       current branch (or "master" if git is unavailable)
 REM   CONCAD_BUILD     monotonically increasing commit count on the current
 REM                    branch (0 if git is unavailable)
+REM   CONCAD_VERSION_STR  "0.<CONCAD_BUILD>" - the version shown in About,
+REM                    the .exe file properties and the installer
 REM   BUILD_UUID       a fresh per-build UUID
 REM
 REM MSBuild's pre-build event runs cmd with the system PATH, which often
@@ -42,6 +44,7 @@ if defined GIT_EXE (
 
 > BuildId.h echo #define GIT_BRANCH "!BRANCH!"
 >> BuildId.h echo #define CONCAD_BUILD !BUILD!
+>> BuildId.h echo #define CONCAD_VERSION_STR "0.!BUILD!"
 for /f %%a in ('"uuidgen"') do echo #define BUILD_UUID "%%a" >> BuildId.h
 
 endlocal
