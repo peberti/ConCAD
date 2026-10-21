@@ -85,6 +85,9 @@ VC++ redist, registers `.con` files, and creates shortcuts. The version is `0.<r
 installer reads it from `src\BuildId.h`, written by the Release build. To
 hand out a new release, raise `RELEASE` (and set `RELEASE_TYPE`) at the top
 of `src\gitbranch.bat`, commit, build Release, then compile the script.
+If ConCAD has the repo's `Libraries\*.TCLib` open, NSIS cannot read them;
+then copy them elsewhere (e.g. `git show HEAD:Libraries/modules.TCLib`)
+and run `makensis /DLIBDIR=<that folder> ConCAD.nsi`.
 
 ## Splash screen
 
