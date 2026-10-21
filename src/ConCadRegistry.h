@@ -32,6 +32,7 @@ public:
 private:
 	static void CreateDefaultEntries();
 	static void CopyExampleFiles();
+	static void AddBundledLibrary(const CString& file);
 
 	//=====================================================================
 	//== Accessor for application settings                               ==

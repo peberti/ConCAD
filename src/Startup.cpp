@@ -68,34 +68,55 @@ END_MESSAGE_MAP()
 // pixels are overpainted entirely so the splash is recognisably ConCAD.
 void CDlgStartUpWindow::OnPaint()
 {
+	// Colours of the ConCAD icon (res/idr_main.ico)
+	const COLORREF aqua = RGB(0x94, 0xFF, 0xF7);     // icon background
+	const COLORREF teal = RGB(0x01, 0x69, 0x84);     // the "C" and the bus
+	const COLORREF darkTeal = RGB(0x01, 0x4D, 0x61);
+	const COLORREF stripe = RGB(0xEE, 0xEE, 0xEE);   // the bus stripe
+
 	CPaintDC dc(this);
 	CRect rect;
 	GetClientRect(rect);
+	const int band = 44; // the teal band at the bottom, like the bus body (no text)
 
-	// Background
-	CBrush bg(RGB(15, 32, 64));
+	CBrush bg(aqua);
 	dc.FillRect(rect, &bg);
+	CBrush bandBrush(teal);
+	dc.FillRect(CRect(rect.left, rect.bottom - band, rect.right, rect.bottom), &bandBrush);
+	CBrush stripeBrush(stripe);
+	dc.FillRect(CRect(rect.left, rect.bottom - band - 4, rect.right, rect.bottom - band), &stripeBrush);
 
-	// White rule border
-	CPen border(PS_SOLID, 2, RGB(255, 255, 255));
+	// Border
+	CPen border(PS_SOLID, 2, darkTeal);
 	CPen* oldPen = dc.SelectObject(&border);
 	CBrush* oldBrush = (CBrush*) dc.SelectStockObject(NULL_BRUSH);
-	dc.Rectangle(rect.left + 1, rect.top + 1, rect.right - 1, rect.bottom - 1);
+	dc.Rectangle(rect.left + 1, rect.top + 1, rect.right, rect.bottom);
 	dc.SelectObject(oldBrush);
 	dc.SelectObject(oldPen);
 
-	dc.SetBkMode(TRANSPARENT);
-	dc.SetTextColor(RGB(255, 255, 255));
+	// The icon on the left
+	const int iconSize = 128;
+	const int iconX = 40;
+	const int iconY = (rect.Height() - band - 4 - iconSize) / 2;
+	HICON hIcon = (HICON) ::LoadImage(AfxGetResourceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON, iconSize, iconSize, LR_DEFAULTCOLOR);
+	if (hIcon != NULL)
+	{
+		::DrawIconEx(dc.m_hDC, iconX, iconY, hIcon, iconSize, iconSize, 0, NULL, DI_NORMAL);
+		::DestroyIcon(hIcon);
+	}
 
-	// Big centred "ConCAD"
+	dc.SetBkMode(TRANSPARENT);
+	const int textX = iconX + iconSize + 36;
+
+	// "ConCAD"
 	CFont fontTitle;
-	fontTitle.CreateFont(-60, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+	fontTitle.CreateFont(-64, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-		DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, _T("Arial"));
+		DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, _T("Arial"));
 	CFont* oldFont = dc.SelectObject(&fontTitle);
-	dc.SetTextAlign(TA_CENTER | TA_TOP);
-	dc.TextOut(rect.Width() / 2, rect.Height() / 2 - 60, _T("ConCAD"));
-	dc.SelectObject(oldFont);
+	dc.SetTextAlign(TA_LEFT | TA_TOP);
+	dc.SetTextColor(teal);
+	dc.TextOut(textX, iconY + 8, _T("ConCAD"));
 
 	// Version line
 	CFont fontMed;
@@ -103,21 +124,11 @@ void CDlgStartUpWindow::OnPaint()
 		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Segoe UI"));
 	dc.SelectObject(&fontMed);
+	dc.SetTextColor(darkTeal);
 
 	CString version;
-	version.Format(_T("Version %s"), (LPCTSTR) CConCadApp::GetVersion());
-	dc.TextOut(rect.Width() / 2, rect.Height() / 2 + 10, version);
-
-	// Tagline / branch (small)
-	CFont fontSmall;
-	fontSmall.CreateFont(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Segoe UI"));
-	dc.SelectObject(&fontSmall);
-
-	CString tagline;
-	tagline.Format(_T("branch %hs  -  based on TinyCAD"), GIT_BRANCH);
-	dc.TextOut(rect.Width() / 2, rect.Height() - 28, tagline);
+	version.Format(_T("Version %s  (%s)"), (LPCTSTR) CConCadApp::GetVersion(), (LPCTSTR) CConCadApp::GetReleaseType());
+	dc.TextOut(textX + 3, iconY + 86, version);
 
 	dc.SelectObject(oldFont);
 }

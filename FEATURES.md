@@ -13,12 +13,11 @@ Release); Help → About shows the exact version, e.g. `ConCAD 0.1.716
 - **Install:** run `ConCAD_0.1.<n>_Test_Release.exe`. The installer is not
   signed, so Windows may say *"Windows protected your PC"* — click
   **More info → Run anyway**.
-- **Libraries:** the installer contains **no symbol libraries**. Copy the
-  library files you were given (`.TCLib`) to a folder of your own and add
-  them under **Library → Libraries… → Add**.
-- **Module library:** for the module features (§13) pick one of the
-  attached `.TCLib` libraries under **Options → Settings → Drawing →
-  Module library** (a separate, empty library for modules is best).
+- **Libraries:** the installer includes the ConCAD libraries. On the first
+  start they are copied to `Documents\ConCAD\library\` and attached
+  (Library → Libraries…), and `modules` is set as the module library
+  (Options → Settings → Drawing → Module library). Your changes to them
+  are kept when ConCAD is reinstalled.
 - **Files:** designs are saved as **`.con`**. Older TinyCAD `.dsn` files
   still open. A design saved by ConCAD still opens in TinyCAD, but without
   the ConCAD-only parts (groups, colours, cables show as normal objects).

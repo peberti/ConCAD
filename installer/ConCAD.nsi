@@ -93,9 +93,14 @@ Section "MainSection" SEC01
   CreateShortCut "$SMPROGRAMS\ConCAD\User Manual.lnk" "$INSTDIR\ConCAD.html"
 
   ;
-  ; NOTE: symbol libraries (library\*.TCLib) and example circuits
-  ; (examples\*.dsn) are no longer bundled with the installer.
+  ; Symbol and module libraries (Libraries\*.TCLib in the repo).  On first
+  ; start ConCAD copies them to Documents\ConCAD\library\ (never over an
+  ; existing file) and attaches them; modules.TCLib becomes the module
+  ; library.  Example circuits are not bundled.
   ;
+  SetOutPath "$INSTDIR\library"
+  File "..\Libraries\*.TCLib"
+  SetOutPath "$INSTDIR"
 
   ;
   ; Register '.con' files as 'ConCAD Design'
@@ -112,9 +117,7 @@ Section "MainSection" SEC01
   
   ; SVG title-block templates, picked from File -> Design Details -> Title Block.
   SetOutPath "$INSTDIR\templates\title-blocks"
-  File "..\templates\title-blocks\Simple-A4.svg"
-  File "..\templates\title-blocks\Drawing-Details.svg"
-  File "..\templates\title-blocks\Design-Details.svg"
+  File "..\templates\title-blocks\*.svg"
 
   ; Revision history table template (Edit -> Revision History).
   SetOutPath "$INSTDIR\templates"
@@ -180,8 +183,8 @@ Section Uninstall
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
   Delete "$INSTDIR\uninst.exe"
 
-  ; Clean up symbol libraries / examples left by older installers that
-  ; bundled them (current installer no longer ships these).
+  ; The bundled libraries (the user's copies in Documents\ConCAD stay), and
+  ; examples left by older installers.
   RMDir /r "$INSTDIR\library"
   RMDir /r "$INSTDIR\examples"
 
@@ -202,9 +205,7 @@ Section Uninstall
   Delete "$SMPROGRAMS\ConCAD\User Manual.lnk"
   Delete "$INSTDIR\LGPL Version 2.1.txt"
   Delete "$INSTDIR\LGPL Version 3.0.txt"
-  Delete "$INSTDIR\templates\title-blocks\Simple-A4.svg"
-  Delete "$INSTDIR\templates\title-blocks\Drawing-Details.svg"
-  Delete "$INSTDIR\templates\title-blocks\Design-Details.svg"
+  Delete "$INSTDIR\templates\title-blocks\*.svg"
   Delete "$INSTDIR\templates\revision.svg"
 
   RMDir "$SMPROGRAMS\ConCAD"

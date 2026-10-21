@@ -127,7 +127,10 @@ void CConCadRegistry::CopyExampleFiles()
 				{
 					CString from_file = app_dir + theFind.GetName();
 					CString to_file = to_dir + theFind.GetName();
-					CopyFile(from_file, to_file, TRUE);
+					if (CopyFile(from_file, to_file, TRUE) && i == 0) // not copied over an existing file
+					{
+						AddBundledLibrary(to_file);
+					}
 				}
 			} while (theFind.FindNext());
 		}
@@ -138,6 +141,44 @@ void CConCadRegistry::CopyExampleFiles()
 
 }
 
+//-------------------------------------------------------------------------
+//-- A library the installer bundled (<exe dir>\library) was copied to the
+//	 user's library folder: attach it, unless a library with the same file
+//	 name is attached already, and make "modules" the module library if none
+//	 is set.  (On a machine without ConCAD settings CreateDefaultEntries
+//	 attaches the folder's libraries too; after the settings were copied
+//	 from TinyCAD it does not run.)
+void CConCadRegistry::AddBundledLibrary(const CString& file)
+{
+	if (file.Right(6).CompareNoCase(_T(".TCLib")) != 0)
+	{
+		return;
+	}
+	const CString name = file.Left(file.GetLength() - 6);
+	const CString title = name.Mid(name.ReverseFind('\\') + 1);
+
+	CString libraries = super::GetString(M_SLIBRARIES, "");
+	int pos = 0;
+	CString entry = libraries.Tokenize(_T(","), pos);
+	while (!entry.IsEmpty())
+	{
+		if (entry.Mid(entry.ReverseFind('\\') + 1).CompareNoCase(title) == 0)
+		{
+			return;
+		}
+		entry = libraries.Tokenize(_T(","), pos);
+	}
+	if (!libraries.IsEmpty())
+	{
+		libraries += _T(",");
+	}
+	super::Set(M_SLIBRARIES, libraries + name);
+
+	if (title.CompareNoCase(_T("modules")) == 0 && GetModuleLibrary().IsEmpty())
+	{
+		SetModuleLibrary(name);
+	}
+}
 //-------------------------------------------------------------------------
 //-- Write the initial data to the registry
 void CConCadRegistry::CreateDefaultEntries()

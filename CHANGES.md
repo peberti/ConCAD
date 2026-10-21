@@ -1060,6 +1060,31 @@ Files: `src/Net.cpp` (only `OnSpecialNet` left), `src/NetList.cpp`,
 attribute, Check Design Rules and FAQ 1 removed; Special → Create Netlist
 rewritten; stray PCB/SPICE/ERC sentences reworded).
 
+## 20. Bundled libraries, splash in the icon colours, About credits
+
+- **Libraries in the installer:** `Libraries\*.TCLib` (e.g.
+  `modules.TCLib`, `sample_library.TCLib`) are installed to
+  `<install dir>\library\`; all title blocks
+  (`templates\title-blocks\*.svg`) and `templates\revision.svg` as
+  before. On the first start after an install ConCAD copies the
+  libraries to `Documents\ConCAD\library\` (never over an existing
+  file — the user's edits are kept) and **attaches** each newly copied
+  one, unless a library with the same file name is attached already;
+  `modules` becomes the module library if none is set
+  (`CConCadRegistry::AddBundledLibrary`). This also works when the
+  settings were copied from TinyCAD.
+- **Splash** redrawn in the icon's colours: aqua `#94FFF7` background,
+  the icon on the left, "ConCAD" in teal `#016984`, version and release
+  type in dark teal `#014D61`, and a teal band with a light stripe at the
+  bottom; the "branch … based on TinyCAD" line is gone (`src/Startup.cpp`).
+  The splash is drawn in code; `STARTUP.BMP` only sets its size.
+- **Help → About:** "Development Team for Current Release" and its names
+  removed; "Developer for Current Release: Per Bertilsson" added; the
+  open-source list moved up and the dialog made shorter.
+
+Files: `installer/ConCAD.nsi`, `src/ConCadRegistry.{h,cpp}`,
+`src/Startup.cpp`, `src/ConCad.rc`.
+
 ---
 
 ## File-format compatibility
@@ -1279,3 +1304,11 @@ XML-saved files.
     lines with the connected ref/pins — cables connect like wires. XML
     opens as XML. The choice is remembered. Prefix with sheet number
     works on a multi-sheet design.
+31. **Installer, splash, About** — on a PC without ConCAD settings (or a
+    fresh Windows user), install and start ConCAD: the splash is aqua and
+    teal with the icon; Library → Libraries lists `modules` and
+    `sample_library` from `Documents\ConCAD\library`; Options → Settings →
+    Drawing → Module library is `modules`; Design Details → Title Block
+    lists all three templates. Change a library, reinstall: the change is
+    kept. Help → About: "Developer for Current Release: Per Bertilsson",
+    no team list.
