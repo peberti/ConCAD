@@ -110,6 +110,7 @@ Section "MainSection" SEC01
   SetOutPath "$INSTDIR\templates\title-blocks"
   File "..\templates\title-blocks\Simple-A4.svg"
   File "..\templates\title-blocks\Drawing-Details.svg"
+  File "..\templates\title-blocks\Design-Details.svg"
 
   ; Revision history table template (Edit -> Revision History).
   SetOutPath "$INSTDIR\templates"
@@ -199,6 +200,7 @@ Section Uninstall
   Delete "$INSTDIR\LGPL Version 3.0.txt"
   Delete "$INSTDIR\templates\title-blocks\Simple-A4.svg"
   Delete "$INSTDIR\templates\title-blocks\Drawing-Details.svg"
+  Delete "$INSTDIR\templates\title-blocks\Design-Details.svg"
   Delete "$INSTDIR\templates\revision.svg"
 
   RMDir "$SMPROGRAMS\ConCAD"

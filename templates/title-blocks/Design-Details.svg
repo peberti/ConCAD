@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ConCAD title block: design details panel.  Units: mm.  Filled from
+  Design Details; Project_prefix, Project_number and Customer are design
+  variables (set them on the Design tab), RevisedBy is the reviser of the
+  latest version (File > Create Version).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+   width="69.229mm" height="58.894mm" viewBox="0 0 69.229 58.894">
+  <rect x="0.125" y="0.125" width="68.979" height="58.644" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="5.132" x2="69.104" y2="5.132" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="12.794" x2="69.104" y2="12.794" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="20.457" x2="69.104" y2="20.457" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="28.119" x2="69.104" y2="28.119" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="35.782" x2="69.104" y2="35.782" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="43.444" x2="69.104" y2="43.444" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="0.125" y1="51.107" x2="69.104" y2="51.107" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="22.957" y1="51.107" x2="22.957" y2="58.769" stroke="#000000" stroke-width="0.25" fill="none" />
+  <line x1="45.689" y1="51.107" x2="45.689" y2="58.769" stroke="#000000" stroke-width="0.25" fill="none" />
+  <text x="1.537" y="3.632" font-family="Arial" font-size="3.52778" font-weight="bold">DESIGN DETAILS</text>
+  <text x="1.714" y="7.894" font-family="Arial" font-size="2.11667">Drawing number / title</text>
+  <text x="1.714" y="11.295" font-family="Arial" font-size="2.82222">{Project_prefix}_{Project_number} — {Title}</text>
+  <text x="1.714" y="15.556" font-family="Arial" font-size="2.11667">Customer</text>
+  <text x="1.714" y="18.957" font-family="Arial" font-size="2.82222">{Customer}</text>
+  <text x="1.714" y="23.219" font-family="Arial" font-size="2.11667">Description</text>
+  <text x="1.714" y="26.62" font-family="Arial" font-size="2.82222">{Description}</text>
+  <text x="1.714" y="30.881" font-family="Arial" font-size="2.11667">Company</text>
+  <text x="1.714" y="34.282" font-family="Arial" font-size="2.82222">{Organisation}</text>
+  <text x="1.714" y="38.544" font-family="Arial" font-size="2.11667">Original author</text>
+  <text x="1.714" y="41.945" font-family="Arial" font-size="2.82222">{Author}</text>
+  <text x="1.714" y="46.206" font-family="Arial" font-size="2.11667">Revised by</text>
+  <text x="1.714" y="49.608" font-family="Arial" font-size="2.82222">{RevisedBy}</text>
+  <text x="1.714" y="54.289" font-family="Arial" font-size="2.11667">Current revision</text>
+  <text x="1.714" y="57.27" font-family="Arial" font-size="2.82222">{Revision}</text>
+  <text x="24.757" y="54.289" font-family="Arial" font-size="2.11667">Revision issue date</text>
+  <text x="24.757" y="57.27" font-family="Arial" font-size="2.82222">{Date}</text>
+  <text x="47.489" y="54.289" font-family="Arial" font-size="2.11667">Sheet</text>
+  <text x="47.489" y="57.27" font-family="Arial" font-size="2.82222">{Sheets}</text>
+</svg>

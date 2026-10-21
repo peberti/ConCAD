@@ -187,7 +187,9 @@ protected:
 
 	// Clipboard operators
 	afx_msg void OnDestroyClipboard();
+public:
 	BOOL IsClipboardAvailable();
+protected:
 
 	// Generated message map functions
 protected:

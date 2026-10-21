@@ -45,6 +45,9 @@ placed before the fix carry no flag in the design and must be re-placed.
 
 ## ctrl+f flip — done 2026-10-09 (Find has no shortcut now; CHANGES.md §13)
 
+## copy and cut text objects — done 2026-10-21 (untested in the app; CHANGES.md §16)
+
+When pressing ctrl+c or ctrl+x on a text box, label, etc. the object shall be processed, not the text itself. 
 
 ## dynamic shortcuts — done 2026-10-09 (Options → Keyboard Shortcuts…; CHANGES.md §13)
 
@@ -73,3 +76,57 @@ Add/Delete); texts/notes in the module show `{Field}`. See `CHANGES.md` §11
 Library window → Edit/double-click opens a module in a "Module: name" window;
 Save stores it back. Library XML export/import includes modules. See
 `CHANGES.md` §11 and quick test plan steps 17–18.
+
+## New function, align to grid. 
+
+Implement an **Align to Grid** command in TinyCAD based on the following requirements.
+
+**Scope and controls**
+
+- Align selected objects, or the entire drawing if nothing is selected.
+- Allow applying it to the active sheet or all sheets.
+- Use the current grid spacing, with an option to enter another spacing.
+- Use TinyCAD’s native grid-unit conversion. In the metric spacing box, a value of 10 means 1 mm.
+
+**Alignment behavior**
+
+- Align components by their electrical pin connection points, not their bounding boxes or insertion points.
+- Move each component as a whole, preserving its symbol geometry, pin spacing, rotation, mirroring, and scaling.
+- If all pins cannot fit the chosen grid through translation alone, leave the component unchanged and highlight it. Explain whether the issue is incompatible pin spacing or pins closer together than the grid spacing.
+- Snap wire endpoints and bends to the grid. Move connected endpoints together with their component pins.
+- Preserve horizontal and vertical routing where possible. Adjust nearby bends or add short orthogonal segments when needed.
+- Keep junctions, electrical labels, and no-connect markers attached to their original connections.
+- Remove zero-length wire segments created by alignment only when doing so preserves connectivity.
+- Preserve text content, fonts, colors, line styles, and other formatting. Font cleanup is a separate function.
+
+**Connectivity protection**
+
+- Record electrical connectivity before making changes.
+- Preserve existing connections and keep separate nets separate. Nearest-point rounding alone is insufficient: it can accidentally join neighboring wires.
+- When snapping would create an unintended contact, try a nearby grid point or reroute locally. If no safe solution exists, leave the affected objects unchanged and highlight them.
+- Detect small pre-existing wire-to-pin gaps that alignment could repair. Show these as proposed connection changes and require explicit acceptance before adding those connections.
+- Use native symbol transformations and connectivity logic, including rotated, mirrored, scaled, and multipart symbols.
+
+**User experience**
+
+- Preview moved objects, unresolved objects, and proposed connection repairs before applying.
+- Apply the operation as one undoable transaction.
+- Show a brief result summary: components moved, wires adjusted, redundant segments removed, connection repairs accepted, and objects left unresolved.
+- Do not overwrite or save the drawing automatically.
+
+**Validation**
+
+Add tests covering off-grid components, rotated and mirrored symbols, scaled symbols, incompatible pin pitches, junctions, wire crossings, labels, no-connect markers, short segments, and closely spaced separate nets. Verify that accepted changes land on the grid and that connectivity changes only where the user explicitly accepted a repair.
+
+## generate BoM
+
+a tool to extract all part numbers from all text object (text boxes, variables, labels, etc.) based on prefix like "CON-". The prefix shall be configurable in the settings menu.  The output shall be an excel file. 
+if tokens exists for project details such as: "Project name", "Customer", "Project number", etc. and Vehicle details such as: "Vehicle manufacturer", "vehicle model", "vehicle length", "quantity", etc. This should be included in the top of the BoM excel file. Default storage location is same as the .con file. Default filename should be configurable with all avilible tokens. Se sample file "BOM_Bergkvara_Trelleborg_Volvo_R7" 
+
+As a BOM template, an existing excel file with formatting, text, formulas and tokens shall be placed somewhere in the main or subdirectory of the applikation executable. 
+
+Shall be availible with a button from the toolbar. 
+
+## Design details toolbar button — done 2026-10-21 (untested in the app; CHANGES.md §16)
+
+Shall be availible with a button from the toolbar.

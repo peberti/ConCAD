@@ -928,6 +928,28 @@ Files: `src/ConCadMultiDoc.{h,cpp}`, `src/ConCad.cpp`.
 
 ---
 
+## 16. Copy/cut of a selected text; Design Details toolbar button
+
+- Selecting a text, label, pin etc. puts the keyboard focus in its text
+  field in Tool Options, so Ctrl+C / Ctrl+X used to copy/cut the field's
+  text. The Tool Options dialogs now pass the Copy and Cut shortcuts
+  (whatever keys they are assigned to in Options → Keyboard Shortcuts) to
+  the drawing, so they copy/cut the selected objects. Paste goes to the
+  drawing too when the clipboard holds ConCAD objects; plain text is still
+  pasted into the field. To copy part of a field's text, use the field's
+  right-click menu.
+- A **Design Details** button on the main toolbar, after Print.
+- New bundled title block `templates/title-blocks/Design-Details.svg`:
+  like Drawing-Details plus a Customer row, titled
+  `{Project_prefix}_{Project_number} — {Title}` (design variables).
+
+Files: `src/EditDlg.cpp`, `src/Diag.h` (`CEditDlg::PreTranslateMessage`),
+`src/ConCad.rc` (`IDR_MAINFRAME` toolbar), `src/res/Toolbar.bmp`
+(extended 128→144 px: Design Details tile appended),
+`templates/title-blocks/Design-Details.svg`, `installer/ConCAD.nsi`.
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1079,3 +1101,13 @@ XML-saved files.
     asked about 1 unsaved design; Yes opens *Recovered 1* with the
     drawing; Save asks for a name and the recovery file is gone. Close a
     changed untitled design with Don't Save: its recovery file is deleted.
+21. **Copy/cut a text** — click a free Text (Tool Options shows its text,
+    selected). Ctrl+C, click elsewhere on the sheet, Ctrl+V: a copy of the
+    text *object* follows the mouse. Click a label, Ctrl+X: the label is
+    removed; Ctrl+V brings it back. Copy some words in Notepad, click a
+    text, Ctrl+V: the words are pasted into its field (plain text).
+22. **Design Details button** — the main toolbar has a new button after
+    Print (page with a blue title block); it opens Design Details and is
+    greyed on a write-protected version. If the button is missing, the
+    toolbar layout saved in the registry wins: right-click the toolbar →
+    Customize… → Toolbars → select it → Reset.

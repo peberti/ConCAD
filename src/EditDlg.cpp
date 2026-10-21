@@ -61,6 +61,57 @@ void CEditDlg::OnCancel()
 	}
 }
 
+// The command the main window's (user-editable) shortcut table maps this
+// key press to, or 0.
+static UINT FindShortcutCommand(const MSG* pMsg)
+{
+	CFrameWnd* pFrame = static_cast<CFrameWnd*>(AfxGetMainWnd());
+	HACCEL h = pFrame != NULL ? pFrame->m_hAccelTable : NULL;
+	int n = h != NULL ? ::CopyAcceleratorTable(h, NULL, 0) : 0;
+	if (n <= 0)
+	{
+		return 0;
+	}
+	std::vector<ACCEL> accels(n);
+	::CopyAcceleratorTable(h, &accels[0], n);
+
+	BYTE mods = FVIRTKEY;
+	if (::GetKeyState(VK_CONTROL) < 0) mods |= FCONTROL;
+	if (::GetKeyState(VK_SHIFT) < 0) mods |= FSHIFT;
+	if (::GetKeyState(VK_MENU) < 0) mods |= FALT;
+
+	for (int i = 0; i < n; ++i)
+	{
+		if (accels[i].key == pMsg->wParam && (accels[i].fVirt & ~FNOINVERT) == mods)
+		{
+			return accels[i].cmd;
+		}
+	}
+	return 0;
+}
+
+// While a text, label etc. is selected its text field here has the focus, so
+// the dialog would take the copy/cut keys for the field's text. Send them to
+// the drawing instead, so they copy/cut the selected objects. Paste goes to
+// the drawing only when the clipboard holds ConCAD objects; plain text is
+// still pasted into the field.
+BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
+{
+	extern CConCadView *g_currentview;
+
+	if ((pMsg->message == WM_KEYDOWN || pMsg->message == WM_SYSKEYDOWN) && g_currentview)
+	{
+		UINT id = FindShortcutCommand(pMsg);
+		if (id == IDM_EDITCOPY || id == IDM_EDITCUT
+			|| (id == IDM_EDITPASTE && g_currentview->IsClipboardAvailable()))
+		{
+			g_currentview->SendMessage(WM_COMMAND, id, 0);
+			return TRUE;
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
 BEGIN_MESSAGE_MAP(CEditDlg, CDialog)
 //{{AFX_MSG_MAP(CEditDlg)
 // No message handlers

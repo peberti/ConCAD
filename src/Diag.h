@@ -136,6 +136,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX); // DDX/DDV support
 	//}}AFX_VIRTUAL
 	void OnCancel() override;
+	BOOL PreTranslateMessage(MSG* pMsg) override;
 
 private:
 	CDrawingObject *m_pObject;

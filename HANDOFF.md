@@ -2,6 +2,15 @@
 
 ## Latest session (2026-10-08) — start here
 
+- 2026-10-21: from the new TODO.md items — Ctrl+C/X on a selected text,
+  label etc. now copies/cuts the object (the Tool Options dialogs pass
+  these keys on to the drawing), and a Design Details button on the main
+  toolbar (CHANGES.md §16, quick-test 21–22). Builds clean, not
+  app-tested, not committed. Deferred until after testing: BoM to Excel
+  (sample `BOM_Bergkvara_Trelleborg_Volvo_R7.xlsx` in the repo root;
+  decide whether it replaces Special → Bill of Materials) and Align to
+  Grid (large; no test suite for its "tests" requirement).
+
 **Built (Debug) but not committed or tested in the app yet:**
 - Connector flag now reaches placed symbols (`Symbol.cpp`; TODO.md).
 - Groups (TODO "Module behaviour", CHANGES.md §11): placed modules and
