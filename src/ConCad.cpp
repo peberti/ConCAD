@@ -1079,6 +1079,12 @@ BOOL CConCadApp::ChooseColor(COLORREF &col)
 	return FALSE;
 }
 
+BOOL CConCadApp::GetSavedWindowRect(CRect& rect)
+{
+	int flags = 0, show = 0;
+	return CWinAppEx::LoadWindowPlacement(rect, flags, show);
+}
+
 BOOL CConCadApp::LoadWindowPlacement(CRect& rectNormalPosition, int& nFflags, int& nShowCmd)
 {
 	if (m_hiddenWindow)

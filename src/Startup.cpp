@@ -21,22 +21,55 @@
 #include "concad.h"
 #include "startup.h"
 #include "revision.h"
-#include "BuildID.h"
+#include "ImagePng.h"
 
-// The constructor (Which loads etc., the bitmap)
+// The splash picture, a PNG resource (IDB_SPLASH = res/splash.png, exported
+// from res/splash.svg).  NULL if it cannot be loaded.
+static CImagePNG* LoadSplashImage(CSize& size)
+{
+	HINSTANCE hInst = AfxGetResourceHandle();
+	HRSRC hRes = ::FindResource(hInst, MAKEINTRESOURCE(IDB_SPLASH), _T("PNG"));
+	HGLOBAL hData = hRes != NULL ? ::LoadResource(hInst, hRes) : NULL;
+	const void* pData = hData != NULL ? ::LockResource(hData) : NULL;
+	if (pData == NULL)
+	{
+		return NULL;
+	}
+	const DWORD length = ::SizeofResource(hInst, hRes);
+	unsigned char* copy = new unsigned char[length]; // owned by the image
+	memcpy(copy, pData, length);
+
+	CImagePNG* pImage = new CImagePNG();
+	pImage->SetCompressedData(copy, length);
+	CWindowDC screen(NULL);
+	size = pImage->GetSize(screen);
+	return pImage;
+}
+
+// The constructor (which loads the picture)
 CDlgStartUpWindow::CDlgStartUpWindow(CWnd *Parent)
 {
-	// Load a bitmap into a compatible DC
-	theBitmap.LoadBitmap(_T("START_BITMAP"));
-	BITMAP theBitmapSize;
+	theSize = CSize(618, 246);
+	m_pImage = LoadSplashImage(theSize);
 
-	// Get it's size etc..
-	theBitmap.GetObject(sizeof (theBitmapSize), &theBitmapSize);
-	theSize = CSize(theBitmapSize.bmWidth, theBitmapSize.bmHeight);
-
-	// Centre the window in the parent window
+	// Centre it on the monitor ConCAD opens on: the main window is not at
+	// its saved position yet, so use that position (primary monitor if none)
+	CRect saved;
+	CConCadApp *pApp = static_cast<CConCadApp*>(AfxGetApp());
+	HMONITOR hMonitor = pApp != NULL && pApp->GetSavedWindowRect(saved)
+		? ::MonitorFromRect(saved, MONITOR_DEFAULTTONEAREST)
+		: ::MonitorFromPoint(CPoint(0, 0), MONITOR_DEFAULTTOPRIMARY);
+	MONITORINFO mi;
+	mi.cbSize = sizeof(mi);
 	CRect pRect;
-	GetDesktopWindow()->GetWindowRect(pRect);
+	if (::GetMonitorInfo(hMonitor, &mi))
+	{
+		pRect = mi.rcWork;
+	}
+	else
+	{
+		GetDesktopWindow()->GetWindowRect(pRect);
+	}
 	CPoint Centre = CPoint(pRect.left + pRect.Width() / 2 - theSize.cx / 2, pRect.top + pRect.Height() / 2 - theSize.cy / 2);
 	CRect ClientRect = CRect(Centre.x, Centre.y, Centre.x + theSize.cx, Centre.y + theSize.cy);
 
@@ -50,11 +83,10 @@ CDlgStartUpWindow::CDlgStartUpWindow(CWnd *Parent)
 	timerID = (int) SetTimer(1, TIME_OUT, NULL);
 }
 
-// The destructor (which gets rid of the Bitmap)
+// The destructor
 CDlgStartUpWindow::~CDlgStartUpWindow()
 {
-
-	theBitmap.DeleteObject();
+	delete m_pImage;
 }
 
 BEGIN_MESSAGE_MAP( CDlgStartUpWindow, CWnd ) 
@@ -63,72 +95,36 @@ BEGIN_MESSAGE_MAP( CDlgStartUpWindow, CWnd )
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-// The On Paint Handler — draws the ConCAD splash.  STARTUP.BMP is still
-// loaded by the constructor so the window inherits its dimensions, but its
-// pixels are overpainted entirely so the splash is recognisably ConCAD.
+// The picture, then the version where the hidden "Version" layer of
+// res/splash.svg has it (x 207, baseline 139, Segoe UI 18 px, #EEEEEE)
 void CDlgStartUpWindow::OnPaint()
 {
-	// Colours of the ConCAD icon (res/idr_main.ico)
-	const COLORREF aqua = RGB(0x94, 0xFF, 0xF7);     // icon background
-	const COLORREF teal = RGB(0x01, 0x69, 0x84);     // the "C" and the bus
-	const COLORREF darkTeal = RGB(0x01, 0x4D, 0x61);
-	const COLORREF stripe = RGB(0xEE, 0xEE, 0xEE);   // the bus stripe
-
 	CPaintDC dc(this);
 	CRect rect;
 	GetClientRect(rect);
-	const int band = 44; // the teal band at the bottom, like the bus body (no text)
 
-	CBrush bg(aqua);
-	dc.FillRect(rect, &bg);
-	CBrush bandBrush(teal);
-	dc.FillRect(CRect(rect.left, rect.bottom - band, rect.right, rect.bottom), &bandBrush);
-	CBrush stripeBrush(stripe);
-	dc.FillRect(CRect(rect.left, rect.bottom - band - 4, rect.right, rect.bottom - band), &stripeBrush);
-
-	// Border
-	CPen border(PS_SOLID, 2, darkTeal);
-	CPen* oldPen = dc.SelectObject(&border);
-	CBrush* oldBrush = (CBrush*) dc.SelectStockObject(NULL_BRUSH);
-	dc.Rectangle(rect.left + 1, rect.top + 1, rect.right, rect.bottom);
-	dc.SelectObject(oldBrush);
-	dc.SelectObject(oldPen);
-
-	// The icon on the left
-	const int iconSize = 128;
-	const int iconX = 40;
-	const int iconY = (rect.Height() - band - 4 - iconSize) / 2;
-	HICON hIcon = (HICON) ::LoadImage(AfxGetResourceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON, iconSize, iconSize, LR_DEFAULTCOLOR);
-	if (hIcon != NULL)
+	if (m_pImage != NULL)
 	{
-		::DrawIconEx(dc.m_hDC, iconX, iconY, hIcon, iconSize, iconSize, 0, NULL, DI_NORMAL);
-		::DestroyIcon(hIcon);
+		m_pImage->Paint(dc, rect, 0);
+	}
+	else
+	{
+		CBrush bg(RGB(0x01, 0x69, 0x84));
+		dc.FillRect(rect, &bg);
 	}
 
+	CFont font;
+	font.CreateFont(-18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Segoe UI"));
+	CFont* oldFont = dc.SelectObject(&font);
 	dc.SetBkMode(TRANSPARENT);
-	const int textX = iconX + iconSize + 36;
-
-	// "ConCAD"
-	CFont fontTitle;
-	fontTitle.CreateFont(-64, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
-		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-		DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, _T("Arial"));
-	CFont* oldFont = dc.SelectObject(&fontTitle);
-	dc.SetTextAlign(TA_LEFT | TA_TOP);
-	dc.SetTextColor(teal);
-	dc.TextOut(textX, iconY + 8, _T("ConCAD"));
-
-	// Version line
-	CFont fontMed;
-	fontMed.CreateFont(-18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-		ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Segoe UI"));
-	dc.SelectObject(&fontMed);
-	dc.SetTextColor(darkTeal);
+	dc.SetTextColor(RGB(0xEE, 0xEE, 0xEE));
+	dc.SetTextAlign(TA_LEFT | TA_BASELINE);
 
 	CString version;
 	version.Format(_T("Version %s  (%s)"), (LPCTSTR) CConCadApp::GetVersion(), (LPCTSTR) CConCadApp::GetReleaseType());
-	dc.TextOut(textX + 3, iconY + 86, version);
+	dc.TextOut(207, 139, version);
 
 	dc.SelectObject(oldFont);
 }

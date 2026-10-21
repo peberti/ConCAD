@@ -86,6 +86,15 @@ installer reads it from `src\BuildId.h`, written by the Release build. To
 hand out a new release, raise `RELEASE` (and set `RELEASE_TYPE`) at the top
 of `src\gitbranch.bat`, commit, build Release, then compile the script.
 
+## Splash screen
+
+The splash is the picture `src/res/splash.png`, exported from
+`src/res/splash.svg`. Edit the SVG in Inkscape, then File → Export →
+PNG Image → Page, 96 dpi (618 × 246 px), save over `src/res/splash.png`
+and rebuild. The version number is drawn on top by `src/Startup.cpp` at
+the position of the SVG's hidden *Version* layer; if you move that text,
+change the coordinates in `CDlgStartUpWindow::OnPaint` too.
+
 ## Repository layout
 
 | Path           | What it is                                              |

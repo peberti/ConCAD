@@ -1073,11 +1073,17 @@ rewritten; stray PCB/SPICE/ERC sentences reworded).
   `modules` becomes the module library if none is set
   (`CConCadRegistry::AddBundledLibrary`). This also works when the
   settings were copied from TinyCAD.
-- **Splash** redrawn in the icon's colours: aqua `#94FFF7` background,
-  the icon on the left, "ConCAD" in teal `#016984`, version and release
-  type in dark teal `#014D61`, and a teal band with a light stripe at the
-  bottom; the "branch … based on TinyCAD" line is gone (`src/Startup.cpp`).
-  The splash is drawn in code; `STARTUP.BMP` only sets its size.
+- **Splash** is now a picture: `src/res/splash.svg` (the user's design,
+  in the icon's colours) exported to `src/res/splash.png`, built in as the
+  `IDB_SPLASH` PNG resource; the window takes the picture's size. Only the
+  version ("Version 0.1.n  (Test Release)") is drawn on top by
+  `src/Startup.cpp`, at the place of the SVG's hidden *Version* layer
+  (x 207, baseline 139, Segoe UI 18 px, `#EEEEEE`). The old TinyCAD
+  `STARTUP.BMP` is removed. The splash is centred on the monitor of the
+  main window's saved position (the primary monitor on a first start), so
+  it appears on the same screen as ConCAD. To change the splash: edit `splash.svg` in
+  Inkscape, File → Export → PNG, Page, 96 dpi, to `src/res/splash.png`
+  (Version layer hidden), rebuild.
 - **Help → About:** "Development Team for Current Release" and its names
   removed; "Developer for Current Release: Per Bertilsson" added; the
   open-source list moved up and the dialog made shorter.

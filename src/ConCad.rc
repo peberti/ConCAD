@@ -48,7 +48,7 @@ IDI_ALIGN_BOTTOM        ICON                    "res\\alignBot.ico"
 // Bitmap
 //
 
-START_BITMAP            BITMAP                  "STARTUP.BMP"
+IDB_SPLASH              PNG                     "res\\splash.png"
 
 IDB_BITMAP1             BITMAP                  "res\\LGPLV3.bmp"
 

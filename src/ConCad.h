@@ -182,6 +182,10 @@ public:
 
 	DECLARE_MESSAGE_MAP()
 	virtual BOOL LoadWindowPlacement(CRect& rectNormalPosition, int& nFflags, int& nShowCmd);
+
+public:
+	// The main window's saved (normal) position, for the splash screen
+	BOOL GetSavedWindowRect(CRect& rect);
 };
 //=========================================================================
 extern int Message(int Resource, int Type = MB_ICONINFORMATION | MB_OK, const TCHAR *NameString = _T(""));

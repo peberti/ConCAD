@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ConCAD splash screen.  Edit in Inkscape, then File > Export > PNG,
+  Page, 618 x 246 px (96 dpi), to src/res/splash.png and rebuild.
+-->
+<svg
+   width="618"
+   height="246"
+   version="1.1"
+   id="svg6"
+   sodipodi:docname="splash.svg"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     id="namedview6"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.47411"
+     inkscape:cx="220.47201"
+     inkscape:cy="87.17124"
+     inkscape:window-width="1920"
+     inkscape:window-height="1129"
+     inkscape:window-x="-8"
+     inkscape:window-y="152"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg6" />
+  <rect
+     width="618"
+     height="246"
+     fill="#94FFF7"
+     id="rect1"
+     style="fill:#016984;fill-opacity:1" />
+  <rect
+     y="202"
+     width="618"
+     height="44"
+     fill="#016984"
+     id="rect2"
+     style="fill:#94fff7;fill-opacity:1" />
+  <rect
+     y="198"
+     width="618"
+     height="4"
+     fill="#EEEEEE"
+     id="rect3" />
+  <rect
+     x="1"
+     y="1"
+     width="616"
+     height="244"
+     fill="none"
+     stroke="#014D61"
+     stroke-width="2"
+     id="rect4" />
+  <text
+     x="204"
+     y="101"
+     font-family="Arial"
+     font-weight="bold"
+     font-size="64"
+     fill="#016984"
+     id="text4"
+     style="fill:#eeeeee;fill-opacity:1">ConCAD</text>
+  <!-- The version is drawn by ConCAD (src/Startup.cpp) at this position and
+       style; keep this layer hidden when exporting splash.png. -->
+  <g
+     inkscape:groupmode="layer"
+     id="layer-version"
+     inkscape:label="Version - drawn by ConCAD (keep hidden)"
+     style="display:none">
+  <text
+       x="207"
+       y="139"
+       font-family="Segoe UI"
+       font-size="18"
+       fill="#014D61"
+       id="text5"
+       style="fill:#eeeeee;fill-opacity:1">Version 0.1.718  (Test Release)</text>
+  </g>
+  <path
+     id="path1"
+     style="display:inline;fill:#90d789;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     d="m 85.91813,127.46287 c -4e-6,-9.24595 -7.667006,-15.28955 -17.12473,-15.28955 -9.457726,0 -17.124728,6.0436 -17.124731,15.28955 H 38.29626 c -1.916583,0.003 -3.459541,-1.50841 -3.459541,-3.38209 v -8.061 l 2.574702,0.0613 V 74.853208 l -6.638303,0.01981 -0.01659,5.387841 c 0,0 -1.049472,4.08553 -4.379002,3.99871 -3.329533,-0.08679 -4.379006,-3.998708 -4.379006,-3.998708 l -0.172739,-11.966437 2.975503,-2.825466 c 1.374797,-1.305481 4.702869,-5.255745 4.702869,-3.382075 h -4e-6 l 151.782971,1.12867 c 1.91655,0.01419 3.45956,1.508405 3.45956,3.382075 v 57.309522 c 0,1.87366 -1.54296,3.37976 -3.45956,3.38208 l -14.34615,0.17364 c 0,-9.24595 -7.667,-15.28955 -17.12472,-15.28955 -9.45773,0 -17.12473,6.0436 -17.12474,15.28955 z"
+     sodipodi:nodetypes="csccscccccsccssccssccscc" />
+  <path
+     id="path8"
+     style="fill:#eeeeee;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     d="m 38.06522,116.08114 v -9.21028 l 81.10146,-0.10878 8.47587,-9.638923 h 57.10413 v 9.223453 H 132.7017 l -9.84622,9.62575 H 84.299949 c -3.451346,-3.63302 -9.986502,-6.24198 -15.506155,-6.24198 -5.912442,0 -11.974768,2.14901 -15.435548,6.24198 z"
+     sodipodi:nodetypes="cccccccccscc" />
+  <g
+     id="g9"
+     transform="matrix(1.3075432,0,0,1.2782661,-21.360117,-158.48132)"
+     style="stroke-width:1.45881;stroke-dasharray:none">
+    <circle
+       style="display:inline;fill:#797b7a;fill-opacity:1;stroke:#000000;stroke-width:1.45881;stroke-dasharray:none"
+       id="path2-1"
+       cx="130.8614"
+       cy="223.37277"
+       r="10" />
+    <circle
+       style="display:inline;fill:#31485d;fill-opacity:1;stroke:#000000;stroke-width:1.45881;stroke-dasharray:none"
+       id="path7-2"
+       cx="130.8614"
+       cy="223.37277"
+       r="3.7417734" />
+  </g>
+  <rect
+     style="display:inline;fill:#b7e5f4;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     id="rect3-0"
+     width="18.346987"
+     height="23.436609"
+     x="100.58643"
+     y="68.97908"
+     rx="10"
+     ry="10" />
+  <rect
+     style="display:inline;fill:#b7e5f4;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     id="rect3-2"
+     width="18.346987"
+     height="23.436609"
+     x="125.79993"
+     y="68.97908"
+     rx="10"
+     ry="10" />
+  <rect
+     style="display:inline;fill:#b7e5f4;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     id="rect3-7"
+     width="18.346987"
+     height="23.436609"
+     x="151.01344"
+     y="68.97908"
+     rx="10"
+     ry="10" />
+  <rect
+     style="display:inline;fill:#b7e5f4;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     id="rect3-27"
+     width="18.346987"
+     height="23.436609"
+     x="75.372925"
+     y="68.97908"
+     rx="10"
+     ry="10" />
+  <rect
+     style="display:inline;fill:#b7e5f4;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     id="rect3-1"
+     width="18.606451"
+     height="32.652771"
+     x="50.159412"
+     y="68.97908"
+     rx="10"
+     ry="10" />
+  <path
+     id="rect3-11"
+     style="display:inline;fill:#b7e5f4;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     d="m 184.01319,92.415702 h -5.71396 c -1.91658,0 -3.45954,-1.508405 -3.45954,-3.382075 V 72.361176 c 0,-1.873669 1.54296,-3.382087 3.45954,-3.382087 h 5.71396"
+     sodipodi:nodetypes="cssssc" />
+  <rect
+     style="display:inline;fill:#b7e5f4;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     id="rect4-9"
+     width="8.1420717"
+     height="26.829988"
+     x="37.411423"
+     y="74.853203" />
+  <path
+     id="rect5"
+     style="display:inline;fill:#d12927;fill-opacity:1;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     d="m 178.54276,127.29027 v -23.60012 h 2.39817 v -3.38206 h 3.80575 v 23.6001 c 0,1.87367 -0.99057,3.38208 -2.22102,3.38208 z"
+     sodipodi:nodetypes="cccccscc" />
+  <path
+     style="display:inline;fill:none;stroke:#000000;stroke-width:1.88599;stroke-dasharray:none"
+     d="m 184.61537,110.70186 h -6.07261"
+     id="path5" />
+  <g
+     id="g10"
+     transform="matrix(1.3075432,0,0,1.2782661,-21.360117,-155.35497)"
+     style="stroke-width:1.45881;stroke-dasharray:none">
+    <circle
+       style="display:inline;fill:#797b7a;fill-opacity:1;stroke:#000000;stroke-width:1.45881;stroke-dasharray:none"
+       id="path2"
+       cx="68.895699"
+       cy="220.927"
+       r="10" />
+    <circle
+       style="display:inline;fill:#31485d;fill-opacity:1;stroke:#000000;stroke-width:1.45881;stroke-dasharray:none"
+       id="path7"
+       cx="68.895699"
+       cy="220.927"
+       r="3.7417734" />
+  </g>
+</svg>

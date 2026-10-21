@@ -19,11 +19,15 @@
 
 #define	TIME_OUT	2500
 
+class CImagePNG;
+
+// The splash: the picture res/splash.png (exported from res/splash.svg)
+// with the version drawn on top
 class CDlgStartUpWindow: public CWnd
 {
 
 private:
-	CBitmap theBitmap;
+	CImagePNG *m_pImage;
 	CSize theSize;
 	int timerID;
 
