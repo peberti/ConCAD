@@ -8,6 +8,7 @@
 
 #include "stdafx.h"
 #include "startup.h"
+#include "Log.h"
 #include "ConCad.h"
 #include "ConCadDoc.h"
 #include "EditToolBar.h"
@@ -184,6 +185,16 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	new CDlgStartUpWindow(this);
 	return 0;
+}
+
+BOOL CMainFrame::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	// 0 = menu or toolbar, 1 = shortcut; other codes are control notifications
+	if (HIWORD(wParam) <= 1)
+	{
+		CLog::Command(LOWORD(wParam));
+	}
+	return CMDIFrameWndEx::OnCommand(wParam, lParam);
 }
 
 void CMainFrame::ResetAllSymbols()

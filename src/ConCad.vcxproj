@@ -175,6 +175,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>c:\Program Files\HTML Help Workshop\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
@@ -217,7 +218,9 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
@@ -1180,6 +1183,8 @@
     <ClCompile Include="ShortcutsDlg.cpp" />
     <ClCompile Include="ConCadMultiModuleDoc.cpp" />
     <ClCompile Include="DrawModuleInfo.cpp" />
+    <ClCompile Include="Log.cpp" />
+    <ClCompile Include="BugReport.cpp" />
     <ClCompile Include="EditDlgModuleEdit.cpp" />
     <ClCompile Include="Paint.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
@@ -1581,6 +1586,8 @@
     <ClInclude Include="ShortcutsDlg.h" />
     <ClInclude Include="ConCadMultiModuleDoc.h" />
     <ClInclude Include="DrawModuleInfo.h" />
+    <ClInclude Include="Log.h" />
+    <ClInclude Include="BugReport.h" />
     <ClInclude Include="EditDlgModuleEdit.h" />
     <ClInclude Include="Registry.h" />
     <ClInclude Include="ResizeWnd.h" />

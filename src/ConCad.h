@@ -124,6 +124,10 @@ private:
 	//== ctor/dtor/initializing                                          ==
 	//=====================================================================
 	virtual BOOL InitInstance();
+	virtual int ExitInstance();
+	// Every message box is also written to the log
+	virtual int DoMessageBox(LPCTSTR lpszPrompt, UINT nType, UINT nIDPrompt);
+	virtual LRESULT ProcessWndProcException(CException* e, const MSG* pMsg);
 
 public:
 	CConCadApp();
@@ -178,6 +182,7 @@ public:
 	afx_msg void OnHelpGotoconcadwebsite();
 	afx_msg void OnHelpHelp();
 	afx_msg void OnHelpSupport();
+	afx_msg void OnHelpReportBug();
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()

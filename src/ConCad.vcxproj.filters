@@ -322,6 +322,12 @@
     <ClCompile Include="ConCadMultiModuleDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BugReport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="DrawModuleInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -679,6 +685,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConCadMultiModuleDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BugReport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DrawModuleInfo.h">

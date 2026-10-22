@@ -62,6 +62,12 @@ Anything that touches "all sheets in the open design" lives on `CMultiSheetDoc` 
 - **`CDetailsPropertySheet`** (`DetailsPropertySheet.*`) + `CDetailsPropertyPage1/2/3` are the `File → Design Details…` dialog (Design / Guides / Variables tabs). Page 1 and Page 3's `OnApply` propagate edits to every sheet via `CDetails::CopyDesignFields`.
 - "Sheets X of Y" is recomputed into `CDetails::m_sSheets` immediately before every paint (`ConCadDoc.cpp`) and every save (`Io.cpp`), so the in-memory value is never trusted.
 
+### Logging, crashes and bug reports
+
+- **`CLog`** (`Log.h/.cpp`) writes `%LOCALAPPDATA%\ConCAD\Logs\ConCAD-<date>.log` and installs the crash handlers (minidump `crash-*.dmp` next to it). `CLog::Init()` is the first call in `InitInstance`. Commands are logged centrally in `CMainFrame::OnCommand`, message boxes in `CConCadApp::DoMessageBox` — so new code gets that for free; add `CLog::Write(...)` only for notable non-command events (file I/O, recovery, errors that are not shown).
+- **`CDlgBugReport`** (`BugReport.h/.cpp`, Help → Report a Bug) zips the description, logs, latest dump and a copy of the open design and mails it via Simple MAPI (fallback: Desktop + mailto).
+- Release builds write `ConCAD.pdb`; the NSIS script archives it as `installer\symbols\ConCAD_<version>.pdb` for reading testers' dumps.
+
 ## Resources / IDs
 
 - `src/resource.h`, `src/ConCad.rc` — Windows resource IDs and dialog templates. **Never reuse a numeric ID**; pick fresh ones for new commands / controls.

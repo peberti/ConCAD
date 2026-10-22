@@ -61,6 +61,10 @@ public:
 	// Force an autosave of the document
 	virtual void AutoSave();
 
+	// Write the design as it is now (unsaved changes included) to another
+	// file, without changing the document (bug reports)
+	bool SaveCopyTo(const CString& path);
+
 	// Is this document editing a library?
 	virtual bool IsLibInUse(CLibraryStore *lib);
 

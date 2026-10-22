@@ -48,6 +48,8 @@ public:
 	//{{AFX_VIRTUAL(CMainFrame)
 protected:
 	//}}AFX_VIRTUAL
+	// Menu, toolbar and shortcut commands: written to the log
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 
 	// Implementation
 public:

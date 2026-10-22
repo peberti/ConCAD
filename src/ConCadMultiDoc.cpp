@@ -21,6 +21,7 @@
 //
 
 #include "stdafx.h"
+#include "Log.h"
 #include "concad.h"
 #include "ConCadMultiDoc.h"
 #include "HeaderStamp.h"
@@ -341,6 +342,7 @@ void CConCadMultiDoc::AutoSave()
 					CFile::Remove(theFileName);
 				}
 				CFile::Rename(theFileNameNew, theFileName);
+				CLog::Write(_T("Autosaved: %s"), (LPCTSTR) theFileName);
 			}catch (CException *e)
 			{
 				// Could not rename the file properly
@@ -373,6 +375,25 @@ void CConCadMultiDoc::AutoSave()
 		Message(IDS_ABORTAUTOSAVE, MB_ICONEXCLAMATION);
 	}
 
+}
+
+//-------------------------------------------------------------------------
+bool CConCadMultiDoc::SaveCopyTo(const CString& path)
+{
+	CFile theFile;
+	if (!theFile.Open(path, CFile::modeCreate | CFile::modeWrite))
+	{
+		return false;
+	}
+	bool saved = false;
+	{
+		UnTag();
+		CStreamFile stream(&theFile, CArchive::store);
+		CXMLWriter xml(&stream);
+		saved = SaveXML(xml);
+	}
+	theFile.Close();
+	return saved;
 }
 
 //-------------------------------------------------------------------------
@@ -412,8 +433,10 @@ BOOL CConCadMultiDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 {
 	if (!CMultiSheetDoc::DoSave(lpszPathName, bReplace))
 	{
+		CLog::Write(_T("Save failed or cancelled: %s"), (LPCTSTR) GetPathName());
 		return FALSE;
 	}
+	CLog::Write(bReplace ? _T("Saved: %s") : _T("Saved a copy of: %s"), (LPCTSTR) GetPathName());
 	if (bReplace)
 	{
 		DeleteAutoSave();
@@ -425,6 +448,7 @@ BOOL CConCadMultiDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 // a crash leaves one behind.
 void CConCadMultiDoc::OnCloseDocument()
 {
+	CLog::Write(_T("Closed: %s"), GetPathName().IsEmpty() ? (LPCTSTR) GetTitle() : (LPCTSTR) GetPathName());
 	DeleteAutoSave();
 	CMultiSheetDoc::OnCloseDocument();
 }
@@ -433,6 +457,7 @@ void CConCadMultiDoc::OnCloseDocument()
 BOOL CConCadMultiDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
 	const CString sPath = lpszPathName;
+	CLog::Write(_T("Open: %s"), (LPCTSTR) sPath);
 
 	// An untitled design from the recovery folder: it stays untitled and
 	// keeps autosaving to the same file

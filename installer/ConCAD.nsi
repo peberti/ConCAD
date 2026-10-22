@@ -11,6 +11,10 @@
 ; regenerates (gitbranch.bat) - build ConCAD first.
 !searchparse /file "..\src\BuildId.h" '#define CONCAD_VERSION_STR "' PRODUCT_VERSION '"'
 !searchparse /file "..\src\BuildId.h" '#define CONCAD_RELEASE_TYPE "' RELEASE_TYPE '"'
+; Keep the debug symbols of every installer (installer\symbols, not in
+; git): a crash dump from a tester can only be read with the matching .pdb
+!system 'if not exist symbols mkdir symbols'
+!system 'copy /Y "..\Release\ConCAD.pdb" "symbols\ConCAD_${PRODUCT_VERSION}.pdb" >nul'
 !define PRODUCT_PUBLISHER "ConCAD"
 ; ConCAD has no dedicated web site; this points at the upstream TinyCAD project
 ; purely for the "About" link shown in Add/Remove Programs.

@@ -83,6 +83,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
         MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
+        MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
     END
@@ -216,6 +217,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
         MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
+        MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
     END
@@ -265,6 +267,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
         MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
+        MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
     END
@@ -304,6 +307,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
         MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
+        MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
     END
@@ -716,6 +720,21 @@ BEGIN
     LTEXT           "",UPDATE_LIBFILE,36,165,190,7,SS_NOPREFIX | SS_PATHELLIPSIS
     PUSHBUTTON      "Cancel",IDCANCEL,237,157,50,14
     DEFPUSHBUTTON   "Store",IDOK,302,157,50,14
+END
+
+IDD_BUG_REPORT DIALOGEX 0, 0, 310, 206
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Report a Bug"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    LTEXT           "Describe what happened and, if you can, the steps that led to it.",IDC_BUG_INTRO,7,7,296,18
+    EDITTEXT        IDC_BUG_DESCRIPTION,7,27,296,90,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    CONTROL         "Include the log files (the last 3 days)",IDC_BUG_LOGS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,124,296,10
+    CONTROL         "Include crash information",IDC_BUG_CRASH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,137,296,10
+    CONTROL         "Include the open design",IDC_BUG_DESIGN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,150,296,10
+    LTEXT           "",IDC_BUG_ADDRESS,7,166,296,16
+    DEFPUSHBUTTON   "Send...",IDOK,199,185,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,253,185,50,14
 END
 
 IDD_POLYGON DIALOGEX 4, 16, 152, 66
@@ -2255,6 +2274,7 @@ BEGIN
     IDM_SPECIALBOM          "Create a bill of materials"
     IDM_SPECIALANNOTATE     "Automatically create or remove the symbol references"
     IDM_SPECIALNET          "Create a net-list of the current design\nCreate netlist"
+    IDM_HELP_REPORTBUG      "Send a bug report with the logs to the developer\nReport a bug"
 END
 
 STRINGTABLE

@@ -21,9 +21,9 @@ Release); Help → About shows the exact version, e.g. `ConCAD 0.1.716
 - **Files:** designs are saved as **`.con`**. Older TinyCAD `.dsn` files
   still open. A design saved by ConCAD still opens in TinyCAD, but without
   the ConCAD-only parts (groups, colours, cables show as normal objects).
-- **Reporting a problem:** note the version (Help → About), what you did
-  step by step, what you expected and what happened; attach the `.con`
-  file and a screenshot if you can.
+- **Reporting a problem:** use **Help → Report a Bug…** (§19): it sends
+  your description together with the logs, crash information and the
+  open design. Add a screenshot to the email if it helps.
 
 ---
 
@@ -419,3 +419,29 @@ no longer crashes ConCAD.
 **Test:**
 - [ ] Add a read-only `.TCLib`: it opens and its symbols can be placed.
 - [ ] Remove a library in Library → Libraries: no error.
+
+---
+
+## 19. Reporting a problem: Help → Report a Bug
+
+**What:** ConCAD keeps a log of what you do (commands, files opened and
+saved, messages) and, if it crashes, saves crash information. **Help →
+Report a Bug…** sends this to the developer together with your
+description.
+
+**How to use:**
+1. Help → Report a Bug… (or answer Yes when ConCAD offers it after it
+   did not close normally).
+2. Describe what happened and what you did just before.
+3. Leave the boxes ticked (logs, crash information, the open design) —
+   untick the design if it must not leave your company.
+4. Click **Send…**: an email opens in Outlook with the report attached;
+   click Send there. Without Outlook, the report is saved on your
+   Desktop and an email opens — attach the file to it.
+
+The logs are in `%LOCALAPPDATA%\ConCAD\Logs` (kept for 14 days).
+
+**Test:**
+- [ ] Report a Bug: the email opens with the zip attached and the
+      description in the text.
+- [ ] End ConCAD in Task Manager and start it again: it offers a report.

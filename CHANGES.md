@@ -1091,6 +1091,43 @@ rewritten; stray PCB/SPICE/ERC sentences reworded).
 Files: `installer/ConCAD.nsi`, `src/ConCadRegistry.{h,cpp}`,
 `src/Startup.cpp`, `src/ConCad.rc`.
 
+## 21. Log file, crash reports and Help → Report a Bug
+
+- **Log file:** `%LOCALAPPDATA%\ConCAD\Logs\ConCAD-<date>.log`, one per
+  day, kept 14 days (UTF-8, each line flushed so a crash loses nothing).
+  It records the start (version, build, Windows version, screens and DPI,
+  libraries, module library), every command from a menu, toolbar or
+  shortcut by name (`Command: Object > Create Module`), files opened,
+  saved, autosaved and closed, every message box shown (and the answer),
+  and MFC exceptions. (`src/Log.{h,cpp}`; commands are logged in
+  `CMainFrame::OnCommand`, message boxes in `CConCadApp::DoMessageBox`.)
+- **Crashes:** an unhandled exception, invalid CRT parameter, pure
+  virtual call, abort or `std::terminate` writes `CRASH: exception … at
+  <module> + <offset>` to the log and a crash dump `crash-<time>.dmp`
+  next to it. Each ConCAD keeps a `session-<pid>.running` marker while it
+  runs; if one is left from a process that is gone, the next start says
+  ConCAD did not close normally and offers a bug report.
+- **Help → Report a Bug…** (all menus): describe what happened; tick the
+  logs (last 3 days), the newest crash dump (last 7 days) and the open
+  design (a copy with unsaved changes; on by default). ConCAD packs them
+  with a `report.txt` (description, version, user, computer) into
+  `Logs\BugReport-<time>.zip` and opens an email to
+  per.bertilsson@consat.se with the zip attached in the mail program
+  (Simple MAPI — classic Outlook). If there is none, the zip is copied to
+  the Desktop and a plain email (mailto) opens, asking to attach it. The
+  address can be changed in `HKCU\Software\ConCAD\ConCAD\BugReport`,
+  value `Address`.
+- **Reading crash dumps:** the Release build now writes debug symbols
+  (`Release\ConCAD.pdb`), and every NSIS build keeps a copy as
+  `installer\symbols\ConCAD_<version>.pdb` (not in git). Open the `.dmp`
+  in Visual Studio with that `.pdb` (and the source of that version's
+  tag) to see where it crashed.
+
+Files: `src/Log.{h,cpp}`, `src/BugReport.{h,cpp}` (new), `src/ConCad.{h,cpp}`,
+`src/MainFrm.{h,cpp}`, `src/ConCadMultiDoc.{h,cpp}` (`SaveCopyTo`, log
+lines), `src/ConCad.rc`, `src/resource.h`, `src/ConCad.vcxproj{,.filters}`,
+`installer/ConCAD.nsi`, `.gitignore`.
+
 ---
 
 ## File-format compatibility
@@ -1318,3 +1355,11 @@ XML-saved files.
     lists all three templates. Change a library, reinstall: the change is
     kept. Help → About: "Developer for Current Release: Per Bertilsson",
     no team list.
+32. **Log and bug report** — start ConCAD, open a design, use a few menu
+    commands and a shortcut, save. `%LOCALAPPDATA%\ConCAD\Logs\` has
+    today's log with the start-up information, the commands by name, the
+    open and save. Help → Report a Bug…: Send with an empty description →
+    refused; with a description → Outlook opens an email to
+    per.bertilsson@consat.se with `BugReport-….zip` attached, which holds
+    report.txt, logs\ and design\<name>.con (with unsaved changes). End
+    ConCAD in Task Manager, start it: asked to send a bug report.

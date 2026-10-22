@@ -18,6 +18,8 @@
  */
 
 #include "stdafx.h"
+#include "Log.h"
+#include "BugReport.h"
 #include "ConCad.h"
 #include "MainFrm.h"
 #include "ChildFrm.h"
@@ -263,6 +265,7 @@ BEGIN_MESSAGE_MAP(CConCadApp, CWinAppEx)
 	ON_COMMAND(ID_HELP_GOTOCONCADWEBSITE, OnHelpGotoconcadwebsite)
 	ON_COMMAND(ID_HELP_HELP, OnHelpHelp)
 	ON_COMMAND(ID_HELP_SUPPORTFORUM, OnHelpSupport)
+	ON_COMMAND(IDM_HELP_REPORTBUG, OnHelpReportBug)
 
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, CConCadApp::OnFileNewDesign)
@@ -378,6 +381,9 @@ BOOL CConCadApp::InitInstance()
 	// I could not see any effect of the specific value here
 	CommonControls.dwICC = ICC_STANDARD_CLASSES;
 	InitCommonControlsEx(&CommonControls);
+
+	// The log file and the crash handlers, before anything else can fail
+	CLog::Init();
 
 	// Now run the standard CWinAppEx initInstance() function
 	CWinAppEx::InitInstance();
@@ -571,11 +577,54 @@ BOOL CConCadApp::InitInstance()
 		//Turn on the auto-save functionality
 		CAutoSave::Start();
 
+		CLog::WriteStartupInfo();
+
 		// Offer untitled designs autosaved before an unexpected exit
 		CConCadMultiDoc::RecoverUnsavedDesigns(m_pDocTemplate);
+
+		// ... and a bug report if ConCAD crashed (or was ended) last time
+		if (CLog::PreviousSessionEndedUnexpectedly()
+			&& AfxMessageBox(_T("ConCAD did not close normally the last time (it crashed or was ended).\n\nDo you want to send a bug report, so the problem can be found?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
+		{
+			CDlgBugReport::Run(true);
+		}
 	}
 
 	return TRUE;
+}
+
+int CConCadApp::ExitInstance()
+{
+	const int result = CWinAppEx::ExitInstance();
+	CLog::Shutdown();
+	return result;
+}
+
+int CConCadApp::DoMessageBox(LPCTSTR lpszPrompt, UINT nType, UINT nIDPrompt)
+{
+	CLog::Write(_T("Message: %s"), lpszPrompt);
+	const int answer = CWinAppEx::DoMessageBox(lpszPrompt, nType, nIDPrompt);
+	if ((nType & MB_TYPEMASK) != MB_OK)
+	{
+		CLog::Write(_T("  answer: %d"), answer);
+	}
+	return answer;
+}
+
+LRESULT CConCadApp::ProcessWndProcException(CException* e, const MSG* pMsg)
+{
+	TCHAR text[512] = { 0 };
+	if (e != NULL)
+	{
+		e->GetErrorMessage(text, 512);
+	}
+	CLog::Write(_T("Error (MFC exception) in message 0x%04X: %s"), pMsg != NULL ? pMsg->message : 0, text);
+	return CWinAppEx::ProcessWndProcException(e, pMsg);
+}
+
+void CConCadApp::OnHelpReportBug()
+{
+	CDlgBugReport::Run(false);
 }
 //-------------------------------------------------------------------------
 
