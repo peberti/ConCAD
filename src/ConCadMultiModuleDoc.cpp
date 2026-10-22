@@ -54,6 +54,12 @@ END_MESSAGE_MAP()
 
 void CConCadMultiModuleDoc::UpdateTitle()
 {
+	// The XML import starts from an empty name set: no record to name it by
+	if (m_moduleedit.GetNumRecords() == 0)
+	{
+		SetTitle(_T("Module"));
+		return;
+	}
 	const CSymbolRecord& r = m_moduleedit.GetRecord(0);
 	SetTitle(_T("Module: ") + CDlgUpdateBox::ModuleLibraryName(CDlgUpdateBox::GetModuleType(r), CDlgUpdateBox::GetModuleName(r)));
 }
