@@ -8,6 +8,7 @@
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
 #include <MAPI.h>
+#include <afxole.h>
 #include "resource.h"
 #include "BugReport.h"
 #include "Log.h"
@@ -430,7 +431,21 @@ void CDlgBugReport::Run(bool afterCrash)
 	}
 	const CString body = summary + _T("\r\n\r\n(The details are in the attached zip file.)\r\n");
 
+	// The compose window stays open until the user sends or closes it, and
+	// Outlook runs that as a COM call into outlook.exe: without this, MFC's
+	// OLE message filter shows "Server Busy" after a few seconds
+	COleMessageFilter* pFilter = AfxOleGetMessageFilter();
+	if (pFilter != NULL)
+	{
+		pFilter->EnableBusyDialog(FALSE);
+		pFilter->EnableNotRespondingDialog(FALSE);
+	}
 	const ULONG result = SendWithMapi(AfxGetMainWnd()->GetSafeHwnd(), address, subject, body, zipPath);
+	if (pFilter != NULL)
+	{
+		pFilter->EnableBusyDialog(TRUE);
+		pFilter->EnableNotRespondingDialog(TRUE);
+	}
 	CLog::Write(_T("Bug report: MAPI result %lu"), result);
 	if (result == SUCCESS_SUCCESS)
 	{
