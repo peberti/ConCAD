@@ -100,6 +100,9 @@ private:
 	// Set up the charaset conversions
 	void SetCharset(const TCHAR* fromcode);
 
+	// First mismatched closing tag found, empty if none
+	CString m_error;
+
 public:
 	CXMLReader(CStream* pInput);
 	virtual ~CXMLReader();
@@ -122,6 +125,13 @@ public:
 
 	// Get the line counter
 	int get_line_counter();
+
+	// The first mismatched closing tag ("line N: <A> is closed by </B>"),
+	// or empty if the input has been well-formed so far
+	const CString& GetError() const
+	{
+		return m_error;
+	}
 
 	// Get the attribute information associated with the current
 	// tag...

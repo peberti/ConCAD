@@ -1904,7 +1904,7 @@ void CConCadView::OnFolderContextMenu()
 	GetDocument()->OnFolderContextMenu();
 }
 
-#define ALL_IMAGE_FILES _T("*.png;*.emf;*.bmp;*.jpeg;*.jpe;*.jpg")
+#define ALL_IMAGE_FILES _T("*.png;*.svg;*.emf;*.bmp;*.jpeg;*.jpe;*.jpg")
 void CConCadView::OnEditInsertpicture()
 {
 	// switch back to the Edit tool
@@ -1913,6 +1913,7 @@ void CConCadView::OnEditInsertpicture()
 	CFileDialog dlg( TRUE, ALL_IMAGE_FILES, ALL_IMAGE_FILES, OFN_HIDEREADONLY,
 		_T("Image files|") ALL_IMAGE_FILES _T("|")
 		_T("Portable network graphic (*.png)|*.png|")
+		_T("Scalable vector graphic (*.svg)|*.svg|")
 		_T("JPEG (*.jpeg)|*.jpeg;*.jpg;*.jpe|")
 		_T("Windows bitmaps(*.bmp,*.dib)|*.bmp;*.dib|")
 		_T("Enhanced metafile (*.emf)|*.emf|")

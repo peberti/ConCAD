@@ -30,6 +30,7 @@
 #include "ImageMetafile.h"
 #include "ImagePNG.h"
 #include "ImageJpeg.h"
+#include "ImageSvg.h"
 
 // The Constructor
 CDrawMetaFile::CDrawMetaFile(CConCadDoc *pDesign) :
@@ -131,6 +132,18 @@ bool CDrawMetaFile::setImageFile(const TCHAR *filename)
 	{
 		// Create a metafile
 		i = new CImageMetafile;
+	}
+	else if (_tcsicmp(ext, _T(".svg")) == 0)
+	{
+		i = new CImageSvg;
+		if (!i->SetCompressedData(buffer, bytes))
+		{
+			delete i;
+			AfxMessageBox(_T("Cannot read this SVG file (it is empty or not valid SVG)"));
+			return false;
+		}
+		m_metafile = m_pDesign->GetOptions()->AddMetaFile(i);
+		return true;
 	}
 	else
 	{
@@ -240,7 +253,11 @@ void CDrawMetaFile::Paint(CContext &dc, paint_options options)
 	int rotmir = dc.GetTransform().GetRotMir();
 
 	CTCImage *pImage = m_pDesign->GetOption().GetImage(m_metafile);
-	if (pImage)
+	if (pImage && pImage->GetType() == _T("SVG"))
+	{
+		static_cast<CImageSvg*> (pImage)->PaintVector(dc, sma, smb, m_pDesign->GetDetails());
+	}
+	else if (pImage)
 	{
 		pImage->Paint(*dc.GetDC(), rect, rotmir);
 	}

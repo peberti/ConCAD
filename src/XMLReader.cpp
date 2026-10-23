@@ -442,6 +442,14 @@ void CXMLReader::outofTag()
 	{
 		CString check_name = get_current_tag()->m_tag_name;
 
+		// The level above holds the opening tag this closing tag must match.
+		// Parsing carries on regardless; callers check GetError().
+		if (m_error.IsEmpty() && m_tags[1]->m_tag_name != check_name)
+		{
+			m_error.Format(_T("line %d: <%s> is closed by </%s>"), m_line_counter, (LPCTSTR)m_tags[1]->m_tag_name, (LPCTSTR)check_name);
+			TRACE(_T("CXMLReader: %s\n"), (LPCTSTR)m_error);
+		}
+
 		// Copy this tag up one level...
 		xml_parse_tag *ptag = m_tags.front();
 		m_tags.pop_front();
@@ -450,15 +458,6 @@ void CXMLReader::outofTag()
 		m_tags.pop_front();
 
 		m_tags.push_front(ptag);
-
-		if (get_current_tag()->m_tag_name != check_name)
-		{
-			CString diagnosticMessage;
-			diagnosticMessage.Format(_T("Error:  XMLReader line #475:  ERR_XML_WRONG_CLOSE:  Expecting tag [%s], but found tag [%s].  Current line number = %d.\n"), (LPCTSTR)check_name, (LPCTSTR)get_current_tag()->m_tag_name, m_line_counter);
-			TRACE(diagnosticMessage);
-
-			throw new CXMLException(ERR_XML_WRONG_CLOSE, m_line_counter, TRUE);
-		}
 	}
 	else
 	{

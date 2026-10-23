@@ -23,6 +23,7 @@
 #include "ConCadDoc.h"
 #include "ConCadMultiSymbolDoc.h"
 #include "ConCadMultiModuleDoc.h"
+#include "DlgUpdateBox.h"
 #include "StreamMemory.h"
 
 // The constructor
@@ -276,81 +277,122 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 		int symbols = 0;
 		int modules = 0;
 		int skipped = 0;
+		CString problems; // one line per symbol/module that was not imported
 		CConCadApp::SetLockOutSymbolRedraw(true);
-		while (xml.nextTag(name))
+		try
 		{
-			// Is this a symbol?
-			if (name == "SYMBOL")
+			while (xml.nextTag(name))
 			{
-				// Load in the details
-				xml.intoTag();
-				CConCadMultiSymbolDoc temp_doc;
-				drawingCollection drawing;
-				CLibraryStoreNameSet s;
-				s.LoadXML(&temp_doc, xml);
-				xml.outofTag();
-
-				// ... and store the symbol
-				Store(&s, temp_doc);
-				++symbols;
-			}
-			else if (name == "MODULE")
-			{
-				// Name-set details and a <TinyCAD> document with the objects
-				CLibraryStoreNameSet s;
-				CLibraryStoreNameSet empty;
-				CConCadMultiModuleDoc temp_doc(NULL, empty);
-				CString tag;
-				xml.intoTag();
-				while (xml.nextTag(tag))
+				// Is this a symbol?
+				if (name == "SYMBOL")
 				{
-					if (tag == _T("PPP"))
+					// Load in the details
+					xml.intoTag();
+					CConCadMultiSymbolDoc temp_doc;
+					drawingCollection drawing;
+					CLibraryStoreNameSet s;
+					s.LoadXML(&temp_doc, xml);
+					xml.outofTag();
+
+					// A broken symbol is not stored, and nothing after it can be trusted
+					if (!xml.GetError().IsEmpty())
 					{
-						xml.getChildData(s.ppp);
+						problems.AppendFormat(_T("Symbol \"%s\": %s\n"), s.GetNumRecords() > 0 ? (LPCTSTR)s.GetRecord(0).name : _T("(unnamed)"), (LPCTSTR)xml.GetError());
+						break;
 					}
-					else if (tag == _T("ORIENTATION"))
-					{
-						xml.getChildData(s.orientation);
-					}
-					else if (tag == _T("DETAILS"))
-					{
-						CLibraryStoreSymbol r;
-						xml.intoTag();
-						r.LoadXML(xml);
-						xml.outofTag();
-						s.PushBackRecord(r);
-					}
-					else if (tag == _T("TinyCAD"))
-					{
-						temp_doc.ReadModuleXML(xml);
-					}
+
+					// ... and store the symbol
+					Store(&s, temp_doc);
+					++symbols;
 				}
-				xml.outofTag();
-
-				if (s.GetNumRecords() > 0 && temp_doc.IsLoaded())
+				else if (name == "MODULE")
 				{
-					CStreamMemory data;
+					// Name-set details and a <TinyCAD> document with the objects
+					CLibraryStoreNameSet s;
+					CLibraryStoreNameSet empty;
+					CConCadMultiModuleDoc temp_doc(NULL, empty);
+					CString tag;
+					xml.intoTag();
+					while (xml.nextTag(tag))
 					{
-						CXMLWriter w(&data);
-						temp_doc.WriteModuleXML(w);
+						if (tag == _T("PPP"))
+						{
+							xml.getChildData(s.ppp);
+						}
+						else if (tag == _T("ORIENTATION"))
+						{
+							xml.getChildData(s.orientation);
+						}
+						else if (tag == _T("DETAILS"))
+						{
+							CLibraryStoreSymbol r;
+							xml.intoTag();
+							r.LoadXML(xml);
+							xml.outofTag();
+							s.PushBackRecord(r);
+						}
+						else if (tag == _T("TinyCAD"))
+						{
+							temp_doc.ReadModuleXML(xml);
+						}
 					}
-					for (int i = 0; i < s.GetNumRecords(); i++)
+					xml.outofTag();
+
+					CString module_name = _T("(unnamed)");
+					if (s.GetNumRecords() > 0)
 					{
-						s.GetRecord(i).is_module = TRUE;
+						const CSymbolRecord &r = s.GetRecord(0);
+						module_name = CDlgUpdateBox::ModuleLibraryName(CDlgUpdateBox::GetModuleType(r), CDlgUpdateBox::GetModuleName(r));
 					}
-					s.lib = this;
-					if (StoreModule(&s, data))
+
+					if (!xml.GetError().IsEmpty())
 					{
-						++modules;
+						problems.AppendFormat(_T("Module \"%s\": %s\n"), (LPCTSTR)module_name, (LPCTSTR)xml.GetError());
+						break;
+					}
+					if (s.GetNumRecords() == 0)
+					{
+						problems.AppendFormat(_T("Module \"%s\": no <DETAILS>\n"), (LPCTSTR)module_name);
+					}
+					else if (!temp_doc.IsLoaded())
+					{
+						problems.AppendFormat(_T("Module \"%s\": no drawing objects in its <TinyCAD>\n"), (LPCTSTR)module_name);
 					}
 					else
 					{
-						++skipped;
+						CStreamMemory data;
+						{
+							CXMLWriter w(&data);
+							temp_doc.WriteModuleXML(w);
+						}
+						for (int i = 0; i < s.GetNumRecords(); i++)
+						{
+							s.GetRecord(i).is_module = TRUE;
+						}
+						s.lib = this;
+						if (StoreModule(&s, data))
+						{
+							++modules;
+						}
+						else
+						{
+							++skipped;
+						}
 					}
 				}
 			}
+			if (xml.GetError().IsEmpty())
+			{
+				xml.outofTag();
+			}
 		}
-		xml.outofTag();
+		catch (CException *e)
+		{
+			TCHAR text[512];
+			e->GetErrorMessage(text, _countof(text));
+			e->Delete();
+			problems.AppendFormat(_T("%s\n"), text);
+		}
 
 		CConCadApp::SetLockOutSymbolRedraw(false);
 
@@ -362,6 +404,14 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 			more.Format(_T("\n\n%d module(s) were not imported: modules can only be stored in SQLite libraries (.TCLib)."), skipped);
 			msg += more;
 		}
-		AfxMessageBox(msg, MB_ICONINFORMATION);
+		if (!problems.IsEmpty())
+		{
+			msg += _T("\n\nNot imported:\n") + problems;
+			if (!xml.GetError().IsEmpty())
+			{
+				msg += _T("\nThe file has mismatched XML tags, so the import stopped there.");
+			}
+		}
+		AfxMessageBox(msg, problems.IsEmpty() ? MB_ICONINFORMATION : MB_ICONEXCLAMATION);
 	}
 }

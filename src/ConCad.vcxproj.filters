@@ -220,6 +220,9 @@
     <ClCompile Include="ImageJpeg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImageSvg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ImageMetafile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -598,6 +601,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImageJpeg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageSvg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImageMetafile.h">

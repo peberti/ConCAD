@@ -11,6 +11,7 @@
 #include "ImageMetafile.h"
 #include "ImagePNG.h"
 #include "ImageJPEG.h"
+#include "ImageSvg.h"
 
 //=========================================================================
 //== ctor/dtor/initializing                                              ==
@@ -108,6 +109,10 @@ void ListOfMetaFiles::Read(CXMLReader& xml, hMETAFILE& nID)
 	else if (type == "JPEG")
 	{
 		m_pImage = new CImageJpeg();
+	}
+	else if (type == "SVG")
+	{
+		m_pImage = new CImageSvg();
 	}
 	else
 	{

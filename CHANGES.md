@@ -1130,6 +1130,53 @@ lines), `src/ConCad.rc`, `src/resource.h`, `src/ConCad.vcxproj{,.filters}`,
 
 ---
 
+## 22. SVG pictures (Edit → Insert picture…)
+
+- **Edit → Insert picture…** also accepts `.svg` files (in *Image files*
+  and its own *Scalable vector graphic* filter).
+- The SVG file is embedded in the design like a PNG/JPEG: an `<IMAGE
+  type='SVG'>` resource holding the file's bytes uuencoded, referenced by
+  the usual `<METAFILE>` object. The original file is not needed later.
+- It is drawn as vectors with the SVG title-block renderer (§7), so it
+  stays sharp at any zoom and in print/PDF, and `{tokens}` in its
+  `<text>` resolve against the sheet's Design Details.
+- Inserted at its natural size (96 dpi pixels as drawing units, capped at
+  500 like other pictures); resize it with its handles. The aspect ratio
+  is kept (letterboxed in the frame).
+- Limits: rotating/flipping the picture only changes its frame, the
+  content stays upright; gradients, patterns and embedded bitmaps inside
+  the SVG are not drawn (solid fills and strokes only). A file that is
+  not valid SVG is refused with a message.
+- Older builds open such a design but show the picture as invalid.
+
+Files: `src/ImageSvg.{h,cpp}` (new), `src/DrawMetafile.cpp`,
+`src/ListOfMetaFiles.cpp`, `src/ConCadView.cpp`,
+`src/ConCad.vcxproj{,.filters}`.
+
+---
+
+## 23. Library import reports broken symbols/modules
+
+- **File → Import symbols** used to skip a hand-edited symbol or module
+  with mismatched XML tags silently ("Imported 0 module(s)"). The message
+  now lists what was not imported and why, e.g.
+  `Module "Vehicle computer - CVC01 LTE": line 213: <TinyCAD> is closed
+  by </SYMBOLDEF>`. At a mismatched tag the import stops (nothing after
+  it can be trusted); a module with no `<DETAILS>` or no drawing objects
+  is listed and the import continues.
+- `CXMLReader` now records the first closing tag that does not match its
+  opening tag (`GetError()`); its old check compared the tag with itself
+  and never fired. Parsing is unchanged, so opening designs behaves as
+  before.
+- `tools/mod2sym.py <module.xml> <symbol.xml>` turns a one-module library
+  XML export into a symbol export (the module's embedded symbol), to edit
+  the symbol in the library.
+
+Files: `src/XMLReader.{h,cpp}`, `src/LibraryStore.cpp`,
+`tools/mod2sym.py` (new).
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1139,7 +1186,7 @@ following sense:
 - New elements (`<USERTOKEN>`, `<CABLE>`, `<CONNECTOR>`,
   `<TITLEBLOCK_SVG>`, `<GROUP>`, `<MODULEINFO>`, the new `use_color`/`color` attributes on
   `<SYMBOL>`, wires/cables/lines, `<POLYGON>` and rectangles/ellipses,
-  `write_protected` on `<TinyCADSheets>`) are emitted only when
+  `write_protected` on `<TinyCADSheets>`, `type='SVG'` on `<IMAGE>`) are emitted only when
   the corresponding feature is in use.
 - A pre-existing file with no new elements loads unchanged.
 - Saving a file with the new build, then loading it in the new build
@@ -1363,3 +1410,13 @@ XML-saved files.
     per.bertilsson@consat.se with `BugReport-….zip` attached, which holds
     report.txt, logs\ and design\<name>.con (with unsaved changes). End
     ConCAD in Task Manager, start it: asked to send a bug report.
+33. **SVG picture** — Edit → Insert picture…, pick an `.svg`: it appears
+    at its natural size and stays sharp when zooming in; resize it with
+    the handles. Save, close, delete or rename the `.svg` file, reopen the
+    design: the picture is still there. Print preview / Export as PDF show
+    it. Picking a text file renamed to `.svg` gives "Cannot read this SVG
+    file".
+34. **Import error** — remove one `</TinyCAD>` line from an exported
+    module XML and import it: the message names the module and the line
+    with the mismatched tags; nothing is imported from that point. The
+    unedited file imports normally.

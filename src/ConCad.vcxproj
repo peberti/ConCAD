@@ -1338,6 +1338,7 @@
     </ClCompile>
     <ClCompile Include="StreamMemory.cpp" />
     <ClCompile Include="SvgTitleBlock.cpp" />
+    <ClCompile Include="ImageSvg.cpp" />
     <ClCompile Include="Symbol.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -1556,6 +1557,7 @@
     <ClInclude Include="ImageBitmap.h" />
     <ClInclude Include="ImageJpeg.h" />
     <ClInclude Include="ImageMetafile.h" />
+    <ClInclude Include="ImageSvg.h" />
     <ClInclude Include="ImagePng.h" />
     <ClInclude Include="InitDialogBar.h" />
     <ClInclude Include="JunctionUtils.h" />
