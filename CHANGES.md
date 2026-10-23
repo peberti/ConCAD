@@ -1072,8 +1072,15 @@ rewritten; stray PCB/SPICE/ERC sentences reworded).
   file — the user's edits are kept) and **attaches** each newly copied
   one, unless a library with the same file name is attached already;
   `modules` becomes the module library if none is set
-  (`CConCadRegistry::AddBundledLibrary`). This also works when the
-  settings were copied from TinyCAD.
+  (`CConCadRegistry::AddBundledLibrary`).
+- **No TinyCAD settings import:** ConCAD no longer copies
+  `HKCU\Software\TinyCAD\TinyCAD` into its own registry key on first
+  start, so a fresh install does not inherit TinyCAD's library list,
+  recent files or preferences.
+- **No TinyCAD web links:** Help → Support Forum and Help → Tutorials and
+  Documentation (both on tinycad.net) and the installer's "Users Group"
+  Start-menu shortcut were removed; Help → User Manual opens the bundled
+  `ConCAD.html`.
 - **Splash** is now a picture: `src/res/splash.svg` (the user's design,
   in the icon's colours) exported to `src/res/splash.png`, built in as the
   `IDB_SPLASH` PNG resource; the window takes the picture's size. Only the

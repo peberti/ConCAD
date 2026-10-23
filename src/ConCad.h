@@ -178,10 +178,7 @@ public:
 	//{{AFX_MSG(CConCadApp)
 	afx_msg void OnAppAbout();
 	afx_msg void OnLibLib();
-	afx_msg void OnHelpOpenConCADUserManual();
-	afx_msg void OnHelpGotoconcadwebsite();
 	afx_msg void OnHelpHelp();
-	afx_msg void OnHelpSupport();
 	afx_msg void OnHelpReportBug();
 	//}}AFX_MSG
 

@@ -133,7 +133,7 @@ Section "MainSection" SEC01
   SetOutPath "$INSTDIR\templates"
   File "..\templates\revision.svg"
   
-  ; A file purely for the purpose of setting a timestamp of when TinyCAD was installed
+  ; A file purely for the purpose of setting a timestamp of when ConCAD was installed
   FileOpen $0 "$INSTDIR\installed.txt" w
   FileClose $0
 
@@ -146,9 +146,8 @@ Section "MainSection" SEC01
 SectionEnd
 
 Section -AdditionalIcons
-  ; ConCAD has no dedicated web site, so no "Website" shortcut is created.
+  ; ConCAD has no web site or forum of its own, so no web shortcuts are created.
   CreateShortCut "$SMPROGRAMS\ConCAD\Uninstall.lnk" "$INSTDIR\uninst.exe"
-  CreateShortCut "$SMPROGRAMS\ConCAD\Users Group.lnk" "https://forum.tinycad.net"
 SectionEnd
 
 Section -Post
@@ -210,7 +209,7 @@ Section Uninstall
   Delete "$SMPROGRAMS\ConCAD\Uninstall.lnk"
   Delete "$SMPROGRAMS\ConCAD\Help.lnk"
   Delete "$DESKTOP\ConCAD.lnk"
-  Delete "$SMPROGRAMS\ConCAD\Users Group.lnk"
+  Delete "$SMPROGRAMS\ConCAD\Users Group.lnk"  ; created by older installers
   Delete "$SMPROGRAMS\ConCAD\ConCAD.lnk"
   Delete "$SMPROGRAMS\ConCAD\User Manual.lnk"
   Delete "$INSTDIR\LGPL Version 2.1.txt"

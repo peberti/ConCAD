@@ -81,8 +81,6 @@ BEGIN
     BEGIN
         MENUITEM "User Manual",                 ID_HELP_HELP
         MENUITEM SEPARATOR
-        MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
-        MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
         MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
@@ -215,8 +213,6 @@ BEGIN
     BEGIN
         MENUITEM "User Manual",                 ID_HELP_HELP
         MENUITEM SEPARATOR
-        MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
-        MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
         MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
@@ -265,8 +261,6 @@ BEGIN
     BEGIN
         MENUITEM "User Manual",                 ID_HELP_HELP
         MENUITEM SEPARATOR
-        MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
-        MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
         MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
@@ -305,8 +299,6 @@ BEGIN
     BEGIN
         MENUITEM "User Manual",                 ID_HELP_HELP
         MENUITEM SEPARATOR
-        MENUITEM "Support Forum",               ID_HELP_SUPPORTFORUM
-        MENUITEM "Tutorials and Documentation", ID_HELP_OPENCONCADUSERMANUAL
         MENUITEM "Report a &Bug...",            IDM_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&About ConCAD...",            ID_APP_ABOUT
@@ -2172,8 +2164,6 @@ STRINGTABLE
 BEGIN
     IDS_NODELETE            "Cannot delete a library while it is being edited or while you are creating a new symbol for it.  Close the editing windows and try again"
     IDM_SNAPTOGRID          "Turn snap to grid on/off\nSnap to grid on/off"
-    ID_HELP_GOTOCONCADWEBSITE 
-                            "Open an explorer window at the TinyCAD web site"
 END
 
 STRINGTABLE

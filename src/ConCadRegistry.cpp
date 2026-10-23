@@ -159,7 +159,7 @@ void CConCadRegistry::CopyExampleFiles()
 //	 name is attached already.  A module library (.CCMod) becomes the
 //	 preselected one in Store Module if none is set.  (On a machine without
 //	 ConCAD settings CreateDefaultEntries attaches the folder's libraries
-//	 too; after the settings were copied from TinyCAD it does not run.)
+//	 too.)
 void CConCadRegistry::AddBundledLibrary(const CString& file)
 {
 	const CString ext = file.Right(6);

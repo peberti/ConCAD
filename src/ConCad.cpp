@@ -45,7 +45,7 @@
 #include <io.h>
 #include <iostream>
 #include <fstream>
-#include <shlwapi.h>		// for SHCopyKey (registry migration)
+#include <shlwapi.h>
 #include "ShortcutsDlg.h"
 #pragma comment(lib, "shlwapi.lib")
 
@@ -261,10 +261,7 @@ BEGIN_MESSAGE_MAP(CConCadApp, CWinAppEx)
 //{{AFX_MSG_MAP(CConCadApp)
 	ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
 	ON_COMMAND(IDM_LIBLIB, OnLibLib)
-	ON_COMMAND(ID_HELP_OPENCONCADUSERMANUAL, OnHelpOpenConCADUserManual)
-	ON_COMMAND(ID_HELP_GOTOCONCADWEBSITE, OnHelpGotoconcadwebsite)
 	ON_COMMAND(ID_HELP_HELP, OnHelpHelp)
-	ON_COMMAND(ID_HELP_SUPPORTFORUM, OnHelpSupport)
 	ON_COMMAND(IDM_HELP_REPORTBUG, OnHelpReportBug)
 
 	// Standard file based document commands
@@ -414,36 +411,6 @@ BOOL CConCadApp::InitInstance()
 	{
 		AfxMessageBox(IDP_SOCKETS_INIT_FAILED);
 		return FALSE;
-	}
-
-	// ConCAD is a fork of TinyCAD; on first run, migrate any existing user
-	// settings from the legacy hive to the ConCAD hive so that upgrading users
-	// keep their preferences, recent-file list, and library configuration.
-	// Both the MFC profile (MRU, window state) and the custom CConCadRegistry
-	// settings (see CConCadRegistry::M_SKEY) live under the shared profile
-	// subkey HKCU\Software\TinyCAD\TinyCAD, so copying that one subtree onto
-	// HKCU\Software\ConCAD\ConCAD migrates everything in one step.
-	{
-		HKEY hExisting = NULL;
-		if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\ConCAD\\ConCAD"), 0, KEY_READ, &hExisting) == ERROR_SUCCESS)
-		{
-			// Our settings already exist - nothing to migrate.
-			RegCloseKey(hExisting);
-		}
-		else
-		{
-			HKEY hSrc = NULL;
-			if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\TinyCAD\\TinyCAD"), 0, KEY_READ, &hSrc) == ERROR_SUCCESS)
-			{
-				HKEY hDest = NULL;
-				if (RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\ConCAD\\ConCAD"), 0, NULL, 0, KEY_WRITE, NULL, &hDest, NULL) == ERROR_SUCCESS)
-				{
-					SHCopyKey(hSrc, NULL, hDest, 0);	// recursively copy the legacy settings subtree
-					RegCloseKey(hDest);
-				}
-				RegCloseKey(hSrc);
-			}
-		}
 	}
 
 	// Change the registry key under which our settings are stored.
@@ -1129,27 +1096,6 @@ void CConCadApp::OnLibLib()
 {
 	CDlgLibraryBox(AfxGetMainWnd()).DoModal();
 }
-//-------------------------------------------------------------------------
-void CConCadApp::OnHelpOpenConCADUserManual()
-{
-	// Open a browser for our web site
-	ShellExecute(AfxGetMainWnd()->m_hWnd, _T("open"), _T("https://www.tinycad.net/Home/Documentation"), NULL, NULL, SW_SHOWNORMAL);
-}
-//-------------------------------------------------------------------------
-void CConCadApp::OnHelpGotoconcadwebsite()
-{
-	// Open a browser for our web site
-	ShellExecute(AfxGetMainWnd()->m_hWnd, _T("open"), _T("https://www.tinycad.net"), NULL, NULL, SW_SHOWNORMAL);
-}
-
-//-------------------------------------------------------------------------
-
-void CConCadApp::OnHelpSupport()
-{
-	// Open a browser for our web site
-	ShellExecute(AfxGetMainWnd()->m_hWnd, _T("open"), _T("https://forum.tinycad.net"), NULL, NULL, SW_SHOWNORMAL);
-}
-
 //-------------------------------------------------------------------------
 void CConCadApp::OnAppAbout()
 {

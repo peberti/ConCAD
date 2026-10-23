@@ -135,7 +135,7 @@ was cleaned of stray files on 2026-10-21.)
 - **SQLite crashes fixed and committed:**
   - `CLibrarySQLite::Attach` no longer crashes when its catch-handler `close()` throws; the IsConnector migration is now best-effort (PRAGMA-probe + try/catch `ALTER`) so read-only libraries (e.g. under Program Files) load instead of failing. The `IsConnector` read is guarded because `getIntField` throws on an unknown column. (`4c04216`)
   - `~CppSQLite3DB` no longer lets `close()` throw out of the destructor (was `abort()` on library delete); now matches the sibling Query/Statement destructors. (`e3e66a6`)
-- **Why the app loaded VeeCAD / TinyCAD libraries:** first-run migration in `CConCadApp::InitInstance` (`ConCad.cpp:361`) recursively copies `HKCU\Software\TinyCAD\TinyCAD` → `HKCU\Software\ConCAD\ConCAD` (`SHCopyKey`), inheriting the whole library list. Prune unwanted libraries via **Library → Libraries…** (rewrites the `Libraries` value under ConCAD's own key). Deleting the ConCAD key just re-triggers the copy.
+- **Why the app loaded VeeCAD / TinyCAD libraries:** the old first-run copy of `HKCU\Software\TinyCAD\TinyCAD` → `HKCU\Software\ConCAD\ConCAD` (`SHCopyKey` in `CConCadApp::InitInstance`). Removed 2026-10-23 — a fresh install now starts with only ConCAD's bundled libraries.
 - **Latent, not fixed:** `CLibrarySQLite::GetMethodArchive` (~line 318) is the one SQLite method with no try/catch.
 
 ## Plan progress
