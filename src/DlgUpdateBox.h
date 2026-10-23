@@ -39,7 +39,12 @@ class CDlgUpdateBox: public CDialog
 	recordCollection m_records;
 	unsigned int m_current_record;
 
-	CFont m_smallFont; // module mode: the library file line
+	// Module mode: the module libraries in the Library list; the user may
+	// pick one only when a new module is stored (SetChooseLibrary)
+	bool m_bChooseLibrary;
+	std::vector<class CLibraryStore*> m_moduleLibs;
+	CComboBox m_moduleLibrary;
+	void FillModuleLibraries();
 
 	CLibraryStoreSymbol& getCurrentRecord();
 
@@ -100,6 +105,18 @@ public:
 		m_bModule = true;
 		m_lpszTemplateName = MAKEINTRESOURCE(IDD_STORE_MODULE);
 	}
+
+	// Module mode, new module: the user chooses the module library (the
+	// symbol's lib preselected, else the one chosen last); OK sets the
+	// symbol's lib.  Without this the module stays in its library.
+	void SetChooseLibrary()
+	{
+		m_bChooseLibrary = true;
+	}
+
+	// The module library Create Module preselects: the one chosen last, else
+	// the first attached; NULL when no module library is attached
+	static CLibraryStore* GetDefaultModuleLibrary();
 
 	// A module's record: library name = Type, description = Name, so the
 	// library panel shows "<Type> - <Name>" (without a Type: name = Name,

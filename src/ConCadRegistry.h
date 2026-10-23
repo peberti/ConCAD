@@ -53,8 +53,11 @@ public:
 	//-- Returns main window state
 	static bool GetMaximize();
 
-	//-- Returns list of libraries
+	//-- Returns list of libraries (symbol libraries, without extension)
 	static CStringList* GetLibraryNames();
+
+	//-- Returns list of module libraries (.CCMod, without extension)
+	static CStringList* GetModuleLibraryNames();
 
 	//-- Are automatic updates on (1), off (0) or unconfigured (-1)?
 	static int GetAutomaticUpdatesOn();
@@ -71,7 +74,7 @@ public:
 	//-- "Revised by" last entered in File -> Create version
 	static CString GetLastRevisedBy();
 
-	//-- Library that Special -> Create Module stores into (library name; empty = none)
+	//-- Module library last chosen in the Store Module dialog (library name; empty = none)
 	static CString GetModuleLibrary();
 	//-- Object -> Colour -> Consat / Factory
 	static COLORREF GetConsatColor();
@@ -139,6 +142,7 @@ private:
 	static const CString M_SASKNEWTITLEBLOCK;
 	static const CString M_SLASTREVISEDBY;
 	static const CString M_SMODULELIBRARY;
+	static const CString M_SMODULELIBRARIES;
 	static const CString M_SCONSATCOLOR;
 	static const CString M_SFACTORYCOLOR;
 };

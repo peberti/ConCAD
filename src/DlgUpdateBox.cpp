@@ -25,6 +25,8 @@
 #include "registry.h"
 #include "colour.h"
 #include "ConCad.h"
+#include "ConCadRegistry.h"
+#include "LibraryCollection.h"
 
 #include "Net.h"
 
@@ -38,6 +40,7 @@ CDlgUpdateBox::CDlgUpdateBox(CWnd* pParentWnd) :
 	m_capture = FALSE;
 	m_current_record = 0;
 	m_bModule = false;
+	m_bChooseLibrary = false;
 }
 
 void CDlgUpdateBox::DoDataExchange(CDataExchange* pDX)
@@ -55,6 +58,10 @@ void CDlgUpdateBox::DoDataExchange(CDataExchange* pDX)
 		DDX_Control(pDX, IDC_DELETE_NAME, m_Delete_Name);
 		DDX_Control(pDX, IDC_LIST_NAMES, m_List_Names);
 		DDX_Control(pDX, IDC_ORIENTATION, m_Orientation);
+	}
+	else
+	{
+		DDX_Control(pDX, IDC_MODULE_LIBRARY, m_moduleLibrary);
 	}
 }
 
@@ -87,14 +94,7 @@ BOOL CDlgUpdateBox::OnInitDialog()
 
 	if (m_bModule)
 	{
-		// Library file in a smaller font, as in the module dialog design
-		SetDlgItemText(UPDATE_LIBFILE, m_NewSymbol->GetLibName());
-		LOGFONT lf;
-		GetFont()->GetLogFont(&lf);
-		lf.lfHeight = lf.lfHeight * 2 / 3;
-		m_smallFont.CreateFontIndirect(&lf);
-		GetDlgItem(IDC_LIBFILE_LABEL)->SetFont(&m_smallFont);
-		GetDlgItem(UPDATE_LIBFILE)->SetFont(&m_smallFont);
+		FillModuleLibraries();
 	}
 	else
 	{
@@ -142,6 +142,65 @@ BOOL CDlgUpdateBox::OnInitDialog()
 	InitFromRecord();
 
 	return TRUE;
+}
+
+// The Library list of the module dialog: the module libraries to choose
+// from, or only the module's own library
+void CDlgUpdateBox::FillModuleLibraries()
+{
+	m_moduleLibs.clear();
+	m_moduleLibrary.ResetContent();
+	if (m_bChooseLibrary)
+	{
+		CLibraryStore* pLib;
+		for (int i = 0; (pLib = CLibraryCollection::GetLibraryByIndex(i)) != NULL; ++i)
+		{
+			if (pLib->m_modules)
+			{
+				m_moduleLibs.push_back(pLib);
+			}
+		}
+	}
+	else if (m_NewSymbol->lib != NULL)
+	{
+		m_moduleLibs.push_back(m_NewSymbol->lib);
+	}
+
+	int sel = m_moduleLibs.empty() ? -1 : 0;
+	for (size_t i = 0; i < m_moduleLibs.size(); i++)
+	{
+		const CString& name = m_moduleLibs[i]->m_name;
+		m_moduleLibrary.AddString(name.Mid(name.ReverseFind(_T('\\')) + 1));
+		if (m_moduleLibs[i] == m_NewSymbol->lib)
+		{
+			sel = (int)i;
+		}
+	}
+	m_moduleLibrary.SetCurSel(sel);
+	m_moduleLibrary.EnableWindow(m_bChooseLibrary && m_moduleLibs.size() > 1);
+}
+
+CLibraryStore* CDlgUpdateBox::GetDefaultModuleLibrary()
+{
+	const CString last = CConCadRegistry::GetModuleLibrary();
+	CLibraryStore* pFirst = NULL;
+	CLibraryStore* pLib;
+	for (int i = 0; (pLib = CLibraryCollection::GetLibraryByIndex(i)) != NULL; ++i)
+	{
+		if (!pLib->m_modules)
+		{
+			continue;
+		}
+		if (pLib->m_name.CompareNoCase(last) == 0)
+		{
+			return pLib;
+		}
+		if (pFirst == NULL)
+		{
+			pFirst = pLib;
+		}
+	}
+	return pFirst;
 }
 
 CString CDlgUpdateBox::ModuleLibraryName(const CString& type, const CString& name)
@@ -413,6 +472,18 @@ void CDlgUpdateBox::OnOK()
 			AfxMessageBox(_T("Enter a name for the module."), MB_ICONEXCLAMATION);
 			m_Description.SetFocus();
 			return;
+		}
+		if (m_bChooseLibrary)
+		{
+			const int sel = m_moduleLibrary.GetCurSel();
+			if (sel < 0 || sel >= (int)m_moduleLibs.size())
+			{
+				AfxMessageBox(_T("Choose the module library to store the module in."), MB_ICONEXCLAMATION);
+				m_moduleLibrary.SetFocus();
+				return;
+			}
+			m_NewSymbol->lib = m_moduleLibs[sel];
+			CConCadRegistry::SetModuleLibrary(m_NewSymbol->lib->m_name);
 		}
 		UpdateToRecord();
 		m_NewSymbol->SetRecords(m_records);

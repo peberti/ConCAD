@@ -571,6 +571,8 @@
 #define IDC_BUG_DESIGN                  40073
 #define IDC_BUG_ADDRESS                 40074
 #define IDC_BUG_INTRO                   40075
+#define IDC_LIBRARY_TABS                40076
+#define IDC_MODULE_LIBRARY              40077
 #define IDM_HELP_REPORTBUG              32923
 #define IDC_VERSION_HISTORY             40056
 #define IDC_DESIGNBOX_DESCRIPTION       40057
@@ -593,7 +595,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        192
 #define _APS_NEXT_COMMAND_VALUE         32924
-#define _APS_NEXT_CONTROL_VALUE         40076
+#define _APS_NEXT_CONTROL_VALUE         40078
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

@@ -27,6 +27,7 @@ const CString CConCadRegistry::M_SNEWTITLEBLOCK = "NewTitleBlock";
 const CString CConCadRegistry::M_SASKNEWTITLEBLOCK = "AskNewTitleBlock";
 const CString CConCadRegistry::M_SLASTREVISEDBY = "LastRevisedBy";
 const CString CConCadRegistry::M_SMODULELIBRARY = "ModuleLibrary";
+const CString CConCadRegistry::M_SMODULELIBRARIES = "ModuleLibraries";
 const CString CConCadRegistry::M_SCONSATCOLOR = "ConsatColor";
 const CString CConCadRegistry::M_SFACTORYCOLOR = "FactoryColor";
 
@@ -127,6 +128,17 @@ void CConCadRegistry::CopyExampleFiles()
 				{
 					CString from_file = app_dir + theFind.GetName();
 					CString to_file = to_dir + theFind.GetName();
+					// A module library the user still has as a .TCLib is
+					// renamed to .CCMod on start (CConCadApp::ReadRegistry);
+					// the bundled copy must not take its place.
+					if (to_file.Right(6).CompareNoCase(_T(".CCMod")) == 0)
+					{
+						FindFile old(to_file.Left(to_file.GetLength() - 6) + _T(".TCLib"));
+						if (old.Success())
+						{
+							continue;
+						}
+					}
 					if (CopyFile(from_file, to_file, TRUE) && i == 0) // not copied over an existing file
 					{
 						AddBundledLibrary(to_file);
@@ -144,20 +156,23 @@ void CConCadRegistry::CopyExampleFiles()
 //-------------------------------------------------------------------------
 //-- A library the installer bundled (<exe dir>\library) was copied to the
 //	 user's library folder: attach it, unless a library with the same file
-//	 name is attached already, and make "modules" the module library if none
-//	 is set.  (On a machine without ConCAD settings CreateDefaultEntries
-//	 attaches the folder's libraries too; after the settings were copied
-//	 from TinyCAD it does not run.)
+//	 name is attached already.  A module library (.CCMod) becomes the
+//	 preselected one in Store Module if none is set.  (On a machine without
+//	 ConCAD settings CreateDefaultEntries attaches the folder's libraries
+//	 too; after the settings were copied from TinyCAD it does not run.)
 void CConCadRegistry::AddBundledLibrary(const CString& file)
 {
-	if (file.Right(6).CompareNoCase(_T(".TCLib")) != 0)
+	const CString ext = file.Right(6);
+	const bool modules = ext.CompareNoCase(_T(".CCMod")) == 0;
+	if (!modules && ext.CompareNoCase(_T(".TCLib")) != 0)
 	{
 		return;
 	}
 	const CString name = file.Left(file.GetLength() - 6);
 	const CString title = name.Mid(name.ReverseFind('\\') + 1);
+	const CString key = modules ? M_SMODULELIBRARIES : M_SLIBRARIES;
 
-	CString libraries = super::GetString(M_SLIBRARIES, "");
+	CString libraries = super::GetString(key, "");
 	int pos = 0;
 	CString entry = libraries.Tokenize(_T(","), pos);
 	while (!entry.IsEmpty())
@@ -172,9 +187,9 @@ void CConCadRegistry::AddBundledLibrary(const CString& file)
 	{
 		libraries += _T(",");
 	}
-	super::Set(M_SLIBRARIES, libraries + name);
+	super::Set(key, libraries + name);
 
-	if (title.CompareNoCase(_T("modules")) == 0 && GetModuleLibrary().IsEmpty())
+	if (modules && GetModuleLibrary().IsEmpty())
 	{
 		SetModuleLibrary(name);
 	}
@@ -227,6 +242,23 @@ void CConCadRegistry::CreateDefaultEntries()
 
 			super::Set("Libraries", Libraries);
 		}
+	}
+
+	// ... and the module libraries
+	CString sModuleLibs;
+	FindFile theFind(CConCadApp::GetMyDocumentDir("library") + _T("*.CCMod"));
+	if (theFind.Success())
+	{
+		do
+		{
+			if (theFind.IsFile())
+			{
+				CString name = CConCadApp::GetMyDocumentDir("library") + theFind.GetName();
+				if (!sModuleLibs.IsEmpty()) sModuleLibs += ",";
+				sModuleLibs += name.Left(name.ReverseFind('.'));
+			}
+		} while (theFind.FindNext());
+		super::Set(M_SMODULELIBRARIES, sModuleLibs);
 	}
 }
 //-------------------------------------------------------------------------
@@ -284,6 +316,12 @@ CStringList* CConCadRegistry::GetLibraryNames()
 	return colReturn;
 }
 //-------------------------------------------------------------------------
+//-- Returns list of module libraries
+CStringList* CConCadRegistry::GetModuleLibraryNames()
+{
+	return CRegistry::GetStringList(M_SMODULELIBRARIES);
+}
+//-------------------------------------------------------------------------
 //-- Are automatic updates on (1), off (0) or unconfigured (-1)?
 int CConCadRegistry::GetAutomaticUpdatesOn()
 {
@@ -314,7 +352,7 @@ CString CConCadRegistry::GetLastRevisedBy()
 	return CRegistry::GetString(M_SLASTREVISEDBY, "");
 }
 //-------------------------------------------------------------------------
-//-- Library that Special -> Create Module stores into
+//-- Module library last chosen in the Store Module dialog
 CString CConCadRegistry::GetModuleLibrary()
 {
 	return CRegistry::GetString(M_SMODULELIBRARY, "");

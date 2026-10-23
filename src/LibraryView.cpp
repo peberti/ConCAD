@@ -593,7 +593,19 @@ void CLibraryView::OnRButtonDown(UINT nFlags, CPoint point)
 	CMenu lib_menu;
 	lib_menu.CreatePopupMenu();
 
-	CLibraryCollection::FillLibraryNames(IDM_LIBCOPY, &lib_menu);
+	// Copy to: libraries of the item's kind (a module goes to module
+	// libraries, also from a .TCLib that was not renamed to .CCMod)
+	CLibraryDoc* pDoc = GetDocument();
+	bool modules = pDoc->m_pLibrary->m_modules;
+	if (pDoc->getSelected() >= 0)
+	{
+		CLibraryStore::symbolCollection::iterator it = pDoc->getSymbol(pDoc->getSelected());
+		if (it != pDoc->m_pLibrary->m_Symbols.end() && it->second.GetNumRecords() > 0)
+		{
+			modules = it->second.GetRecord(0).is_module != FALSE;
+		}
+	}
+	CLibraryCollection::FillLibraryNames(IDM_LIBCOPY, &lib_menu, modules);
 	menu.ModifyMenu(ID_CONTEXT_COPY_TO, MF_POPUP, (unsigned int) lib_menu.m_hMenu, _T("Copy to"));
 	lib_menu.Detach();
 	menu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, AfxGetMainWnd(), NULL);

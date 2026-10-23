@@ -107,7 +107,7 @@ bool CLibraryCollection::Contains(CLibraryStore* pLib)
 
 	for (TIterator i = m_colLibs.begin(); i != m_colLibs.end(); i++)
 	{
-		bReturn |= (pLib->m_name == (*i)->m_name);
+		bReturn |= (pLib->m_name == (*i)->m_name && pLib->m_modules == (*i)->m_modules);
 	}
 
 	return bReturn;
@@ -172,30 +172,36 @@ CLibraryStoreNameSet* CLibraryCollection::GetSymbol(CString sKey)
 }
 //-------------------------------------------------------------------------
 //-- Fills listbox entries with library names
-void CLibraryCollection::FillLibraryNames(CListBox* lstLib)
+void CLibraryCollection::FillLibraryNames(CListBox* lstLib, bool modules)
 {
 	lstLib->ResetContent();
 
 	int library_id = 0;
 	for (TIterator i = m_colLibs.begin(); i != m_colLibs.end(); i++)
 	{
-		int index = lstLib->AddString( (*i)->m_name);
-		lstLib->SetItemData(index, library_id);
+		if ((*i)->m_modules == modules)
+		{
+			int index = lstLib->AddString( (*i)->m_name);
+			lstLib->SetItemData(index, library_id);
+		}
 		++library_id;
 	}
 }
 //-------------------------------------------------------------------------
 //-- Fills listbox entries with library names
-void CLibraryCollection::FillLibraryNames(int start_id, CMenu* menuLib)
+void CLibraryCollection::FillLibraryNames(int start_id, CMenu* menuLib, bool modules)
 {
 	int library_id = start_id;
 	int pos = 0;
 
 	for (TIterator i = m_colLibs.begin(); i != m_colLibs.end(); i++)
 	{
-		menuLib->InsertMenu(pos, MF_BYPOSITION | MF_STRING, library_id, (*i)->m_name);
+		if ((*i)->m_modules == modules)
+		{
+			menuLib->InsertMenu(pos, MF_BYPOSITION | MF_STRING, library_id, (*i)->m_name);
+			++pos;
+		}
 		++library_id;
-		++pos;
 	}
 }
 
@@ -284,19 +290,24 @@ void CLibraryCollection::FillMatchingSymbols(CTreeCtrl* Tree, const CString& sSe
 //-- Write the all library file pathes back to the registry
 void CLibraryCollection::SaveToRegistry()
 {
+	// Symbol libraries in "Libraries" (as TinyCAD), module libraries in
+	// "ModuleLibraries"
 	CString sLibs = "";
+	CString sModuleLibs = "";
 
 	for (TIterator i = m_colLibs.begin(); i != m_colLibs.end(); i++)
 	{
-		if (!sLibs.IsEmpty())
+		CString& list = (*i)->m_modules ? sModuleLibs : sLibs;
+		if (!list.IsEmpty())
 		{
-			sLibs += ",";
+			list += ",";
 		}
 
-		sLibs += (*i)->m_name;
+		list += (*i)->m_name;
 	}
 
 	CRegistry::Set("Libraries", sLibs);
+	CRegistry::Set("ModuleLibraries", sModuleLibs);
 }
 
 //-------------------------------------------------------------------------

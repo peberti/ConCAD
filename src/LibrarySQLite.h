@@ -40,8 +40,16 @@ protected:
 	void DeleteSymbol(int SymbolID);
 
 public:
-	CLibrarySQLite();
+	// modules: a module library (.CCMod) instead of a symbol library (.TCLib)
+	explicit CLibrarySQLite(bool modules = false);
 	virtual ~CLibrarySQLite();
+
+	// The file: m_name + ".TCLib" or ".CCMod"
+	CString GetFileName() const;
+
+	// Number of symbols and modules in an SQLite library file (without
+	// attaching it); false if it cannot be read
+	static bool CountRecords(const CString& file, int& symbols, int& modules);
 
 	// Attach this library to a file
 	virtual BOOL Attach(const TCHAR *filename) OVERRIDE;

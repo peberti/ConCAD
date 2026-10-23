@@ -2120,8 +2120,8 @@ void CConCadView::OnUpdateEditRevisionHistory(CCmdUI* pCmdUI)
 }
 
 //-------------------------------------------------------------------------
-// Modules: a group of drawing objects stored in the module library
-// (Options > Settings > Drawing) and inserted like a paste.
+// Modules: a group of drawing objects stored in a module library (.CCMod,
+// chosen in the Store Module dialog) and inserted like a paste.
 
 void CConCadView::OnSpecialCreateModule()
 {
@@ -2132,12 +2132,11 @@ void CConCadView::OnSpecialCreateModule()
 		return;
 	}
 
-	const CString sModuleLib = CConCadRegistry::GetModuleLibrary();
-	CLibraryStore* pLib = sModuleLib.IsEmpty() ? NULL : CLibraryCollection::GetLibrary(sModuleLib);
-	if (pLib == NULL || pLib->MustUpgrade())
+	CLibraryStore* pLib = CDlgUpdateBox::GetDefaultModuleLibrary();
+	if (pLib == NULL)
 	{
-		AfxMessageBox(_T("No module library is set.\n\nChoose one under Options > Settings > Drawing > Module library. ")
-			_T("Only SQLite libraries (.TCLib) can hold modules."), MB_ICONINFORMATION);
+		AfxMessageBox(_T("No module library is attached.\n\nCreate or add one under Library > Libraries..., ")
+			_T("tab Module libraries."), MB_ICONINFORMATION);
 		return;
 	}
 
@@ -2176,6 +2175,7 @@ void CConCadView::OnSpecialCreateModule()
 	CDlgUpdateBox dlg(AfxGetMainWnd());
 	dlg.SetSymbol(&module);
 	dlg.SetModuleMode();
+	dlg.SetChooseLibrary();
 	if (dlg.DoModal() != IDOK)
 	{
 		return;
@@ -2185,7 +2185,7 @@ void CConCadView::OnSpecialCreateModule()
 	{
 		module.GetRecord(i).is_module = TRUE;
 	}
-	pLib->StoreModule(&module, stream);   // reports its own errors
+	module.lib->StoreModule(&module, stream);   // the library chosen in the dialog; reports its own errors
 }
 
 void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)

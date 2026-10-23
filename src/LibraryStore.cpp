@@ -31,6 +31,7 @@ CLibraryStore::CLibraryStore()
 {
 	// Default the name
 	m_name = "Library";
+	m_modules = false;
 }
 
 // The destructor
@@ -276,7 +277,8 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 
 		int symbols = 0;
 		int modules = 0;
-		int skipped = 0;
+		int skipped = 0;          // modules for a symbol library
+		int skipped_symbols = 0;  // symbols for a module library
 		CString problems; // one line per symbol/module that was not imported
 		CConCadApp::SetLockOutSymbolRedraw(true);
 		try
@@ -301,7 +303,12 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 						break;
 					}
 
-					// ... and store the symbol
+					// ... and store the symbol (not in a module library)
+					if (m_modules)
+					{
+						++skipped_symbols;
+						continue;
+					}
 					Store(&s, temp_doc);
 					++symbols;
 				}
@@ -401,7 +408,13 @@ void CLibraryStore::LoadXML(const TCHAR *filename)
 		if (skipped > 0)
 		{
 			CString more;
-			more.Format(_T("\n\n%d module(s) were not imported: modules can only be stored in SQLite libraries (.TCLib)."), skipped);
+			more.Format(_T("\n\n%d module(s) were not imported: modules can only be stored in module libraries (.CCMod)."), skipped);
+			msg += more;
+		}
+		if (skipped_symbols > 0)
+		{
+			CString more;
+			more.Format(_T("\n\n%d symbol(s) were not imported: symbols can only be stored in symbol libraries (.TCLib)."), skipped_symbols);
 			msg += more;
 		}
 		if (!problems.IsEmpty())

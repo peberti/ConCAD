@@ -82,11 +82,13 @@ public:
 	//-- Returns a symbol identified by its name, searching in all libraries
 	static CLibraryStoreNameSet* GetSymbol(CString sKey);
 
-	//-- Fills listbox entries with library names
-	static void FillLibraryNames(CListBox* lstLib);
+	//-- Fills listbox entries with the names of the symbol libraries or of
+	//-- the module libraries; the item data is the library's index
+	static void FillLibraryNames(CListBox* lstLib, bool modules);
 
-	//-- Fills a menu entries with library names
-	static void FillLibraryNames(int start_id, CMenu* menuLib);
+	//-- Fills a menu entries with the names of the symbol or module
+	//-- libraries; the command id is start_id + the library's index
+	static void FillLibraryNames(int start_id, CMenu* menuLib, bool modules);
 
 	//-- Find a library given it's index in the array
 	static CLibraryStore* GetLibraryByIndex(int library_id);

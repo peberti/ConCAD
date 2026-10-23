@@ -813,6 +813,7 @@ void CConCadApp::ReadRegistry()
 
 	// Is there a list of libraries in the registry?
 	CStringList* colLibs = CConCadRegistry::GetLibraryNames();
+	bool bMigrated = false;
 
 	// Iterate through the list in head-to-tail order.
 	CString sSearch;
@@ -834,7 +835,28 @@ void CConCadApp::ReadRegistry()
 		{
 			//the .TCLib file was found, so it must be a new SQLIte library file
 			TRACE("    Found library file \"%S\".  This is an SQLite3 library.\n", sSearch);
-			oLib = new CLibrarySQLite;
+
+			// A module library from before module libraries got their own
+			// extension (only modules in it): rename it to .CCMod, so
+			// TinyCAD never opens it, and attach it as a module library.
+			int symbols = 0, modules = 0;
+			bool bModules = false;
+			if (CLibrarySQLite::CountRecords(sSearch, symbols, modules) && modules > 0 && symbols == 0)
+			{
+				const CString sTarget = sLibName + _T(".CCMod");
+				if (MoveFile(sSearch, sTarget))
+				{
+					CLog::Write(_T("Module library %s renamed to %s"), (LPCTSTR)sSearch, (LPCTSTR)sTarget);
+					bModules = true;
+					bMigrated = true;
+				}
+				else
+				{
+					CLog::Write(_T("Module library %s could not be renamed to %s (error %u); kept as a symbol library"),
+						(LPCTSTR)sSearch, (LPCTSTR)sTarget, GetLastError());
+				}
+			}
+			oLib = new CLibrarySQLite(bModules);
 		}
 		else
 		{
@@ -856,6 +878,11 @@ void CConCadApp::ReadRegistry()
 					TRACE("    Found library file \"%S\".  This is the oldest library type.\n", sSearch);
 					oLib = new CLibraryFile;
 				}
+				else if (FindFile(sLibName + _T(".CCMod")).Success())
+				{ //renamed to a module library already (e.g. by hand)
+					oLib = new CLibrarySQLite(true);
+					bMigrated = true;
+				}
 				else
 				{ //no known library format was found
 					CString s;
@@ -874,6 +901,37 @@ void CConCadApp::ReadRegistry()
 	}
 
 	delete colLibs;
+
+	// The module libraries (.CCMod)
+	colLibs = CConCadRegistry::GetModuleLibraryNames();
+	for (POSITION pos = colLibs->GetHeadPosition(); pos != NULL;)
+	{
+		CString sLibName = colLibs->GetNext(pos);
+		FindFile theFind(sLibName + _T(".CCMod"));
+		if (!theFind.Success())
+		{
+			CString s;
+			s.Format(_T("    Module library not found:\r\n\t\"%s.CCMod\""), (LPCTSTR)sLibName);
+			AfxMessageBox(s);
+			continue;
+		}
+		CLibraryStore* oLib = new CLibrarySQLite(true);
+		oLib->m_name = sLibName;
+		if (CLibraryCollection::Contains(oLib))
+		{
+			delete oLib;
+			continue;
+		}
+		oLib->Attach(sLibName);
+		CLibraryCollection::Add(oLib);
+	}
+	delete colLibs;
+
+	// Renamed module libraries move from "Libraries" to "ModuleLibraries"
+	if (bMigrated)
+	{
+		CLibraryCollection::SaveToRegistry();
+	}
 }
 
 //-------------------------------------------------------------------------

@@ -106,6 +106,15 @@ BOOL CConCadMultiModuleDoc::Store()
 	CConCadDoc *pSheet = m_sheets[0];
 	pSheet->SelectObject(new CDrawEditItem(pSheet)); // finish any edit in progress
 
+	// A module in a symbol library (a .TCLib that could not be renamed to
+	// .CCMod on start) cannot be stored back there
+	if (!m_libedit->m_modules)
+	{
+		AfxMessageBox(_T("This module is in a symbol library (.TCLib), which cannot store modules.\n\n")
+			_T("Copy it to a module library (.CCMod) in the library window and edit it there."), MB_ICONINFORMATION);
+		return FALSE;
+	}
+
 	CDlgUpdateBox dlg(AfxGetMainWnd());
 	dlg.SetSymbol(&m_moduleedit);
 	dlg.SetModuleMode();

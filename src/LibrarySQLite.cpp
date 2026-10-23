@@ -32,14 +32,38 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CLibrarySQLite::CLibrarySQLite()
+CLibrarySQLite::CLibrarySQLite(bool modules)
 {
-
+	m_modules = modules;
 }
 
 CLibrarySQLite::~CLibrarySQLite()
 {
 
+}
+
+CString CLibrarySQLite::GetFileName() const
+{
+	return m_name + (m_modules ? _T(".CCMod") : _T(".TCLib"));
+}
+
+bool CLibrarySQLite::CountRecords(const CString& file, int& symbols, int& modules)
+{
+	symbols = 0;
+	modules = 0;
+	try
+	{
+		CppSQLite3DB db;
+		db.open(file);
+		symbols = db.execScalar(_T("SELECT COUNT(*) FROM [Name] WHERE [Type]=0"));
+		modules = db.execScalar(_T("SELECT COUNT(*) FROM [Name] WHERE [Type]=1"));
+		db.close();
+		return true;
+	}
+	catch (CppSQLite3Exception&)
+	{
+		return false;
+	}
 }
 
 // Attach this library to a file
@@ -51,7 +75,7 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 	{
 		if (!m_database.mpDB)
 		{
-			m_database.open(m_name + ".TCLib");
+			m_database.open(GetFileName());
 		}
 
 		// Migrate older libraries to have the IsConnector column.
@@ -168,6 +192,12 @@ BOOL CLibrarySQLite::Attach(const TCHAR *filename)
 // Write a symbol to this library
 void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document)
 {
+	if (m_modules)
+	{
+		AfxMessageBox(_T("Symbols cannot be stored in a module library (.CCMod). Store them in a symbol library (.TCLib)."), MB_ICONINFORMATION);
+		return;
+	}
+
 	// Write the symbol data into the methods file
 	CStreamMemory stream;
 	CXMLWriter xml(&stream);
@@ -182,6 +212,11 @@ void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc
 
 bool CLibrarySQLite::StoreModule(CLibraryStoreNameSet *nwSymbol, CStreamMemory &data)
 {
+	// Only module libraries hold modules; the callers report a refusal
+	if (!m_modules)
+	{
+		return false;
+	}
 	return StoreData(nwSymbol, data, 1);
 }
 
@@ -417,7 +452,7 @@ bool CLibrarySQLite::Create(const TCHAR *filename)
 	// Now create the database
 	try
 	{
-		m_database.open(m_name + ".TCLib");
+		m_database.open(GetFileName());
 	} catch (CppSQLite3Exception& e)
 	{
 		CString s;

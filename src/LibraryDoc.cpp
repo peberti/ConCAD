@@ -71,9 +71,13 @@ static void StoreModuleCopy(CLibraryStoreNameSet& src, CLibraryStore* target, bo
 		{
 			copy.GetRecord(i).is_module = TRUE;
 		}
-		if (!target->StoreModule(&copy, *pMem) && target->MustUpgrade())
+		if (!target->m_modules)
 		{
-			AfxMessageBox(_T("Modules can only be stored in SQLite libraries (.TCLib)."), MB_ICONINFORMATION);
+			AfxMessageBox(_T("Modules can only be stored in module libraries (.CCMod)."), MB_ICONINFORMATION);
+		}
+		else
+		{
+			target->StoreModule(&copy, *pMem);   // reports its own errors
 		}
 	}
 	delete pData;

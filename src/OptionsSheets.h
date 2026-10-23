@@ -216,8 +216,6 @@ public:
 	COLORREF m_factoryColor;
 	LOGFONT  m_compFont;
 	BOOL     m_askTitleBlock;
-	CComboBox            m_moduleLib;
-	std::vector<CString> m_moduleLibNames;   // per combo row; row 0 = none
 
 	virtual BOOL OnApply();
 

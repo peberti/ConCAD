@@ -102,13 +102,14 @@ Section "MainSection" SEC01
   CreateShortCut "$SMPROGRAMS\ConCAD\User Manual.lnk" "$INSTDIR\ConCAD.html"
 
   ;
-  ; Symbol and module libraries (Libraries\*.TCLib in the repo).  On first
-  ; start ConCAD copies them to Documents\ConCAD\library\ (never over an
-  ; existing file) and attaches them; modules.TCLib becomes the module
-  ; library.  Example circuits are not bundled.
+  ; Symbol libraries (Libraries\*.TCLib in the repo) and module libraries
+  ; (Libraries\*.CCMod).  On first start ConCAD copies them to
+  ; Documents\ConCAD\library\ (never over an existing file) and attaches
+  ; them.  Example circuits are not bundled.
   ;
   SetOutPath "$INSTDIR\library"
   File "${LIBDIR}\*.TCLib"
+  File "${LIBDIR}\*.CCMod"
   SetOutPath "$INSTDIR"
 
   ;

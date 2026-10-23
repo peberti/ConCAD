@@ -43,6 +43,7 @@ BEGIN_MESSAGE_MAP( CDlgLibraryBox, CDialog )
 	ON_BN_CLICKED(LIBRARYBOX_NEW, OnNew)
 	ON_BN_CLICKED(LIBRARYBOX_CLEANUP, OnCleanup)
 	ON_BN_CLICKED(LIBRARYBOX_UPGRADE, OnUpgrade)
+	ON_NOTIFY(TCN_SELCHANGE, IDC_LIBRARY_TABS, OnTabChange)
 	//}}AFX_MSG_MAP
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
@@ -59,6 +60,7 @@ CDlgLibraryBox::CDlgLibraryBox(CWnd* pParentWnd) :
 	// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
 	m_lstLibs = NULL;
+	m_modulesTab = false;
 }
 //-------------------------------------------------------------------------
 //-- Creating and filling listbox
@@ -66,6 +68,10 @@ BOOL CDlgLibraryBox::OnInitDialog()
 {
 	// Set up the list box with the current library names in it
 	m_lstLibs = (CListBox*) GetDlgItem(LIBRARYBOX_AVAILABLE);
+
+	m_tabs.SubclassDlgItem(IDC_LIBRARY_TABS, this);
+	m_tabs.InsertItem(0, _T("Symbol libraries"));
+	m_tabs.InsertItem(1, _T("Module libraries"));
 
 	// Get the position of the buttons
 	CRect client, button, list;
@@ -97,15 +103,12 @@ CLibraryStore* CDlgLibraryBox::GetSelectedLibrary() const
 {
 	CLibraryStore* oReturn = NULL;
 	int nSelIndex = m_lstLibs->GetCurSel();
-	CString sLibName;
 
-	// Get the item which has been selected
+	// Get the item which has been selected (item data = library index; the
+	// same name can be both a symbol and a module library)
 	if (nSelIndex != LB_ERR)
 	{
-		// Now calculate which library this is
-		m_lstLibs->GetText(nSelIndex, sLibName);
-
-		oReturn = CLibraryCollection::GetLibrary(sLibName);
+		oReturn = CLibraryCollection::GetLibraryByIndex((int) m_lstLibs->GetItemData(nSelIndex));
 	}
 
 	return oReturn;
@@ -129,7 +132,7 @@ void CDlgLibraryBox::RefreshComponents(bool bHasToRefill)
 
 	if (bHasToRefill)
 	{
-		CLibraryCollection::FillLibraryNames(m_lstLibs);
+		CLibraryCollection::FillLibraryNames(m_lstLibs, m_modulesTab);
 
 		// refilling unselects the listbox
 		bIsLibSelected = false;
@@ -140,6 +143,29 @@ void CDlgLibraryBox::RefreshComponents(bool bHasToRefill)
 	btnEdit->EnableWindow(bIsLibSelected);
 	btnCleanup->EnableWindow(bIsLibSelected);
 	btnUpgrade->EnableWindow(bIsLibSelected);
+	btnUpgrade->ShowWindow(m_modulesTab ? SW_HIDE : SW_SHOW);   // old formats are symbol libraries
+}
+//-------------------------------------------------------------------------
+//-- Show the symbol (false) or module (true) libraries
+void CDlgLibraryBox::ShowTab(bool modules)
+{
+	m_modulesTab = modules;
+	m_tabs.SetCurSel(modules ? 1 : 0);
+	RefreshComponents(true);
+}
+//-------------------------------------------------------------------------
+//-- New symbol or module library object for a file name extension
+CLibraryStore* CDlgLibraryBox::NewLibraryFor(const CString& ext)
+{
+	if (ext == _T("idx"))
+	{
+		return new CLibraryFile;
+	}
+	if (ext == _T("mdb"))
+	{
+		return new CLibraryDb;
+	}
+	return new CLibrarySQLite(ext == _T("ccmod"));
 }
 //-------------------------------------------------------------------------
 
@@ -160,8 +186,9 @@ void CDlgLibraryBox::OnOK()
 //-- Adds it to collection and listbox
 void CDlgLibraryBox::OnAdd()
 {
-	CFileDialog dlg(TRUE, _T("*.TCLib"), NULL, OFN_ALLOWMULTISELECT,
-		_T("ConCAD Library (*.TCLib)|*.TCLib|Legacy Library (*.mdb, *idx, *.TCLib)|*.mdb;*.idx;*.TCLib|All files (*.*)|*.*||"), AfxGetMainWnd());
+	CFileDialog dlg(TRUE, m_modulesTab ? _T("*.CCMod") : _T("*.TCLib"), NULL, OFN_ALLOWMULTISELECT,
+		m_modulesTab ? _T("ConCAD Module Library (*.CCMod)|*.CCMod|All files (*.*)|*.*||")
+			: _T("ConCAD Library (*.TCLib)|*.TCLib|Legacy Library (*.mdb, *idx, *.TCLib)|*.mdb;*.idx;*.TCLib|All files (*.*)|*.*||"), AfxGetMainWnd());
 
 	// Create buffer for file names. 
 	const DWORD numberOfFileNames = 100;
@@ -194,21 +221,9 @@ void CDlgLibraryBox::OnAdd()
 				csFileName = csFileName.Left(lastindex);
 			}
 			
-			// Create the library
-			CLibraryStore* NewLib;
-
-			if (csExt == _T("idx"))
-			{
-				NewLib = new CLibraryFile;
-			}
-			else if (csExt == _T("mdb"))
-			{
-				NewLib = new CLibraryDb;
-			}
-			else
-			{
-				NewLib = new CLibrarySQLite;
-			}
+			// Create the library (the extension decides symbol or module
+			// library, whichever tab is open)
+			CLibraryStore* NewLib = NewLibraryFor(csExt);
 
 			BOOL libraryLoaded = NewLib->Attach(csFileName);
 
@@ -216,7 +231,11 @@ void CDlgLibraryBox::OnAdd()
 			if (libraryLoaded && !CLibraryCollection::Contains(NewLib))
 			{
 				CLibraryCollection::Add(NewLib);
-				RefreshComponents(true);
+				ShowTab(NewLib->m_modules);
+			}
+			else
+			{
+				delete NewLib;
 			}
 		}
 		// Finally update the symbol picker...
@@ -231,21 +250,11 @@ void CDlgLibraryBox::OnAdd()
 //-- Removes a library from collection and listbox
 void CDlgLibraryBox::OnRemove()
 {
-	int nSelIndex = m_lstLibs->GetCurSel();
-	CString sLibName;
-	CLibraryStore* pLib;
+	CLibraryStore* pLib = GetSelectedLibrary();
 
 	// Get the item which has been selected
-	if (nSelIndex != LB_ERR)
+	if (pLib != NULL)
 	{
-		// Now calculate which library this is
-		m_lstLibs->GetText(nSelIndex, sLibName);
-
-		pLib = CLibraryCollection::GetLibrary(sLibName);
-
-		// listbox and collection should be synchron
-		assert( pLib != NULL );
-
 		if (CConCadApp::IsLibInUse(pLib))
 		{
 			// We cannot delete whilst in use
@@ -301,8 +310,9 @@ void CDlgLibraryBox::OnEdit()
 //--
 void CDlgLibraryBox::OnNew()
 {
-	CFileDialog dlg(FALSE, _T("TCLib"), NULL, OFN_HIDEREADONLY, 
-					_T("ConCAD Library (*.TCLib)|*.TCLib|Library database in old MSJet format (*.mdb)|*.mdb|All files (*.*)|*.*||"),
+	CFileDialog dlg(FALSE, m_modulesTab ? _T("CCMod") : _T("TCLib"), NULL, OFN_HIDEREADONLY, 
+					m_modulesTab ? _T("ConCAD Module Library (*.CCMod)|*.CCMod||")
+						: _T("ConCAD Library (*.TCLib)|*.TCLib|Library database in old MSJet format (*.mdb)|*.mdb|All files (*.*)|*.*||"),
 					AfxGetMainWnd());
 
 	if (dlg.DoModal() == IDOK)
@@ -319,17 +329,17 @@ void CDlgLibraryBox::OnNew()
 			csFileName = csFileName.Left(lastindex);
 		}
 
-		// Create the library object
+		// Create the library object.  When you explicitly ask for an MDB,
+		// you get an MDB!  A module library is SQLite with .CCMod.
 		CLibraryStore* NewLib;
 
 		if (csExt == _T("mdb"))
 		{
-			// When you explicitly ask for an MDB, you get an MDB!
 			NewLib = new CLibraryDb;
 		}
 		else
 		{
-			NewLib = new CLibrarySQLite;
+			NewLib = new CLibrarySQLite(m_modulesTab || csExt == _T("ccmod"));
 		}
 
 		// .. and create the file
@@ -339,7 +349,7 @@ void CDlgLibraryBox::OnNew()
 			CLibraryCollection::Add(NewLib);
 
 			// .. and to the list box
-			RefreshComponents(true);
+			ShowTab(NewLib->m_modules);
 		}
 		else
 		{
@@ -377,13 +387,28 @@ void CDlgLibraryBox::OnDblclkAvailable()
 	OnEdit();
 }
 //-------------------------------------------------------------------------
+//-- switch between symbol and module libraries
+void CDlgLibraryBox::OnTabChange(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	ShowTab(m_tabs.GetCurSel() == 1);
+	*pResult = 0;
+}
+//-------------------------------------------------------------------------
 
 
 void CDlgLibraryBox::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
 
-	// Move the list box into position
+	// Move the tabs and the list box into position
+	if (m_tabs.GetSafeHwnd())
+	{
+		CRect r;
+		m_tabs.GetWindowRect(r);
+		ScreenToClient(r);
+		r.right = cx - m_list_pos;
+		m_tabs.MoveWindow(r);
+	}
 	if (m_lstLibs)
 	{
 		CRect r;

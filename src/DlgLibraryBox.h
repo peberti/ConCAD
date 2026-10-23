@@ -42,6 +42,10 @@ private:
 	//-- CLibraryCollection singleton
 	CListBox* m_lstLibs;
 
+	//-- Tabs: symbol libraries (.TCLib, ...) / module libraries (.CCMod)
+	CTabCtrl m_tabs;
+	bool m_modulesTab;
+
 	// The position of the buttons relative to the right hand
 	// border
 	int m_button_pos;
@@ -78,6 +82,13 @@ private:
 	//-- Controls En/Disabling of some buttons of the dialog
 	//-- Parameter bHasToRefill forces redrawing of listbox
 	void RefreshComponents(bool bHasToRefill);
+
+	//-- Show the symbol (false) or module (true) libraries
+	void ShowTab(bool modules);
+
+	//-- New symbol or module library object for a file name extension
+	//-- (lower case, without the dot)
+	static CLibraryStore* NewLibraryFor(const CString& ext);
 
 protected:
 	//=====================================================================
@@ -116,6 +127,9 @@ protected:
 
 	//-- double click opens a thumbnail view of the selected library
 	afx_msg void 		OnDblclkAvailable();
+
+	//-- switch between symbol and module libraries
+	afx_msg void		OnTabChange(NMHDR* pNMHDR, LRESULT* pResult);
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()

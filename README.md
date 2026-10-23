@@ -79,14 +79,15 @@ not invoke it. The script is `installer/ConCAD.nsi`.
 
 The output is `installer\ConCAD_<version>_<Test|Production>_Release.exe`,
 a self-contained installer that installs ConCAD plus DLLs, the manual, the
-SVG title blocks and the libraries in `Libraries\*.TCLib` (copied to the
+SVG title blocks and the libraries in `Libraries\` — symbol libraries
+`*.TCLib` and module libraries `*.CCMod` (copied to the
 user's `Documents\ConCAD\library` and attached on first start), runs the
 VC++ redist, registers `.con` files, and creates shortcuts. The version is `0.<release>.<git commit count>`; the
 installer reads it from `src\BuildId.h`, written by the Release build. To
 hand out a new release, raise `RELEASE` (and set `RELEASE_TYPE`) at the top
 of `src\gitbranch.bat`, commit, build Release, then compile the script.
-If ConCAD has the repo's `Libraries\*.TCLib` open, NSIS cannot read them;
-then copy them elsewhere (e.g. `git show HEAD:Libraries/modules.TCLib`)
+If ConCAD has the repo's libraries open, NSIS cannot read them;
+then copy them elsewhere (e.g. `git show HEAD:Libraries/modules.CCMod`)
 and run `makensis /DLIBDIR=<that folder> ConCAD.nsi`.
 
 ## Splash screen

@@ -32,6 +32,10 @@ public:
 
 	CString m_name; ///< The file name of this library
 
+	// A module library (.CCMod): holds modules only.  Symbol libraries
+	// (.TCLib, TinyCAD compatible) hold symbols only.
+	bool m_modules;
+
 	CLibraryStore(); // The constructor
 	virtual ~CLibraryStore(); // The destructor
 
@@ -78,8 +82,8 @@ public:
 	// Write a symbol to this library
 	virtual void Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document) = 0;
 
-	// Store a module (Special -> Create Module): data is the module's XML.
-	// Only libraries that support it (SQLite) override this.
+	// Store a module (Object -> Create Module): data is the module's XML.
+	// Only module libraries (SQLite, .CCMod) store it; others return false.
 	virtual bool StoreModule(CLibraryStoreNameSet *nwSymbol, class CStreamMemory &data)
 	{
 		return false;

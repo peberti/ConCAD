@@ -703,9 +703,10 @@ A **module** is a reusable piece of schematic — wires, placed symbols,
 labels, text, … — stored in a library and inserted into a design like a
 paste.
 
-- **Set the library:** Options → Settings → Drawing → *Module library*
-  lists the attached SQLite libraries (`.TCLib`). Choose one; modules are
-  stored there.
+- **Module libraries** are separate from symbol libraries: `.CCMod`
+  files, listed on their own tab in Library → Libraries (§24). The Store
+  Module dialog has a *Library* list to choose which one a new module goes
+  into.
 - **Create:** select the objects, then **Object → Create Module…** (also on
   the right-click menu of a selection). The
   usual store dialog opens (titled *Store Module*, without the Connector
@@ -1175,6 +1176,63 @@ Files: `src/ImageSvg.{h,cpp}` (new), `src/DrawMetafile.cpp`,
 Files: `src/XMLReader.{h,cpp}`, `src/LibraryStore.cpp`,
 `tools/mod2sym.py` (new).
 
+## 24. Module libraries are separate files (.CCMod)
+
+A module library is not a valid TinyCAD library, so it no longer uses
+the `.TCLib` extension.
+
+- **Two kinds of library.** Symbol libraries keep `.TCLib` (and the old
+  `.mdb` / `.idx`) and hold symbols only. Module libraries are
+  `.CCMod` and hold modules only. The file format is the same SQLite
+  database; only the extension differs, so TinyCAD never opens a module
+  library.
+- **Library → Libraries** has two tabs, *Symbol libraries* and *Module
+  libraries*. Add, Remove, New, Edit and Cleanup act on the open tab;
+  New on the Module libraries tab creates a `.CCMod`. Add decides by the
+  file extension and switches to the matching tab. Upgrade is only on
+  the Symbol libraries tab.
+- **Store Module** (Object → Create Module) has a *Library* list of the
+  attached module libraries, replacing the *Library File* line. The one
+  chosen last is preselected (else the first one). When a module is
+  stored again (Save in a module window, Properties in the library
+  window) the list only shows its own library. Without any module
+  library, Create Module says to create or add one.
+- **Options → Settings → Drawing → Module library is removed** (the
+  dialog remembers the last choice instead; it is still the registry
+  value `ModuleLibrary`).
+- **Kept apart:** storing a symbol in a module library and a module in a
+  symbol library are refused with a message; Copy to in the library
+  window lists only libraries of the same kind; Import into a module
+  library skips symbols and into a symbol library skips modules, and
+  says how many were skipped.
+- **Registry:** symbol libraries stay in `Libraries` (as TinyCAD); module
+  libraries are in the new `ModuleLibraries` value.
+- **Migration on start:** an attached `.TCLib` with modules and no
+  symbols is renamed to `.CCMod` and moved to the Module libraries tab
+  (logged; if the rename fails it stays a symbol library and its modules
+  can still be placed). A `Libraries` entry whose `.TCLib` is gone but
+  whose `.CCMod` exists is also loaded as a module library. A bundled
+  `X.CCMod` is not copied to `Documents\ConCAD\library` when an
+  `X.TCLib` is still there, so a user's own module library is migrated
+  rather than replaced. A `.TCLib` holding both symbols and
+  modules (none are known) is left as it is.
+- **Repo / installer:** `Libraries/modules.TCLib` is now
+  `Libraries/modules.CCMod` (with updated modules); the installer bundles
+  `*.TCLib` and `*.CCMod`. A bundled `.CCMod` becomes the preselected
+  module library when none is set. A user who already has `modules`
+  keeps their own copy (renamed to `.CCMod`); the updated bundled one
+  only reaches new users.
+
+Files: `src/LibraryStore.{h,cpp}` (`m_modules`, import),
+`src/LibrarySQLite.{h,cpp}` (`GetFileName`, `CountRecords`, store
+guards), `src/LibraryCollection.{h,cpp}`, `src/ConCad.cpp`
+(`ReadRegistry`), `src/ConCadRegistry.{h,cpp}`,
+`src/DlgLibraryBox.{h,cpp}`, `src/DlgUpdateBox.{h,cpp}`,
+`src/ConCadView.cpp`, `src/LibraryDoc.cpp`, `src/LibraryView.cpp`,
+`src/OptionsSheets.{h,cpp}`, `src/ConCad.rc`, `src/resource.h`
+(`IDC_LIBRARY_TABS`, `IDC_MODULE_LIBRARY`), `installer/ConCAD.nsi`,
+`Libraries/modules.CCMod`.
+
 ---
 
 ## File-format compatibility
@@ -1251,9 +1309,9 @@ XML-saved files.
     again hides it. Edit `templates/revision.svg` (e.g. the heading) and
     the open design updates. Save, reopen — position, visibility and rows
     are kept.
-11. **Modules** — Options → Settings → Drawing: pick a `.TCLib` as Module
-    library. Select a few wires and two placed symbols, Object → Create
-    Module…: dialog titled *Store Module*; name it `Test module`, Store.
+11. **Modules** — Select a few wires and two placed symbols, Object →
+    Create Module…: dialog titled *Store Module*, Library = a `.CCMod`;
+    name it `Test module`, Store.
     It appears in the library panel with a preview. Open another design,
     double-click it: the objects follow the mouse, click to drop; the
     symbols draw correctly; title block, grid and colours unchanged. Undo
@@ -1313,7 +1371,7 @@ XML-saved files.
     menu cannot add sheets there.
 18. **Library XML** — in the module library window: File → Export
     library: message "Exported 0 symbol(s) and N module(s)"; the .xml has
-    `<MODULE>` elements. Create a new empty .TCLib, attach it, open it,
+    `<MODULE>` elements. Create a new empty .CCMod (Module libraries tab), open it,
     Import that .xml: "Imported 0 symbol(s) and N module(s)"; place one
     from there — identical. Export a normal symbol library: symbols count
     matches and re-imports as before.
@@ -1396,9 +1454,9 @@ XML-saved files.
     works on a multi-sheet design.
 31. **Installer, splash, About** — on a PC without ConCAD settings (or a
     fresh Windows user), install and start ConCAD: the splash is aqua and
-    teal with the icon; Library → Libraries lists `modules` and
-    `sample_library` from `Documents\ConCAD\library`; Options → Settings →
-    Drawing → Module library is `modules`; Design Details → Title Block
+    teal with the icon; Library → Libraries lists `sample_library` on the
+    Symbol libraries tab and `modules` on the Module libraries tab, from
+    `Documents\ConCAD\library`; Design Details → Title Block
     lists all three templates. Change a library, reinstall: the change is
     kept. Help → About: "Developer for Current Release: Per Bertilsson",
     no team list.
@@ -1420,3 +1478,15 @@ XML-saved files.
     module XML and import it: the message names the module and the line
     with the mismatched tags; nothing is imported from that point. The
     unedited file imports normally.
+35. **Module libraries (.CCMod)** — with the previous build's
+    `Documents\ConCAD\library\modules.TCLib` attached, start the new
+    build: the file is now `modules.CCMod` (log line "Module library …
+    renamed"), Library → Libraries shows it on the Module libraries tab
+    only, and its modules still place. Module libraries tab → New
+    `test.CCMod`; Create Module: the Library list offers `modules` and
+    `test`; store into `test`; Create Module again preselects `test`.
+    Properties on a module in the library window: the Library list is
+    greyed. Copy to on a module lists only module libraries, on a symbol
+    only symbol libraries. Import a symbol XML into a module library:
+    "N symbol(s) were not imported". Options → Settings → Drawing has no
+    Module library any more.
