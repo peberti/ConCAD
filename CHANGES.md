@@ -1233,6 +1233,26 @@ guards), `src/LibraryCollection.{h,cpp}`, `src/ConCad.cpp`
 (`IDC_LIBRARY_TABS`, `IDC_MODULE_LIBRARY`), `installer/ConCAD.nsi`,
 `Libraries/modules.CCMod`.
 
+## 25. Uninstall can remove the user's data
+
+The uninstaller removes the program files, shortcuts, the `.con`
+association and its registry entries, but keeps what ConCAD created for
+the user. It now asks at the end (default **No**; a silent uninstall
+keeps everything): *Also remove your ConCAD libraries and settings?*
+Yes deletes, for the user running the uninstaller:
+
+- `Documents\ConCAD\library` and `\examples` (the `Documents\ConCAD`
+  folder itself only if it is then empty — designs saved there stay)
+- `%APPDATA%\ConCAD` (autosave recovery, own title-block templates)
+- `%LOCALAPPDATA%\ConCAD` (logs, crash dumps)
+- `HKCU\Software\ConCAD` (settings, library lists, shortcuts)
+
+Still kept: the VC++ runtime (shared with other programs, has its own
+uninstaller), bug-report zips saved on the Desktop, and the data of
+other Windows users after an "all users" install.
+
+Files: `installer/ConCAD.nsi`.
+
 ---
 
 ## File-format compatibility

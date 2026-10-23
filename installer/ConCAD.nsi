@@ -238,5 +238,25 @@ Section Uninstall
 
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
+
+  ;
+  ; Optionally the data ConCAD itself created for the user running the
+  ; uninstaller (default No; kept on a silent uninstall): the libraries
+  ; and examples in Documents\ConCAD (the folder itself only if then
+  ; empty, as designs may be saved there), %APPDATA%\ConCAD (autosave
+  ; recovery, own title-block templates), %LOCALAPPDATA%\ConCAD (logs,
+  ; crash dumps) and the settings in HKCU\Software\ConCAD.
+  ;
+  IfSilent keepUserData
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Also remove your ConCAD libraries and settings?$\r$\n$\r$\nThis deletes the libraries in Documents\ConCAD (including symbols and modules you have made or changed), your settings, your own title-block templates, autosave recovery files and the log files.$\r$\n$\r$\nYour designs (.con files) are not deleted." IDNO keepUserData
+    SetShellVarContext current
+    RMDir /r "$DOCUMENTS\ConCAD\library"
+    RMDir /r "$DOCUMENTS\ConCAD\examples"
+    RMDir "$DOCUMENTS\ConCAD"
+    RMDir /r "$APPDATA\ConCAD"
+    RMDir /r "$LOCALAPPDATA\ConCAD"
+    DeleteRegKey HKCU "Software\ConCAD"
+  keepUserData:
+
   SetAutoClose true
 SectionEnd
