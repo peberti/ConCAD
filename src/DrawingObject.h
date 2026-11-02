@@ -188,6 +188,11 @@ public:
 
 	virtual BOOL IsConstruction();
 	virtual BOOL IsEmpty();
+	// Texts, bus names, labels and notes: their text (Edit -> Copy Text)
+	virtual bool GetText(CString &)
+	{
+		return false;
+	}
 
 	virtual UINT getMenuID()
 	{

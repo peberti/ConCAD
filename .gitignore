@@ -25,3 +25,6 @@
 /*.svg
 /*.pdf
 /installer/symbols/
+
+# Built by tools/LibraryOrganizer/build.bat
+/tools/LibraryOrganizer/*.exe

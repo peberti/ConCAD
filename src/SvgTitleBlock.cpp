@@ -934,13 +934,7 @@ std::vector<STitleBlockTemplate> CTitleBlockTemplateStore::Enumerate()
 	AddTemplatesFromFolder(mainDir + _T("..\\templates\\title-blocks"), false, result);
 
 	// User additions in %APPDATA%\ConCAD\templates\title-blocks
-	TCHAR appData[MAX_PATH] = { 0 };
-	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appData)))
-	{
-		AddTemplatesFromFolder(
-			CString(appData) + _T("\\ConCAD\\templates\\title-blocks"),
-			true, result);
-	}
+	AddTemplatesFromFolder(GetUserFolder(), true, result);
 
 	// Sort by display name for stable, user-friendly ordering.
 	std::sort(result.begin(), result.end(),
@@ -1298,4 +1292,480 @@ CString CTitleBlockTemplateStore::ExpandRevisionRows(const CString& svgIn, const
 		}
 	}
 	return svg;
+}
+
+//=========================================================================
+// Import conversion (see CTitleBlockTemplateStore::ConvertImportedSvg)
+
+namespace {
+
+bool IsEditorName(const char* name)
+{
+	return strncmp(name, "inkscape:", 9) == 0 || strncmp(name, "sodipodi:", 9) == 0;
+}
+
+// Namespace declarations that only the removed editor data uses.
+bool IsEditorNamespaceDecl(const char* name)
+{
+	static const char* const decls[] = {
+		"xmlns:inkscape", "xmlns:sodipodi", "xmlns:rdf", "xmlns:cc", "xmlns:dc", "xmlns:svg" };
+	for (const char* d : decls)
+		if (strcmp(name, d) == 0) return true;
+	return false;
+}
+
+std::string Trim(const std::string& s)
+{
+	size_t b = s.find_first_not_of(" \t\r\n");
+	if (b == std::string::npos) return std::string();
+	size_t e = s.find_last_not_of(" \t\r\n");
+	return s.substr(b, e - b + 1);
+}
+
+// Drop editor-only style properties: -inkscape-*, and the font-variant /
+// font-stretch / font-feature-settings defaults Inkscape writes on every text.
+std::string CleanStyle(const char* style)
+{
+	std::string out;
+	std::string all(style);
+	size_t pos = 0;
+	while (pos <= all.size())
+	{
+		size_t semi = all.find(';', pos);
+		if (semi == std::string::npos) semi = all.size();
+		const std::string decl = Trim(all.substr(pos, semi - pos));
+		pos = semi + 1;
+		if (decl.empty()) continue;
+		const size_t colon = decl.find(':');
+		const std::string prop = Trim(decl.substr(0, colon));
+		const std::string val = colon == std::string::npos ? std::string() : Trim(decl.substr(colon + 1));
+		if (prop.compare(0, 9, "-inkscape") == 0) continue;
+		if (val == "normal" && (prop.compare(0, 12, "font-variant") == 0 ||
+		                        prop == "font-stretch" || prop == "font-feature-settings")) continue;
+		if (!out.empty()) out += ';';
+		out += prop + ":" + val;
+	}
+	return out;
+}
+
+struct ImportStats
+{
+	int  removed = 0;          // editor elements/attributes dropped
+	bool flowText = false;     // <flowRoot>: Inkscape 0.92 flowed text
+	bool image = false;        // <image>: not rendered
+	bool multiLine = false;    // <text> with several line tspans
+};
+
+void CleanImportedNode(rapidxml::xml_document<>& doc, rapidxml::xml_node<>* node,
+                       const std::string& source, ImportStats& st)
+{
+	for (rapidxml::xml_node<>* c = node->first_node(); c; )
+	{
+		rapidxml::xml_node<>* next = c->next_sibling();
+		if (c->type() == rapidxml::node_element)
+		{
+			const char* n = c->name();
+			if (IsEditorName(n) || strcmp(n, "metadata") == 0)
+			{
+				node->remove_node(c);
+				++st.removed;
+				c = next;
+				continue;
+			}
+			if (strcmp(n, "flowRoot") == 0) st.flowText = true;
+			if (strcmp(n, "image") == 0) st.image = true;
+			CleanImportedNode(doc, c, source, st);
+			if (strcmp(n, "defs") == 0 && !c->first_node())
+			{
+				node->remove_node(c);
+			}
+		}
+		c = next;
+	}
+	if (node->type() != rapidxml::node_element) return;
+
+	for (rapidxml::xml_attribute<>* a = node->first_attribute(); a; )
+	{
+		rapidxml::xml_attribute<>* next = a->next_attribute();
+		const char* n = a->name();
+		if (IsEditorName(n) || IsEditorNamespaceDecl(n))
+		{
+			node->remove_attribute(a);
+			++st.removed;
+		}
+		else if (strcmp(n, "id") == 0 && source.find(std::string("#") + a->value()) == std::string::npos)
+		{
+			node->remove_attribute(a);
+		}
+		else if (strcmp(n, "style") == 0)
+		{
+			const std::string clean = CleanStyle(a->value());
+			if (clean.empty()) node->remove_attribute(a);
+			else a->value(doc.allocate_string(clean.c_str()));
+		}
+		a = next;
+	}
+
+	// The renderer positions a <text> by its own x/y; Inkscape may put them
+	// on the <tspan> only.  Several tspans at different y = multi-line text,
+	// which is drawn on one line.
+	if (strcmp(node->name(), "text") == 0)
+	{
+		rapidxml::xml_node<>* first = node->first_node("tspan");
+		if (first)
+		{
+			static const char* const xy[] = { "x", "y" };
+			for (const char* k : xy)
+			{
+				rapidxml::xml_attribute<>* src = first->first_attribute(k);
+				if (src && !node->first_attribute(k))
+					node->append_attribute(doc.allocate_attribute(k, doc.allocate_string(src->value())));
+			}
+			for (rapidxml::xml_node<>* t = first->next_sibling("tspan"); t; t = t->next_sibling("tspan"))
+			{
+				rapidxml::xml_attribute<>* y0 = first->first_attribute("y");
+				rapidxml::xml_attribute<>* y1 = t->first_attribute("y");
+				if (y0 && y1 && strcmp(y0->value(), y1->value()) != 0) st.multiLine = true;
+			}
+		}
+	}
+}
+
+void AppendEscaped(std::string& out, const char* s, bool attr)
+{
+	for (; *s; ++s)
+	{
+		switch (*s)
+		{
+		case '&': out += "&amp;"; break;
+		case '<': out += "&lt;"; break;
+		case '>': out += attr ? ">" : "&gt;"; break;
+		case '"': out += attr ? "&quot;" : "\""; break;
+		default:  out += *s; break;
+		}
+	}
+}
+
+void AppendStartTag(std::string& out, rapidxml::xml_node<>* node)
+{
+	out += '<';
+	out += node->name();
+	for (rapidxml::xml_attribute<>* a = node->first_attribute(); a; a = a->next_attribute())
+	{
+		out += ' ';
+		out += a->name();
+		out += "=\"";
+		AppendEscaped(out, a->value(), true);
+		out += '"';
+	}
+}
+
+// Mixed content (text and its tspans) is written on one line, unchanged.
+void AppendInline(std::string& out, rapidxml::xml_node<>* node)
+{
+	switch (node->type())
+	{
+	case rapidxml::node_data:  AppendEscaped(out, node->value(), false); return;
+	case rapidxml::node_cdata: out += "<![CDATA["; out += node->value(); out += "]]>"; return;
+	case rapidxml::node_element: break;
+	default: return;
+	}
+	AppendStartTag(out, node);
+	if (!node->first_node()) { out += " />"; return; }
+	out += '>';
+	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling()) AppendInline(out, c);
+	out += "</";
+	out += node->name();
+	out += '>';
+}
+
+void AppendNode(std::string& out, rapidxml::xml_node<>* node, int depth)
+{
+	const std::string indent(depth * 2, ' ');
+	if (node->type() == rapidxml::node_comment)
+	{
+		out += indent + "<!--" + node->value() + "-->\n";
+		return;
+	}
+	if (node->type() != rapidxml::node_element) return;
+
+	bool mixed = strcmp(node->name(), "text") == 0;
+	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
+		if (c->type() == rapidxml::node_data || c->type() == rapidxml::node_cdata) mixed = true;
+	if (mixed || !node->first_node())
+	{
+		out += indent;
+		AppendInline(out, node);
+		out += '\n';
+		return;
+	}
+	out += indent;
+	AppendStartTag(out, node);
+	out += ">\n";
+	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling()) AppendNode(out, c, depth + 1);
+	out += indent + "</" + node->name() + ">\n";
+}
+
+std::string SerializeSvg(rapidxml::xml_document<>& doc)
+{
+	std::string out = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n";
+	for (rapidxml::xml_node<>* c = doc.first_node(); c; c = c->next_sibling()) AppendNode(out, c, 0);
+	return out;
+}
+
+std::string FormatRounded(double v)
+{
+	char buf[64];
+	sprintf_s(buf, "%.4f", v);
+	std::string s(buf);
+	s.erase(s.find_last_not_of('0') + 1);
+	if (!s.empty() && s.back() == '.') s.pop_back();
+	if (s == "-0") s = "0";
+	return s;
+}
+
+// Text anchors (and their ascent) in root user units, for the crop.
+void AddTextBounds(rapidxml::xml_node<>* node, const Affine& parent, const CssRuleMap& rules,
+                   double& x0, double& y0, double& x1, double& y1, bool& any)
+{
+	for (rapidxml::xml_node<>* c = node->first_node(); c; c = c->next_sibling())
+	{
+		if (c->type() != rapidxml::node_element) continue;
+		Affine xf = parent;
+		if (rapidxml::xml_attribute<>* tr = c->first_attribute("transform"))
+			xf = ConcatAffine(parent, ParseTransformAttr(tr->value()));
+		if (strcmp(c->name(), "text") != 0)
+		{
+			if (strcmp(c->name(), "defs") != 0) AddTextBounds(c, xf, rules, x0, y0, x1, y1, any);
+			continue;
+		}
+		CssTextProps eff;
+		double x = 0.0, y = 0.0;
+		ResolveNodeTextProps(c, rules, eff, &x, &y);
+		if (rapidxml::xml_node<>* t = c->first_node("tspan")) ResolveNodeTextProps(t, rules, eff, nullptr, nullptr);
+		const double size = eff.hasFontSize ? eff.fontSize : 0.0;
+		double px[2] = { x, x }, py[2] = { y, y - size * 0.8 };
+		for (int i = 0; i < 2; ++i)
+		{
+			xf.Apply(px[i], py[i]);
+			if (!any) { x0 = x1 = px[i]; y0 = y1 = py[i]; any = true; }
+			x0 = (std::min)(x0, px[i]); x1 = (std::max)(x1, px[i]);
+			y0 = (std::min)(y0, py[i]); y1 = (std::max)(y1, py[i]);
+		}
+	}
+}
+
+// Content bounds in root user units; false when nothing is drawn.
+bool ContentBounds(const std::string& svg, double vb[4], bool& hasViewBox, double bounds[4])
+{
+	std::vector<char> buf(svg.begin(), svg.end());
+	buf.push_back('\0');
+	NSVGimage* img = nsvgParse(buf.data(), "px", 96.0f);
+	if (!img) return false;
+	const double imgW = img->width, imgH = img->height;
+
+	std::vector<char> xml(svg.begin(), svg.end());
+	xml.push_back('\0');
+	rapidxml::xml_document<> doc;
+	doc.parse<rapidxml::parse_default>(xml.data());
+	rapidxml::xml_node<>* root = doc.first_node("svg");
+	if (!root) { nsvgDelete(img); return false; }
+
+	hasViewBox = false;
+	vb[0] = vb[1] = 0.0; vb[2] = imgW; vb[3] = imgH;
+	if (rapidxml::xml_attribute<>* a = root->first_attribute("viewBox"))
+	{
+		double v[4];
+		std::string s(a->value());
+		std::replace(s.begin(), s.end(), ',', ' ');
+		if (sscanf_s(s.c_str(), "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]) == 4 && v[2] > 0.0 && v[3] > 0.0)
+		{
+			memcpy(vb, v, sizeof(v));
+			hasViewBox = true;
+		}
+	}
+
+	bool any = false;
+	double x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+	if (imgW > 0.0 && imgH > 0.0)
+	{
+		const double sx = vb[2] / imgW, sy = vb[3] / imgH;
+		for (const NSVGshape* sh = img->shapes; sh; sh = sh->next)
+		{
+			if (!(sh->flags & NSVG_FLAGS_VISIBLE)) continue;
+			const double half = sh->stroke.type != NSVG_PAINT_NONE ? sh->strokeWidth / 2.0 : 0.0;
+			const double bx0 = vb[0] + (sh->bounds[0] - half) * sx, by0 = vb[1] + (sh->bounds[1] - half) * sy;
+			const double bx1 = vb[0] + (sh->bounds[2] + half) * sx, by1 = vb[1] + (sh->bounds[3] + half) * sy;
+			if (!any) { x0 = bx0; y0 = by0; x1 = bx1; y1 = by1; any = true; }
+			x0 = (std::min)(x0, bx0); y0 = (std::min)(y0, by0);
+			x1 = (std::max)(x1, bx1); y1 = (std::max)(y1, by1);
+		}
+	}
+	nsvgDelete(img);
+
+	CssRuleMap rules;
+	CollectStyleSheet(root, rules);
+	AddTextBounds(root, Affine(), rules, x0, y0, x1, y1, any);
+
+	bounds[0] = x0; bounds[1] = y0; bounds[2] = x1; bounds[3] = y1;
+	return any && x1 > x0 && y1 > y0;
+}
+
+// Scale a width/height attribute ("161.7mm", "600") by f, keeping its unit.
+// Percentages are left alone (meaningless for a title block).
+void ScaleLengthAttr(rapidxml::xml_document<>& doc, rapidxml::xml_node<>* root, const char* name, double f)
+{
+	rapidxml::xml_attribute<>* a = root->first_attribute(name);
+	if (!a) return;
+	char* unit = nullptr;
+	const double v = strtod(a->value(), &unit);
+	if (unit == a->value() || strchr(unit, '%')) return;
+	const std::string s = FormatRounded(v * f) + Trim(unit);
+	a->value(doc.allocate_string(s.c_str()));
+}
+
+} // namespace
+
+CString CTitleBlockTemplateStore::GetUserFolder()
+{
+	TCHAR appData[MAX_PATH] = { 0 };
+	if (FAILED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appData))) return CString();
+	return CString(appData) + _T("\\ConCAD\\templates\\title-blocks");
+}
+
+bool CTitleBlockTemplateStore::SaveUserTemplate(const CString& name, const CString& svg, CString& outPath)
+{
+	const CString folder = GetUserFolder();
+	if (folder.IsEmpty()) return false;
+	SHCreateDirectoryEx(NULL, folder, NULL);
+	outPath = folder + _T("\\") + name + _T(".svg");
+
+	CT2A utf8(svg, CP_UTF8);
+	CFile file;
+	if (!file.Open(outPath, CFile::modeCreate | CFile::modeWrite | CFile::shareExclusive)) return false;
+	try
+	{
+		file.Write((LPCSTR)utf8, (UINT)strlen((LPCSTR)utf8));
+		file.Close();
+	}
+	catch (CFileException* e)
+	{
+		e->Delete();
+		return false;
+	}
+	return true;
+}
+
+bool CTitleBlockTemplateStore::ConvertImportedSvg(const CString& svgIn, CString& svgOut, CString& report)
+{
+	svgOut.Empty();
+	report.Empty();
+
+	CT2A utf8(svgIn, CP_UTF8);
+	const std::string source((LPCSTR)utf8);
+	std::vector<char> buf(source.begin(), source.end());
+	buf.push_back('\0');
+
+	rapidxml::xml_document<> doc;
+	try
+	{
+		doc.parse<rapidxml::parse_declaration_node | rapidxml::parse_comment_nodes>(buf.data());
+	}
+	catch (const rapidxml::parse_error& e)
+	{
+		report.Format(_T("The file is not valid XML (%s)."), (LPCTSTR)CString(e.what()));
+		return false;
+	}
+	rapidxml::xml_node<>* root = doc.first_node("svg");
+	if (!root)
+	{
+		report = _T("The file is not an SVG drawing (no <svg> root element).");
+		return false;
+	}
+
+	ImportStats st;
+	CleanImportedNode(doc, root, source, st);
+	// Drop the original <?xml ...?> declaration; SerializeSvg writes its own.
+	for (rapidxml::xml_node<>* c = doc.first_node(); c; )
+	{
+		rapidxml::xml_node<>* next = c->next_sibling();
+		if (c->type() == rapidxml::node_declaration) doc.remove_node(c);
+		c = next;
+	}
+	std::string out = SerializeSvg(doc);
+
+	// Crop to the drawn content.
+	double vb[4], b[4];
+	bool hasViewBox = false;
+	CString cropNote;
+	if (!ContentBounds(out, vb, hasViewBox, b))
+	{
+		report = _T("The SVG has no visible content.");
+		return false;
+	}
+	const double eps = 0.001 * (std::max)(vb[2], vb[3]);
+	if (fabs(b[0] - vb[0]) > eps || fabs(b[1] - vb[1]) > eps ||
+	    fabs(b[2] - (vb[0] + vb[2])) > eps || fabs(b[3] - (vb[1] + vb[3])) > eps)
+	{
+		const double w = b[2] - b[0], h = b[3] - b[1];
+		if (!hasViewBox && !root->first_attribute("width"))
+		{
+			// No viewBox and no size: the user units were pixels; keep them.
+			root->append_attribute(doc.allocate_attribute("width", doc.allocate_string(FormatRounded(w).c_str())));
+			root->append_attribute(doc.allocate_attribute("height", doc.allocate_string(FormatRounded(h).c_str())));
+		}
+		else
+		{
+			ScaleLengthAttr(doc, root, "width", w / vb[2]);
+			ScaleLengthAttr(doc, root, "height", h / vb[3]);
+		}
+		const std::string box = FormatRounded(b[0]) + " " + FormatRounded(b[1]) + " " + FormatRounded(w) + " " + FormatRounded(h);
+		if (rapidxml::xml_attribute<>* a = root->first_attribute("viewBox"))
+			a->value(doc.allocate_string(box.c_str()));
+		else
+			root->append_attribute(doc.allocate_attribute("viewBox", doc.allocate_string(box.c_str())));
+
+		const char* wa = root->first_attribute("width") ? root->first_attribute("width")->value() : "";
+		const char* ha = root->first_attribute("height") ? root->first_attribute("height")->value() : "";
+		cropNote.Format(_T("Cropped to the drawing: %s x %s."),
+			(LPCTSTR)CString(CA2T(wa, CP_UTF8)), (LPCTSTR)CString(CA2T(ha, CP_UTF8)));
+		out = SerializeSvg(doc);
+	}
+
+	svgOut = CString(CA2T(out.c_str(), CP_UTF8));
+
+	// Summary.
+	if (st.removed > 0) report += _T("Removed the drawing program's editor data.\n");
+	if (!cropNote.IsEmpty()) report += cropNote + _T("\n");
+
+	std::vector<CString> tokens;
+	for (int pos = 0; (pos = svgOut.Find(_T('{'), pos)) >= 0; ++pos)
+	{
+		const int end = svgOut.Find(_T('}'), pos + 1);
+		if (end < 0) break;
+		const CString name = svgOut.Mid(pos + 1, end - pos - 1);
+		bool ident = !name.IsEmpty() && (_istalpha(name[0]) || name[0] == _T('_'));
+		for (int i = 0; ident && i < name.GetLength(); ++i)
+			ident = _istalnum(name[i]) || name[i] == _T('_');
+		if (!ident) continue;
+		bool seen = false;
+		for (const CString& t : tokens) seen = seen || t.CompareNoCase(name) == 0;
+		if (!seen) tokens.push_back(name);
+	}
+	if (tokens.empty())
+	{
+		report += _T("No {Name} fields found - the block has only fixed text.\n");
+	}
+	else
+	{
+		report += _T("Fields: ");
+		for (size_t i = 0; i < tokens.size(); ++i)
+			report += (i ? _T(", {") : _T("{")) + tokens[i] + _T("}");
+		report += _T("\n");
+	}
+	if (st.flowText) report += _T("Warning: flowed text (Inkscape 0.92 text frames) is not drawn - use plain text.\n");
+	if (st.image) report += _T("Warning: embedded images are not drawn.\n");
+	if (st.multiLine) report += _T("Warning: text with several lines is drawn on one line - make each line its own text.\n");
+	report.TrimRight();
+	return true;
 }

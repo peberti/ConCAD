@@ -26,6 +26,7 @@
 #include "DetailsPropertyPages.h"
 #include "ConCadDoc.h"
 #include "Object.h"
+#include "Log.h"
 
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage1, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage2, CPropertyPage)
@@ -928,7 +929,7 @@ void CDetailsPropertyPage4::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CDetailsPropertyPage4, CPropertyPage)
-	ON_BN_CLICKED(IDC_TBSVG_BROWSE,      OnBrowse)
+	ON_BN_CLICKED(IDC_TBSVG_IMPORT,      OnImport)
 	ON_BN_CLICKED(IDC_TBSVG_USE_BUILTIN, OnUseBuiltin)
 	ON_LBN_SELCHANGE(IDC_TBSVG_LIST,     OnListSelChange)
 END_MESSAGE_MAP()
@@ -998,7 +999,7 @@ void CDetailsPropertyPage4::UpdateStateLabel()
 	if (pState != NULL) pState->SetWindowText(label);
 }
 
-void CDetailsPropertyPage4::OnBrowse()
+void CDetailsPropertyPage4::OnImport()
 {
 	CFileDialog dlg(TRUE, _T("svg"), NULL,
 		OFN_HIDEREADONLY | OFN_FILEMUSTEXIST,
@@ -1012,12 +1013,64 @@ void CDetailsPropertyPage4::OnBrowse()
 		return;
 	}
 
-	m_sSvg   = svg;
-	m_sName.Empty();           // one-off file — no store name, embed-only
+	CString converted, report;
+	if (!CTitleBlockTemplateStore::ConvertImportedSvg(svg, converted, report))
+	{
+		AfxMessageBox(_T("Could not import the SVG file:\n\n") + report, MB_ICONEXCLAMATION);
+		return;
+	}
+
+	// Save it as a user template named after the file.  A bundled template
+	// of the same name would win the by-name lookup, so pick a free name;
+	// an existing user template may be replaced.
+	const CString stem = dlg.GetFileTitle();
+	const CString userFolder = CTitleBlockTemplateStore::GetUserFolder();
+	const std::vector<STitleBlockTemplate> all = CTitleBlockTemplateStore::Enumerate();
+	CString name;
+	for (int n = 1; name.IsEmpty(); ++n)
+	{
+		CString candidate = stem;
+		if (n > 1) candidate.Format(_T("%s-%d"), (LPCTSTR)stem, n);
+		bool bundled = false, user = false;
+		for (size_t i = 0; i < all.size(); ++i)
+		{
+			if (all[i].name.CompareNoCase(candidate) != 0) continue;
+			if (all[i].fullPath.Left(userFolder.GetLength()).CompareNoCase(userFolder) == 0) user = true;
+			else bundled = true;
+		}
+		if (bundled) continue;
+		if (user)
+		{
+			const int answer = AfxMessageBox(_T("A user title block named \"") + candidate +
+				_T("\" already exists. Replace it?\n\nNo keeps it and imports under a new name."),
+				MB_YESNOCANCEL | MB_ICONQUESTION);
+			if (answer == IDCANCEL) return;
+			if (answer == IDNO) continue;
+		}
+		name = candidate;
+	}
+
+	CString path;
+	if (!CTitleBlockTemplateStore::SaveUserTemplate(name, converted, path))
+	{
+		AfxMessageBox(_T("Could not save the title block to\n") + path, MB_ICONEXCLAMATION);
+		return;
+	}
+	CLog::Write(_T("Title block imported: %s -> %s"), (LPCTSTR)dlg.GetPathName(), (LPCTSTR)path);
+
+	PopulateList();
+	m_wndList.SetCurSel(-1);
+	for (size_t i = 0; i < m_templates.size(); ++i)
+	{
+		if (m_templates[i].fullPath.CompareNoCase(path) == 0) m_wndList.SetCurSel((int)i);
+	}
+	m_sSvg   = converted;
+	m_sName  = name;
 	m_bDirty = true;
-	m_wndList.SetCurSel(-1);   // no template selected — this is a custom file
 	UpdateStateLabel();
 	SetModified(TRUE);
+
+	AfxMessageBox(_T("Imported as title block \"") + name + _T(" (user)\".\n\n") + report, MB_ICONINFORMATION);
 }
 
 void CDetailsPropertyPage4::OnUseBuiltin()

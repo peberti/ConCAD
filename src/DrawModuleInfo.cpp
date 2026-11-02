@@ -12,10 +12,7 @@ CDrawModuleInfo::CDrawModuleInfo(CConCadDoc *pDesign) :
 {
 	Field name;
 	name.name = _T("Name");
-	Field ref;
-	ref.name = _T("Reference");
 	m_fields.push_back(name);
-	m_fields.push_back(ref);
 }
 
 void CDrawModuleInfo::SaveXML(CXMLWriter &xml)
@@ -48,20 +45,26 @@ void CDrawModuleInfo::LoadXML(CXMLReader &xml)
 	}
 	xml.outofTag();
 
-	// Name and Reference always come first
-	while (m_fields.size() < FixedFields)
+	// Name always comes first
+	if (m_fields.empty())
 	{
 		Field f;
-		f.name = m_fields.empty() ? _T("Name") : _T("Reference");
+		f.name = _T("Name");
 		m_fields.push_back(f);
+	}
+	// Modules no longer have a Reference: files saved before always have
+	// one after the Name.  An empty one is dropped; one with a value stays
+	// as an ordinary field, so texts showing {Reference} keep their value.
+	if (m_fields.size() > 1 && m_fields[1].name.CompareNoCase(_T("Reference")) == 0 && m_fields[1].value.IsEmpty())
+	{
+		m_fields.erase(m_fields.begin() + 1);
 	}
 	EnsureStandardFields();
 }
 
 bool CDrawModuleInfo::IsStandardField(const CString& name)
 {
-	return name.CompareNoCase(_T("Name")) == 0 || name.CompareNoCase(_T("Reference")) == 0
-		|| name.CompareNoCase(_T("Partnumber")) == 0 || name.CompareNoCase(_T("Type")) == 0;
+	return name.CompareNoCase(_T("Name")) == 0 || name.CompareNoCase(_T("Partnumber")) == 0 || name.CompareNoCase(_T("Type")) == 0;
 }
 
 void CDrawModuleInfo::EnsureStandardFields()

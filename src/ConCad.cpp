@@ -316,8 +316,12 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 		{ 1, FVIRTKEY | FCONTROL, 'G', IDM_OBJECT_GROUP },
 		{ 1, FVIRTKEY | FCONTROL | FSHIFT, 'G', IDM_MODULE_UNGROUP },
 		{ 2, FVIRTKEY | FCONTROL, 'F', IDM_EDITFLIP },
+		{ 3, FVIRTKEY | FCONTROL, 'M', IDM_SPECIAL_CREATEMODULE },
+		{ 3, FVIRTKEY | FCONTROL | FSHIFT, 'C', IDM_EDIT_COPYTEXT },
+		{ 3, FVIRTKEY | FCONTROL | FSHIFT, 'X', IDM_EDIT_CUTTEXT },
+		{ 3, FVIRTKEY | FCONTROL | FSHIFT, VK_DELETE, IDM_EDIT_DELETETEXT },
 	};
-	const int latest = 2;
+	const int latest = 3;
 
 	CWinApp *pApp = AfxGetApp();
 	const int saved = pApp->GetProfileInt(_T("Keyboard"), _T("Version"), 0);

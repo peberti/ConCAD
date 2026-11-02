@@ -9,7 +9,7 @@
 #include "DrawingObject.h"
 
 // One per placed module, in the module's group (same m_group).  Holds the
-// module's parameters (Name, Reference and the module's own fields), shown
+// module's parameters (Name, Partnumber, Type and the module's own fields), shown
 // in the Module panel of Tool Options.  Texts and notes of the module show
 // them through {Name} tokens.  Not drawn and not clickable; it is selected,
 // copied, deleted and undone together with the rest of the group.
@@ -22,15 +22,15 @@ public:
 		CString value;
 	};
 
-	std::vector<Field> m_fields; // [0] Name, [1] Reference, then Partnumber, Type and the module's own fields
+	std::vector<Field> m_fields; // [0] Name, then Partnumber, Type and the module's own fields
 	enum
 	{
-		FixedFields = 2
+		FixedFields = 1
 	};
 
-	// Name, Reference, Partnumber and Type: cannot be renamed or deleted
+	// Name, Partnumber and Type: cannot be renamed or deleted
 	static bool IsStandardField(const CString& name);
-	// Add Partnumber and Type (empty) after Reference if missing
+	// Add Partnumber and Type (empty) after Name if missing
 	void EnsureStandardFields();
 
 	CDrawModuleInfo(CConCadDoc *pDesign);

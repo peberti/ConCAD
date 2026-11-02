@@ -136,6 +136,36 @@ BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 			g_currentview->SendMessage(WM_COMMAND, id, 0);
 			return TRUE;
 		}
+		if (id == IDM_EDIT_COPYTEXT || id == IDM_EDIT_CUTTEXT || id == IDM_EDIT_DELETETEXT)
+		{
+			// Copy / Cut / Delete Text in the name field act on the field:
+			// its selected part, or all of it when nothing is selected
+			// (Copy Text then copies the selected objects' texts instead)
+			CWnd *pFocus = GetFocus();
+			const int field = pFocus != NULL && pFocus->GetParent() == this ? pFocus->GetDlgCtrlID() : 0;
+			if (field == TEXTBOX_TEXT || field == PINBOX_NAME || field == POWERBOX_TEXT)
+			{
+				CEdit *pEdit = static_cast<CEdit*>(pFocus);
+				int start = 0, end = 0;
+				pEdit->GetSel(start, end);
+				if (id != IDM_EDIT_COPYTEXT || start != end)
+				{
+					if (start == end)
+					{
+						pEdit->SetSel(0, -1);
+					}
+					pEdit->SendMessage(id == IDM_EDIT_COPYTEXT ? WM_COPY : id == IDM_EDIT_CUTTEXT ? WM_CUT : WM_CLEAR);
+					return TRUE;
+				}
+			}
+			g_currentview->SendMessage(WM_COMMAND, id, 0);
+			return TRUE;
+		}
+		if (id == IDM_SPECIAL_CREATEMODULE)
+		{
+			g_currentview->SendMessage(WM_COMMAND, id, 0);
+			return TRUE;
+		}
 	}
 	return CDialog::PreTranslateMessage(pMsg);
 }

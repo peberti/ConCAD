@@ -49,12 +49,29 @@ class CDlgUpdateBox: public CDialog
 	CLibraryStoreSymbol& getCurrentRecord();
 
 	// Rows of the parameter list that cannot be renamed or deleted:
-	// Reference, Name for a symbol; Reference, Partnumber, Type for a module
+	// Reference, Name for a symbol; Partnumber, Type for a module
 	int FixedRows() const
 	{
-		return m_bModule ? 3 : 2;
+		return 2;
+	}
+	// A module's list has no Display Method column: Parameter, Value
+	int ColumnCount() const
+	{
+		return m_bModule ? 2 : 3;
+	}
+	int ValueColumn() const
+	{
+		return m_bModule ? 1 : 2;
 	}
 	void UpdateModuleLibraryName();
+
+	// In-place editing of a cell; Tab / Shift+Tab move to the next /
+	// previous editable cell (module mode)
+	void SelectRow(int index);
+	void BeginEdit(int index, int column);
+	void CancelEdit();
+	bool IsEditableCell(int index, int column) const;
+	void MoveToCell(int index, int column, bool back);
 
 public:
 
@@ -81,6 +98,7 @@ public:
 	//{{AFX_VIRTUAL(CDlgUpdateBox)
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX); // DDX/DDV support
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	//}}AFX_VIRTUAL
 
 public:

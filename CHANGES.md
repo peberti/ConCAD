@@ -418,9 +418,35 @@ templates found in:
 - `%APPDATA%/ConCAD/templates/title-blocks/` (per-user; files here get a
   ` (user)` suffix in the list).
 
-Pick a template, **Browse SVG…** for an arbitrary file, or **Use
-built-in** to revert. `{Token}` references inside the SVG (including the
-built-ins and the user variables of §1) are substituted at paint time.
+Pick a template, **Import SVG…** to add a drawing as a template, or
+**Use built-in** to revert. `{Token}` references inside the SVG (including
+the built-ins and the user variables of §1) are substituted at paint time.
+
+### Import SVG…
+
+Draw the block in Inkscape (or any SVG editor) with `{Token}` texts, then
+**Import SVG…** converts it and saves it as a user template
+(`%APPDATA%\ConCAD\templates\title-blocks\<file name>.svg`), selected for
+the design:
+
+- the editor's data is dropped (`inkscape:` / `sodipodi:` elements and
+  attributes, `<metadata>`, ids nothing refers to, `-inkscape-*` and
+  default `font-variant`/`font-stretch` style properties, empty `<defs>`);
+- a `<text>` whose position is only on its `<tspan>` gets it copied up
+  (the renderer positions by the `<text>`);
+- the page is cropped to the drawn content (shape bounds incl. stroke, text
+  anchors): `viewBox` and `width`/`height` (unit kept) shrink, so the
+  block sits flush in the page corner instead of carrying the empty page.
+
+A message then lists the crop size, the `{fields}` found, and warnings for
+what is not drawn (Inkscape 0.92 flowed text, embedded images, multi-line
+text). The name is the file name; if a bundled template has that name,
+`-2`, `-3`, … is appended (a bundled template would win the lookup by
+name); an existing user template of that name may be replaced (Yes) or
+kept (No → next free name). Layout is not changed — aligning panels etc.
+stays a job for the drawing program. Previously the button was **Browse
+SVG…**, which embedded the file unchanged and without a template name.
+`CTitleBlockTemplateStore::ConvertImportedSvg` / `SaveUserTemplate`.
 
 ### On-disk format (hybrid, additive)
 
@@ -429,7 +455,8 @@ built-ins and the user variables of §1) are substituted at paint time.
 ```
 
 - `name` — the template stem; re-resolved against the store on load so a
-  re-shipped/edited bundled template propagates. Absent for Browse… files.
+  re-shipped/edited bundled template propagates. Absent in designs that
+  used the old Browse SVG… button.
 - `enc="base64"` — child data is base64 of the SVG's UTF-8 bytes. Legacy
   files with no `enc` are read as raw and upgraded to base64 on next save.
 - If the named template is missing on a machine, the embedded copy is
@@ -802,6 +829,7 @@ instead of letting the exception escape.
 
 ### Module parameters (Tool Options)
 
+(Reference removed from modules later, see §27.)
 A placed module has parameters like a component: **Name**, **Reference**
 and the fields given in the Store Module dialog (e.g. *Package*). Clicking
 the module shows them in **Tool Options** (*Module Tool Options*): click a
@@ -956,6 +984,12 @@ Files: `src/ConCadMultiDoc.{h,cpp}`, `src/ConCad.cpp`.
 - New bundled title block `templates/title-blocks/Design-Details.svg`:
   like Drawing-Details plus a Customer row, titled
   `{Project_prefix}_{Project_number} — {Title}` (design variables).
+  Later extended (143 × 59 mm): a VEHICLE DETAILS panel to the left of the
+  DESIGN DETAILS panel, on the same row grid and bottom-aligned —
+  Manufacturer `{Vehicle_Manufacturer}`, Model `{Vehicle_Model}`, Quantity
+  `{QTY}`, Length `{Vehicle_Length}`, Number of doors `{No_of_Doors}` (all
+  design variables). Value text is 10 pt in both panels. The old
+  Drawing-Details.svg template was removed.
 
 Files: `src/EditDlg.cpp`, `src/Diag.h` (`CEditDlg::PreTranslateMessage`),
 `src/ConCad.rc` (`IDR_MAINFRAME` toolbar), `src/res/Toolbar.bmp`
@@ -994,7 +1028,7 @@ instead of the Store Symbol dialog: no parts-per-package, orientation,
 names list or SPICE tab.
 
 - **Name** field, and a parameter list whose first rows are fixed:
-  **Reference**, **Partnumber**, **Type** (new modules start with them
+  **Reference**, **Partnumber**, **Type** (Reference removed in §27; new modules start with them
   empty); Add / Delete for the module's own parameters.
 - The library record gets **name = Type** and **description = Name**, so
   the library panel shows **`<Type> - <Name>`** (the panel always shows
@@ -1262,6 +1296,97 @@ Files: `installer/ConCAD.nsi`.
 
 ---
 
+## 26. Library Organizer (stand-alone tool)
+
+`tools/LibraryOrganizer` is a small separate program for tidying the
+libraries without opening ConCAD. Build it with `build.bat` in that folder.
+It uses the C# compiler and SQLite that come with Windows 10/11, so no
+Visual Studio is needed.
+
+- Two libraries side by side (ConCAD's library lists plus everything in
+  `Documents\ConCAD\library`; *Open...* for others, *New...* creates an
+  empty `.TCLib` or `.CCMod` and can add it to ConCAD's list).
+- **Move / Copy** the selected symbols or modules with the buttons in the
+  middle, or drag them (Ctrl+drag copies). Modules only go into `.CCMod`,
+  symbols only into `.TCLib`. **Delete** (or the Delete key) removes them.
+- **Properties** of the selected item: symbols — Name, Reference,
+  Description, Connector and the fields with their visibility; modules —
+  Name, Type and the fields (Partnumber, ...), stored the same way as
+  ConCAD's module dialog (library name "Type - Name", no Reference, new
+  fields "Never shown" — see §27). The drawings
+  are copied byte for byte and never changed.
+- The first change to a library in a session keeps the old file as
+  `<library>.TCLib.bak` / `.CCMod.bak`.
+- A yellow bar warns while ConCAD is running: ConCAD reads libraries at
+  start-up, so close it first and restart it afterwards.
+
+Files: `tools/LibraryOrganizer/LibraryOrganizer.cs`, `build.bat`.
+
+---
+
+## 27. Modules have no Reference; new fields "Never Show"
+
+Modules are not numbered like components, so the Reference is gone:
+
+- **Store Module dialog:** a plain two-column table, **Parameter** and
+  **Value**, without the Display Method column. The fixed rows are
+  **Partnumber** and **Type**; *Add* adds a row and starts editing its
+  name. **Tab / Shift+Tab** move cell by cell like a table (the fixed
+  names are skipped); Tab from the Name box starts in the first value,
+  past the last cell the focus goes on to *Add*. Esc in a cell undoes its
+  typing (a second Esc closes the dialog). All module fields are stored
+  as **Never Show** — they are never drawn as symbol fields; texts in the
+  module show them through `{tokens}`. The module's library record is
+  stored with an empty Reference.
+- **Module Tool Options:** Name, Partnumber, Type and the module's own
+  fields; no Reference. `{Reference}` in a module text is no longer a
+  module parameter. In designs saved before, an empty Reference is
+  dropped on load; one with a value is kept as an ordinary field (it can
+  be deleted), so its texts still show it. Create Module from a placed
+  module stores its fields as Never Show.
+- **Library Organizer:** no Reference box or column for modules; saving
+  a module clears its Reference, and new fields (and Partnumber/Type if
+  missing) are stored as "Never shown".
+
+- **Symbols too:** a field added with *Add* in the Store Symbol dialog,
+  or in a new row of the Library Organizer's field list, starts as
+  *Never Show*. Symbols keep their Reference, and existing fields keep
+  their setting. (Fields added to a placed symbol in Tool Options are
+  unchanged: Never Show would hide them from that list.)
+
+Files: `src/DlgUpdateBox.{h,cpp}`,
+`src/DrawModuleInfo.{h,cpp}`, `src/ConCadView.cpp`,
+`src/EditDlgModuleEdit.cpp`, `tools/LibraryOrganizer/LibraryOrganizer.cs`.
+
+---
+
+## 28. Ctrl+M Create Module; Copy/Cut/Delete Text; shortcut search
+
+- **Ctrl+M** = Object → Create Module.
+- **Edit → Copy Text (Ctrl+Shift+C), Cut Text (Ctrl+Shift+X), Delete
+  Text (Ctrl+Shift+Del)** — the text-level counterparts of Ctrl+C/X/Del,
+  which act on whole objects (§16):
+  - In the text field of Tool Options (text, label, note, bus name, pin
+    name, power name) they act on the selected part of the text, or on
+    all of it when nothing is selected — like the field's own Ctrl+C/X/Del
+    did before §16.
+  - Otherwise Copy Text copies the text of all selected texts, bus names,
+    labels and notes as plain text, one per line; Cut / Delete Text work
+    on the one selected text object (its Tool Options field).
+- **Options → Keyboard Shortcuts…** has a **Search** box (focused when the
+  dialog opens): the list shows only commands whose name or shortcut
+  contains the typed text (e.g. `module`, `ctrl+m`); a single match is
+  selected. Enter in the box moves to the list instead of closing.
+- New default shortcuts reach existing users through
+  `ApplyNewDefaultShortcuts` (version 3).
+
+Files: `src/ConCad.rc`, `src/resource.h`, `src/ConCad.cpp`,
+`src/ConCadView.{h,cpp}`, `src/ConCadDoc.{h,cpp}` (`GetSelectedText`),
+`src/DrawingObject.h`, `src/Object.h` (`GetText`), `src/EditDlg.cpp`,
+`src/ShortcutsDlg.{h,cpp}`.
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1380,16 +1505,16 @@ XML-saved files.
     menus show the new keys, the keys work. Restart ConCAD: still there.
     Reset All → defaults back.
 16. **Module parameters** — draw a small circuit with a text
-    `Ref: {Reference}  Pkg: {Package}`; select it, Create Module…: Name
-    `Test2`, Reference `M?`, add a field *Package* = `TO-220`, Store.
+    `PN: {Partnumber}  Pkg: {Package}`; select it, Create Module…: Name
+    `Test2`, Partnumber `P-1`, add a field *Package* = `TO-220`, Store.
     Place `Test2`, click it: Tool Options shows *Module Tool Options* with
-    Name, Reference, Package; the text shows `Ref: M?  Pkg: TO-220`.
-    Change Reference to `M1` → the text updates at once. Add a field
+    Name, Partnumber, Type, Package; the text shows `PN: P-1  Pkg: TO-220`.
+    Change Partnumber to `P-2` → the text updates at once. Add a field
     `Voltage`, type `{Voltage}` into a new text inside the module (Edit
     Group) → shows the value. Undo reverts the panel changes. Copy/paste
     the module: the copy has its own values. Design Details does not list
-    Reference/Package as variables. Save, reopen — values kept. Ungroup →
-    the text now literally reads `Ref: M1 ...`.
+    Partnumber/Package as variables. Save, reopen — values kept. Ungroup →
+    the text now literally reads `PN: P-2 ...`.
 17. **Edit a library module** — Library → Libraries → Edit the module
     library; double-click `Test2`: window *Module: Test2* with its objects,
     no title block. Move a symbol, add a wire, Ctrl+S → Store Module
@@ -1429,9 +1554,12 @@ XML-saved files.
 23. **Design-Details title block** — Edit → Design Details → Title Block →
     pick `Design-Details` → OK. The panel is headed DESIGN DETAILS, with a
     Customer row between the title and Description. On the Design tab,
-    Variables lists `Project_prefix`, `Project_number` and `Customer`; give
-    them values, OK: the title row reads `<prefix>_<number> — <Title>` and
-    Customer shows. Create Version fills Revised by, revision and date.
+    Variables lists `Project_prefix`, `Project_number`, `Customer`,
+    `Vehicle_Manufacturer`, `Vehicle_Model`, `QTY`, `Vehicle_Length` and
+    `No_of_Doors`; give them values, OK: the title row reads
+    `<prefix>_<number> — <Title>`, Customer shows, and the VEHICLE DETAILS
+    panel to the left fills in (its row lines continue those of the design
+    panel). Create Version fills Revised by, revision and date.
 24. *(Obsolete — SPICE was removed, §19.)* **SPICE prologues** — Store Symbol dialog has no priority boxes. On a
     design with a few SPICE symbols, Special → Check Design Rules → Check →
     Design Markers → Generate SPICE Netlist: each
@@ -1517,3 +1645,36 @@ XML-saved files.
     only symbol libraries. Import a symbol XML into a module library:
     "N symbol(s) were not imported". Options → Settings → Drawing has no
     Module library any more.
+36. **Library Organizer** — close ConCAD, run
+    `tools\LibraryOrganizer\LibraryOrganizer.exe`: two libraries side by
+    side; move, copy (also Ctrl+drag), delete, edit properties; a `.bak`
+    appears on the first change; with ConCAD running the yellow bar shows.
+37. **Modules without Reference** — Create Module: the list has two
+    columns, Parameter and Value, starting with Partnumber and Type. In
+    the Name box press Tab: the Partnumber value is being edited; Tab →
+    Type value (the top line follows the Type); Tab → focus on Add.
+    Add → a new row with its name being edited; type a name, Tab, a
+    value, Shift+Tab back. Esc in a cell restores it. Place it: Module Tool Options has
+    Name, Partnumber, Type, no Reference. Open a design saved before with
+    a placed module: no empty Reference row. Library Organizer: a module
+    shows no Reference box or column. Store Symbol dialog → Add: the new
+    field is *Never Show*; in the organizer a new field row on a symbol
+    starts as "Never shown".
+38. **Ctrl+M, text commands, shortcut search** — select objects, Ctrl+M:
+    Store Module opens. Click a text: Ctrl+Shift+C, paste in Notepad →
+    its text. Click in the field, select part, Ctrl+Shift+X → only that
+    part is cut (and pasteable). Ctrl+Shift+Del → text cleared. Select
+    two texts and a label with a frame,
+    Ctrl+Shift+C → three lines. Ctrl+C on a text still copies the object.
+    Options → Keyboard Shortcuts: type `text` → only the text commands
+    (and others containing "text"); type `ctrl+m` → Create Module, selected.
+39. **Import SVG** — Edit → Design Details → Title Block → Import SVG… →
+    pick an SVG saved by Inkscape with `{Title}` and a `{Something}` text
+    and empty page around the drawing. A message lists the crop size and
+    the fields; the list now shows it as *name (user)*, selected. OK: the
+    block sits flush in the bottom-right corner, `Something` is on the
+    Design tab's Variables. In `%APPDATA%\ConCAD\templates\title-blocks`
+    the file has no `inkscape:`/`sodipodi:` lines. Import the same file
+    again → asked to replace (No → `name-2`). Import a file named
+    `Simple-A4.svg` → saved as `Simple-A4-2`. Import a .txt renamed to
+    .svg → an error, nothing added.

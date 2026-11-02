@@ -123,6 +123,11 @@ public:
 	afx_msg void OnColorCustom();
 	afx_msg void OnColorDefault();
 	afx_msg void OnUpdateColor(CCmdUI* pCmdUI);
+	afx_msg void OnEditCopyText();
+	afx_msg void OnEditCutText();
+	afx_msg void OnEditDeleteText();
+	afx_msg void OnUpdateEditText(CCmdUI* pCmdUI);
+	void EditSelectedText(UINT message);
 	afx_msg void OnOptionsShortcuts();
 	// Insert a module from the library, following the mouse until placed
 	void PlaceModule(CLibraryStoreSymbol* theModule);

@@ -137,6 +137,12 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_UPDATE_COMMAND_UI(IDM_COLOR_FACTORY, OnUpdateColor)
 	ON_UPDATE_COMMAND_UI(IDM_COLOR_CUSTOM, OnUpdateColor)
 	ON_UPDATE_COMMAND_UI(IDM_COLOR_DEFAULT, OnUpdateColor)
+	ON_COMMAND(IDM_EDIT_COPYTEXT, OnEditCopyText)
+	ON_COMMAND(IDM_EDIT_CUTTEXT, OnEditCutText)
+	ON_COMMAND(IDM_EDIT_DELETETEXT, OnEditDeleteText)
+	ON_UPDATE_COMMAND_UI(IDM_EDIT_COPYTEXT, OnUpdateEditText)
+	ON_UPDATE_COMMAND_UI(IDM_EDIT_CUTTEXT, OnUpdateEditText)
+	ON_UPDATE_COMMAND_UI(IDM_EDIT_DELETETEXT, OnUpdateEditText)
 	ON_COMMAND(IDM_OPTIONS_SHORTCUTS, OnOptionsShortcuts)
 	ON_COMMAND(IDM_EDIT_REVISIONHISTORY, OnEditRevisionHistory)
 	ON_UPDATE_COMMAND_UI(IDM_EDIT_REVISIONHISTORY, OnUpdateEditRevisionHistory)
@@ -2161,13 +2167,12 @@ void CConCadView::OnSpecialCreateModule()
 	{
 		CSymbolRecord &r = module.GetRecord(0);
 		r.name = pInfo->m_fields[0].value;
-		r.reference = pInfo->m_fields[1].value;
 		for (size_t i = CDrawModuleInfo::FixedFields; i < pInfo->m_fields.size(); i++)
 		{
 			CSymbolField f;
 			f.field_name = pInfo->m_fields[i].name;
 			f.field_default = pInfo->m_fields[i].value;
-			f.field_type = default_show;
+			f.field_type = always_hidden;
 			r.fields.push_back(f);
 		}
 	}
@@ -2206,13 +2211,12 @@ void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)
 	const int group = pDoc->GetNewGroupId();
 	if (pDoc->Import(*pStream, group))
 	{
-		// ... with its parameters: Name, Reference, Partnumber, Type and the
+		// ... with its parameters: Name, Partnumber, Type and the
 		// module's fields.  The Name is the record's "Name" field (the
 		// library name is "<Type> - <Name>").
 		CDrawModuleInfo *pInfo = new CDrawModuleInfo(pDoc);
 		pInfo->m_group = group;
 		pInfo->m_fields[0].value = CDlgUpdateBox::GetModuleName(*theModule);
-		pInfo->m_fields[1].value = theModule->reference;
 		for (size_t i = 0; i < theModule->fields.size(); i++)
 		{
 			if (theModule->fields[i].field_name.CompareNoCase(_T("Name")) == 0 || CDlgUpdateBox::IsObsoleteModuleField(theModule->fields[i]))
@@ -2323,6 +2327,82 @@ void CConCadView::OnColorDefault()
 void CConCadView::OnUpdateColor(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsColorableSelected());
+}
+
+// Edit -> Copy Text (Ctrl+Shift+C): the text of the selected texts, bus
+// names, labels and notes as plain text, one per line.  (While the text
+// field in Tool Options has the focus, CEditDlg copies its selected part.)
+void CConCadView::OnEditCopyText()
+{
+	CString text;
+	if (!GetCurrentDocument()->GetSelectedText(text))
+	{
+		return;
+	}
+	if (!OpenClipboard())
+	{
+		return;
+	}
+	EmptyClipboard();
+	const size_t bytes = (text.GetLength() + 1) * sizeof(TCHAR);
+	HGLOBAL h = ::GlobalAlloc(GMEM_MOVEABLE, bytes);
+	if (h != NULL)
+	{
+		memcpy(::GlobalLock(h), (LPCTSTR)text, bytes);
+		::GlobalUnlock(h);
+		if (::SetClipboardData(CF_UNICODETEXT, h) == NULL)
+		{
+			::GlobalFree(h);
+		}
+	}
+	CloseClipboard();
+}
+
+// Edit -> Cut Text / Delete Text: edit the text of the one selected text,
+// bus name, label or note in its Tool Options field, as if Ctrl+X / Delete
+// were pressed there with all of its text selected
+void CConCadView::OnEditCutText()
+{
+	EditSelectedText(WM_CUT);
+}
+
+void CConCadView::OnEditDeleteText()
+{
+	EditSelectedText(WM_CLEAR);
+}
+
+void CConCadView::EditSelectedText(UINT message)
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	CString text;
+	CDrawingObject* obj = pDoc->IsSingleItemSelected() ? pDoc->GetSingleSelectedItem() : NULL;
+	if (obj == NULL || !obj->GetText(text))
+	{
+		return;
+	}
+	obj->BeginEdit(TRUE);   // shows its Tool Options with the text field focused and all selected
+	CWnd* pFocus = CWnd::GetFocus();
+	TCHAR cls[16] = { 0 };
+	if (pFocus != NULL && ::GetClassName(pFocus->m_hWnd, cls, _countof(cls)) > 0 && _tcsicmp(cls, _T("Edit")) == 0)
+	{
+		static_cast<CEdit*>(pFocus)->SetSel(0, -1);
+		pFocus->SendMessage(message);
+	}
+}
+
+void CConCadView::OnUpdateEditText(CCmdUI* pCmdUI)
+{
+	CConCadDoc* pDoc = GetCurrentDocument();
+	CString text;
+	if (pCmdUI->m_nID == IDM_EDIT_COPYTEXT)
+	{
+		pCmdUI->Enable(pDoc->GetSelectedText(text));
+	}
+	else
+	{
+		CDrawingObject* obj = pDoc->IsSingleItemSelected() ? pDoc->GetSingleSelectedItem() : NULL;
+		pCmdUI->Enable(obj != NULL && obj->GetText(text));
+	}
 }
 
 void CConCadView::OnOptionsShortcuts()

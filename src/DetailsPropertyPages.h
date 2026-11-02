@@ -198,7 +198,7 @@ class CDetailsPropertyPage4: public CPropertyPage
 private:
 	CMultiSheetDoc* m_pDesign;
 	CString         m_sSvg;       // pending SVG content to apply (embedded copy)
-	CString         m_sName;      // pending template name; empty for a Browse... file
+	CString         m_sName;      // pending template name
 	bool            m_bDirty;
 
 	CListBox                            m_wndList;
@@ -219,7 +219,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 
-	afx_msg void OnBrowse();
+	afx_msg void OnImport();
 	afx_msg void OnUseBuiltin();
 	afx_msg void OnListSelChange();
 	DECLARE_MESSAGE_MAP()

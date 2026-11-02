@@ -131,7 +131,7 @@ void CEditDlgModuleEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 	m_index = hit.iItem;
 	CDrawModuleInfo *pInfo = GetInfo();
 	const bool own = pInfo != NULL && m_index >= CDrawModuleInfo::FixedFields && m_index < (int)pInfo->m_fields.size()
-		&& !CDrawModuleInfo::IsStandardField(pInfo->m_fields[m_index].name); // Name, Reference, Partnumber, Type are fixed
+		&& !CDrawModuleInfo::IsStandardField(pInfo->m_fields[m_index].name); // Name, Partnumber, Type are fixed
 	m_Delete.EnableWindow(own);
 
 	// Values can always be changed, names only of the module's own fields

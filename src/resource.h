@@ -521,6 +521,7 @@
 #define IDC_SC_REMOVE                   40065
 #define IDC_SC_RESET                    40066
 #define IDC_SC_INFO                     40067
+#define IDC_SC_SEARCH                   40078
 #define IDC_SCALING                     40000
 #define IDS_NOCLEANUP                   40001
 #define POSITIONBOX_GRIDSIZE            40002
@@ -574,6 +575,9 @@
 #define IDC_LIBRARY_TABS                40076
 #define IDC_MODULE_LIBRARY              40077
 #define IDM_HELP_REPORTBUG              32923
+#define IDM_EDIT_COPYTEXT               32924
+#define IDM_EDIT_CUTTEXT                32925
+#define IDM_EDIT_DELETETEXT             32926
 #define IDC_VERSION_HISTORY             40056
 #define IDC_DESIGNBOX_DESCRIPTION       40057
 #define IDC_VERSION_REVISEDBY           40058
@@ -583,7 +587,7 @@
 #define METHODBOX_COLOR                 40012
 #define IDC_TBSVG_HELP                  40013
 #define IDC_TBSVG_STATE                 40014
-#define IDC_TBSVG_BROWSE                40015
+#define IDC_TBSVG_IMPORT                40015
 #define IDC_TBSVG_USE_BUILTIN           40016
 #define IDC_TBSVG_LIST                  40017
 #define ID_CONTEXT_COPY_TO              65535
@@ -594,8 +598,8 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        192
-#define _APS_NEXT_COMMAND_VALUE         32924
-#define _APS_NEXT_CONTROL_VALUE         40078
+#define _APS_NEXT_COMMAND_VALUE         32927
+#define _APS_NEXT_CONTROL_VALUE         40079
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

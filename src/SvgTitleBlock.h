@@ -30,6 +30,22 @@ public:
 	// read its SVG.  Returns false when no template of that name is installed.
 	static bool FindByName(const CString& name, CString& outSvg);
 
+	// %APPDATA%\ConCAD\templates\title-blocks (may not exist yet).
+	static CString GetUserFolder();
+	// Write svg (UTF-8) as <user folder>\<name>.svg, creating the folder.
+	static bool SaveUserTemplate(const CString& name, const CString& svg, CString& outPath);
+
+	// Import conversion (Title Block tab > Import SVG...): turn an SVG drawn
+	// in Inkscape or similar into a tidy title-block template.  Drops the
+	// editor's data (inkscape:/sodipodi: elements and attributes, metadata,
+	// unreferenced ids, -inkscape-* style properties, empty <defs>), gives a
+	// <text> the x/y that only its <tspan> carries, and crops the viewBox
+	// (and width/height in proportion) to the drawn content, so the block
+	// sits flush in the page corner.  report receives a user-readable summary
+	// (cropped size, variables used, things that will not render).  Returns
+	// false (report = reason) when the text is not a usable SVG.
+	static bool ConvertImportedSvg(const CString& svgIn, CString& svgOut, CString& report);
+
 	// Base64 helpers used by the hybrid .dsn storage: the SVG's UTF-8 bytes are
 	// base64-encoded so the embedded copy carries no XML-special characters.
 	static CString EncodeSvgBase64(const CString& svgText);

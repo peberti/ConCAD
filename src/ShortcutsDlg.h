@@ -49,8 +49,13 @@ protected:
 	void AddCommand(UINT id, const CString &name);
 	CString GetCommandName(UINT id) const;
 	CString ShortcutsFor(UINT id) const;
+	// Lists the commands whose name or shortcut contains the search text;
+	// selects command select (an index into m_commands) if listed
 	void FillList(int select);
+	// The selected command (index into m_commands), or -1
 	int GetSelectedCommand();
+	CString m_search;
+	afx_msg void OnSearchChange();
 
 	afx_msg void OnAssign();
 	afx_msg void OnRemove();

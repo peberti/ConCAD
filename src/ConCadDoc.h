@@ -233,6 +233,9 @@ public:
 	// Object -> Colour: own colour for the selected components, wires,
 	// cables, polygons and rectangles (use = FALSE: back to normal colours)
 	bool IsColorableSelected();
+	// The text of the selected texts, bus names, labels and notes, one per
+	// line in drawing order; false if none is selected
+	bool GetSelectedText(CString &text);
 	bool GetSelectionColor(COLORREF &c); // first coloured object in the selection
 	void SetSelectionColor(BOOL use, COLORREF c);
 	void PaintGroupFrames(CContext &dc);

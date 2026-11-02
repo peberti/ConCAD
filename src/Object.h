@@ -455,6 +455,11 @@ public:
 	virtual void LoadXML(CXMLReader &xml);
 	static const TCHAR* GetXMLTag(ObjType t);
 	virtual BOOL IsEmpty();
+	virtual bool GetText(CString &s)
+	{
+		s = str;
+		return true;
+	}
 
 	virtual void Move(CDPoint, CDPoint no_snap_p);
 	virtual void LButtonDown(CDPoint, CDPoint);
@@ -548,6 +553,11 @@ public:
 	virtual void LoadXML(CXMLReader &xml);
 	static const TCHAR* GetXMLTag();
 	virtual BOOL IsEmpty();
+	virtual bool GetText(CString &s)
+	{
+		s = str;
+		return true;
+	}
 
 	virtual void Move(CDPoint, CDPoint no_snap_p);
 	virtual void LButtonDown(CDPoint, CDPoint);
@@ -920,6 +930,11 @@ public:
 		return IDM_TOOLNOTETEXT;
 	}
 	BOOL IsEmpty();
+	virtual bool GetText(CString &s)
+	{
+		s = str;
+		return true;
+	}
 };
 
 class CDrawError: public CDrawingObject

@@ -2356,6 +2356,26 @@ void CConCadDoc::SetSelectionColor(BOOL use, COLORREF c)
 	Invalidate();
 }
 
+bool CConCadDoc::GetSelectedText(CString &text)
+{
+	text.Empty();
+	bool found = false;
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		CString s;
+		if (IsSelected(*it) && (*it)->GetText(s))
+		{
+			if (found)
+			{
+				text += _T("\r\n");
+			}
+			text += s;
+			found = true;
+		}
+	}
+	return found;
+}
+
 // Frame the selected modules and the module open for editing
 void CConCadDoc::PaintGroupFrames(CContext &dc)
 {

@@ -119,9 +119,20 @@ BOOL CDlgUpdateBox::OnInitDialog()
 	}
 
 	// Create the treeview control
-	m_list.InsertColumn(0, _T("Parameter"), LVCFMT_LEFT, 100);
-	m_list.InsertColumn(1, _T("Display Method"), LVCFMT_LEFT, 170);
-	m_list.InsertColumn(2, _T("Default Value"), LVCFMT_LEFT, 150);
+	if (m_bModule)
+	{
+		CRect client;
+		m_list.GetClientRect(client);
+		const int name = 130;
+		m_list.InsertColumn(0, _T("Parameter"), LVCFMT_LEFT, name);
+		m_list.InsertColumn(1, _T("Value"), LVCFMT_LEFT, max(100, client.Width() - name - GetSystemMetrics(SM_CXVSCROLL)));
+	}
+	else
+	{
+		m_list.InsertColumn(0, _T("Parameter"), LVCFMT_LEFT, 100);
+		m_list.InsertColumn(1, _T("Display Method"), LVCFMT_LEFT, 170);
+		m_list.InsertColumn(2, _T("Default Value"), LVCFMT_LEFT, 150);
+	}
 
 	if (!m_bModule)
 	{
@@ -296,7 +307,7 @@ void CDlgUpdateBox::UpdateModuleLibraryName()
 	}
 	CString name;
 	GetDlgItemText(UPDATE_DESCRIPTION, name);
-	const CString type = m_list.GetItemCount() > 2 ? m_list.GetItemText(2, 2) : CString();
+	const CString type = m_list.GetItemCount() > 1 ? m_list.GetItemText(1, ValueColumn()) : CString();
 	SetDlgItemText(IDC_MODULE_LIBNAME, ModuleLibraryName(type, name));
 }
 
@@ -311,20 +322,15 @@ void CDlgUpdateBox::InitFromRecord()
 
 	if (m_bModule)
 	{
-		// Name field, then the fixed rows Reference, Partnumber, Type and the
-		// module's own fields
+		// Name field, then the fixed rows Partnumber, Type and the module's
+		// own fields (modules have no Reference)
 		m_list.DeleteAllItems();
 		CSymbolField f;
-		f.field_name = _T("Reference");
-		f.field_type = r.ref_type;
-		f.field_default = r.reference;
-		AddSymbolField(f);
-
 		const TCHAR* const standard[] = { _T("Partnumber"), _T("Type") };
 		for (int s = 0; s < 2; s++)
 		{
 			f.field_name = standard[s];
-			f.field_type = default_show;
+			f.field_type = always_hidden;
 			f.field_default = s == 1 ? GetModuleType(r) : CString();
 			for (size_t i = 0; i < r.fields.size(); i++)
 			{
@@ -397,9 +403,7 @@ void CDlgUpdateBox::UpdateToRecord()
 		GetDlgItemText(UPDATE_DESCRIPTION, name);
 		name.Trim();
 
-		f = GetSymbolField(0);
-		r.reference = f.field_default;
-		r.ref_type = f.field_type;
+		r.reference = _T("");
 
 		r.fields.clear();
 		CSymbolField n;
@@ -407,12 +411,12 @@ void CDlgUpdateBox::UpdateToRecord()
 		n.field_default = name;
 		n.field_type = always_hidden;
 		r.fields.push_back(n);
-		for (int i = 1; i < m_list.GetItemCount(); i++)
+		for (int i = 0; i < m_list.GetItemCount(); i++)
 		{
 			r.fields.push_back(GetSymbolField(i));
 		}
 
-		SetModuleRecordName(r, GetSymbolField(2).field_default, name);
+		SetModuleRecordName(r, GetSymbolField(1).field_default, name);
 		return;
 	}
 
@@ -535,7 +539,7 @@ void CDlgUpdateBox::AddSymbolField(CSymbolField &f)
 	m_list.InsertItem(&item);
 	f.field_name.ReleaseBuffer();
 
-	if (f.field_type >= 0 && f.field_type <= last_symbol_field_type)
+	if (!m_bModule && f.field_type >= 0 && f.field_type <= last_symbol_field_type)
 	{
 		item.mask = LVIF_TEXT;
 		item.iSubItem = 1;
@@ -543,7 +547,8 @@ void CDlgUpdateBox::AddSymbolField(CSymbolField &f)
 		m_list.SetItem(&item);
 	}
 
-	item.iSubItem = 2;
+	item.mask = LVIF_TEXT;
+	item.iSubItem = ValueColumn();
 	item.pszText = f.field_default.GetBuffer(256);
 	m_list.SetItem(&item);
 	f.field_default.ReleaseBuffer();
@@ -553,11 +558,20 @@ void CDlgUpdateBox::OnAdd()
 {
 	// Add a new parameter to the end of the list
 	// control
+	if (m_capture)
+	{
+		EndEdit();
+	}
 	CSymbolField f;
-	f.field_default = "..";
+	f.field_default = m_bModule ? _T("") : _T("..");
 	f.field_name = "Other";
-	f.field_type = default_show;
+	f.field_type = always_hidden; // new fields: Never Show
 	AddSymbolField(f);
+	if (m_bModule)
+	{
+		// Type the new parameter's name at once
+		BeginEdit(m_list.GetItemCount() - 1, 0);
+	}
 }
 
 void CDlgUpdateBox::OnDelete()
@@ -614,7 +628,28 @@ void CDlgUpdateBox::OnClickUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 	{
 		EndEdit();
 	}
-	// Select this item
+
+	// Which column did the user click in?
+	CRect rect;
+	m_list.GetItemRect(index, &rect, LVIR_BOUNDS);
+	int x = rect.left;
+	int column;
+	for (column = 0; column < ColumnCount() - 1; column++)
+	{
+		x += m_list.GetColumnWidth(column);
+		if (clk.x < x)
+		{
+			break;
+		}
+	}
+
+	BeginEdit(index, column);
+
+	*pResult = 0;
+}
+
+void CDlgUpdateBox::SelectRow(int index)
+{
 	LVITEM item;
 	item.mask = LVIF_STATE;
 	item.iItem = index;
@@ -626,84 +661,134 @@ void CDlgUpdateBox::OnClickUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 
 	// Only the rows after the fixed ones can be deleted...
 	m_Delete.EnableWindow(m_index >= FixedRows());
+}
 
-	// Which column did the user click in?
-	CRect rect;
-	CRect r;
-	m_list.GetItemRect(index, &rect, LVIR_BOUNDS);
-	r = rect;
-	int x = rect.right;
-	r.left = x;
-	int column;
-	for (column = 2; column >= 0; column--)
+// Selects the row and, for an editable cell, opens the edit box (or the
+// Display Method list) over it
+void CDlgUpdateBox::BeginEdit(int index, int column)
+{
+	SelectRow(index);
+	m_column = column;
+	if (!IsEditableCell(index, column))
 	{
-		int w = m_list.GetColumnWidth(column);
-		x -= w;
-		r.right = r.left;
-		r.left = x;
-
-		if (clk.x > x)
-		{
-			break;
-		}
+		return;
 	}
 
+	// The cell, in dialog coordinates
+	m_list.EnsureVisible(index, FALSE);
+	CRect r;
+	m_list.GetItemRect(index, &r, LVIR_BOUNDS);
+	for (int c = 0; c < column; c++)
+	{
+		r.left += m_list.GetColumnWidth(c);
+	}
+	r.right = r.left + m_list.GetColumnWidth(column);
 	m_list.ClientToScreen(&r);
 	ScreenToClient(&r);
-	m_column = column;
 
 	// Get this column's current value
-	CString v;
-	item.iItem = m_index;
-	item.iSubItem = m_column;
-	item.mask = LVIF_TEXT;
-	item.pszText = v.GetBuffer(256);
-	item.cchTextMax = 256;
-	m_list.GetItem(&item);
-	v.ReleaseBuffer();
+	CString v = m_list.GetItemText(index, column);
 
-	// Now perform the appropriate action
-	switch (column)
+	if (column == 1 && !m_bModule)
 	{
-		case 0: //parameter name
-		case 2: //parameter value
-			// Now create the edit control
-			if (m_index >= FixedRows() || m_column > 0)
-			{
-				DWORD style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL;
+		// parameter display control (whether to show parameter or not)
+		int sel = -1;
+		m_capture = TRUE;
+		r.bottom = r.bottom + 250;
+		m_list_control.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST, r, this, 102);
+		m_list_control.SetFont(GetFont());
 
-				m_capture = TRUE;
-				m_edit_control.Create(style, r, this, 101);
-				m_edit_control.SetLimitText(255);
-				m_edit_control.SetFont(GetFont());
-				m_edit_control.SetWindowText(v);
-				m_edit_control.SetSel(0, v.GetLength());
-				m_edit_control.SetFocus();
-			}
-			break;
-		case 1: //parameter display control (whether to show parameter or not)
+		for (int i = 0; i < last_symbol_field_type; i++)
 		{
-			int sel = -1;
-			m_capture = TRUE;
-			r.bottom = r.bottom + 250;
-			m_list_control.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST, r, this, 102);
-			m_list_control.SetFont(GetFont());
-
-			for (int i = 0; i < last_symbol_field_type; i++)
+			m_list_control.AddString(field_types[i]);
+			if (v == field_types[i])
 			{
-				m_list_control.AddString(field_types[i]);
-				if (v == field_types[i])
-				{
-					sel = i;
-				}
+				sel = i;
 			}
-			m_list_control.SetCurSel(sel);
-			m_list_control.SetFocus();
 		}
-			break;
+		m_list_control.SetCurSel(sel);
+		m_list_control.SetFocus();
+		return;
 	}
 
-	*pResult = 0;
+	// parameter name or value: the edit control
+	DWORD style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL;
+
+	m_capture = TRUE;
+	m_edit_control.Create(style, r, this, 101);
+	m_edit_control.SetLimitText(255);
+	m_edit_control.SetFont(GetFont());
+	m_edit_control.SetWindowText(v);
+	m_edit_control.SetSel(0, v.GetLength());
+	m_edit_control.SetFocus();
+}
+
+// Closes the edit box without keeping what was typed
+void CDlgUpdateBox::CancelEdit()
+{
+	if (m_capture)
+	{
+		m_capture = FALSE;
+		if (m_column == 1 && !m_bModule)
+		{
+			m_list_control.DestroyWindow();
+		}
+		else
+		{
+			m_edit_control.DestroyWindow();
+		}
+	}
+}
+
+// The names of the fixed rows cannot be changed
+bool CDlgUpdateBox::IsEditableCell(int index, int column) const
+{
+	return index >= 0 && index < m_list.GetItemCount() && column >= 0 && column < ColumnCount()
+		&& (column > 0 || index >= FixedRows());
+}
+
+// Tab / Shift+Tab: edit the next / previous editable cell, row by row; past
+// the last (first) cell the focus leaves the list like any other control
+void CDlgUpdateBox::MoveToCell(int index, int column, bool back)
+{
+	const int columns = ColumnCount();
+	const int cells = m_list.GetItemCount() * columns;
+	for (int p = index * columns + column + (back ? -1 : 1); p >= 0 && p < cells; p += back ? -1 : 1)
+	{
+		if (IsEditableCell(p / columns, p % columns))
+		{
+			BeginEdit(p / columns, p % columns);
+			return;
+		}
+	}
+	CWnd* pNext = GetNextDlgTabItem(&m_list, back);
+	if (pNext != NULL)
+	{
+		GotoDlgCtrl(pNext);
+	}
+}
+
+BOOL CDlgUpdateBox::PreTranslateMessage(MSG* pMsg)
+{
+	if (m_bModule && m_capture && pMsg->message == WM_KEYDOWN && pMsg->hwnd == m_edit_control.GetSafeHwnd())
+	{
+		if (pMsg->wParam == VK_TAB)
+		{
+			const int index = m_index;
+			const int column = m_column;
+			EndEdit();
+			MoveToCell(index, column, GetKeyState(VK_SHIFT) < 0);
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			// Esc undoes the cell's typing instead of closing the dialog
+			CancelEdit();
+			m_list.SetFocus();
+			return TRUE;
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
 }
 
 void CDlgUpdateBox::OnKillfocusEdit()
@@ -718,7 +803,20 @@ void CDlgUpdateBox::OnKillfocusList()
 
 void CDlgUpdateBox::OnSetfocusUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	if (!m_capture)
+	if (m_bModule && !m_capture && GetKeyState(VK_TAB) < 0)
+	{
+		// Tabbed into the list: edit its first cell (Shift+Tab: its last)
+		const int last = m_list.GetItemCount() * ColumnCount() - 1;
+		if (GetKeyState(VK_SHIFT) < 0)
+		{
+			MoveToCell((last + 1) / ColumnCount(), 0, true);
+		}
+		else
+		{
+			MoveToCell(0, 0, false);
+		}
+	}
+	else if (!m_capture)
 	{
 		OnClickUpdateList(pNMHDR, pResult);
 	}
@@ -759,8 +857,12 @@ void CDlgUpdateBox::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	TCHAR buffer[512];
 	buffer[0] = 0;
 	int left = 0;
-	int right = lpDrawItemStruct->rcItem.right;
-	for (int column = 2; column >= 0; column--)
+	int right = lpDrawItemStruct->rcItem.left;
+	for (int column = ColumnCount() - 1; column >= 0; column--)
+	{
+		right += m_list.GetColumnWidth(column);
+	}
+	for (int column = ColumnCount() - 1; column >= 0; column--)
 	{
 		// Create the rectangle to draw into
 		left = right - m_list.GetColumnWidth(column);
@@ -799,7 +901,7 @@ void CDlgUpdateBox::EndEdit()
 		CString v;
 		m_capture = FALSE;
 
-		if (m_column == 1)
+		if (m_column == 1 && !m_bModule)
 		{
 			m_list_control.GetWindowText(v);
 			m_list_control.DestroyWindow();
@@ -826,7 +928,7 @@ void CDlgUpdateBox::EndEdit()
 			m_List_Names.InsertString(m_current_record, v);
 		}
 		// .. or the module's library name (from Type)
-		if (m_bModule && m_index == 2 && m_column == 2)
+		if (m_bModule && m_index == 1 && m_column == ValueColumn())
 		{
 			UpdateModuleLibraryName();
 		}
@@ -846,22 +948,31 @@ CSymbolField CDlgUpdateBox::GetSymbolField(int index)
 	m_list.GetItem(&item);
 	f.field_name.ReleaseBuffer();
 
-	CString ft;
-	item.iSubItem = 1;
-	item.pszText = ft.GetBuffer(256);
-	m_list.GetItem(&item);
-	ft.ReleaseBuffer();
-
-	// Perform conversion...
-	for (int i = 0; i < last_symbol_field_type; i++)
+	if (m_bModule)
 	{
-		if (ft == field_types[i])
+		// Module parameters are never drawn as symbol fields; texts in
+		// the module show them through {tokens}
+		f.field_type = always_hidden;
+	}
+	else
+	{
+		CString ft;
+		item.iSubItem = 1;
+		item.pszText = ft.GetBuffer(256);
+		m_list.GetItem(&item);
+		ft.ReleaseBuffer();
+
+		// Perform conversion...
+		for (int i = 0; i < last_symbol_field_type; i++)
 		{
-			f.field_type = static_cast<SymbolFieldType> (i);
+			if (ft == field_types[i])
+			{
+				f.field_type = static_cast<SymbolFieldType> (i);
+			}
 		}
 	}
 
-	item.iSubItem = 2;
+	item.iSubItem = ValueColumn();
 	item.pszText = f.field_default.GetBuffer(256);
 	m_list.GetItem(&item);
 	f.field_default.ReleaseBuffer();

@@ -36,6 +36,7 @@ BEGIN_MESSAGE_MAP(CShortcutsDlg, CDialog)
 	ON_BN_CLICKED(IDC_SC_ASSIGN, OnAssign)
 	ON_BN_CLICKED(IDC_SC_REMOVE, OnRemove)
 	ON_BN_CLICKED(IDC_SC_RESET, OnReset)
+	ON_EN_CHANGE(IDC_SC_SEARCH, OnSearchChange)
 END_MESSAGE_MAP()
 
 void CShortcutsDlg::LoadDefaults(std::vector<ACCEL> &accels)
@@ -235,17 +236,45 @@ CString CShortcutsDlg::ShortcutsFor(UINT id) const
 
 void CShortcutsDlg::FillList(int select)
 {
+	CString search = m_search;
+	search.Trim();
+	search.MakeLower();
+
 	m_list.SetRedraw(FALSE);
 	m_list.DeleteAllItems();
+	int row = 0;
+	int selectRow = -1;
 	for (int i = 0; i < (int)m_commands.size(); i++)
 	{
-		m_list.InsertItem(i, m_commands[i].name);
-		m_list.SetItemText(i, 1, ShortcutsFor(m_commands[i].id));
+		const CString keys = ShortcutsFor(m_commands[i].id);
+		if (!search.IsEmpty())
+		{
+			CString name = m_commands[i].name;
+			CString k = keys;
+			name.MakeLower();
+			k.MakeLower();
+			if (name.Find(search) < 0 && k.Find(search) < 0)
+			{
+				continue;
+			}
+		}
+		m_list.InsertItem(row, m_commands[i].name);
+		m_list.SetItemText(row, 1, keys);
+		m_list.SetItemData(row, (DWORD_PTR)i);
+		if (i == select)
+		{
+			selectRow = row;
+		}
+		++row;
 	}
-	if (select >= 0 && select < (int)m_commands.size())
+	if (selectRow < 0 && row == 1)
 	{
-		m_list.SetItemState(select, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-		m_list.EnsureVisible(select, FALSE);
+		selectRow = 0;   // the only match
+	}
+	if (selectRow >= 0)
+	{
+		m_list.SetItemState(selectRow, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		m_list.EnsureVisible(selectRow, FALSE);
 	}
 	m_list.SetRedraw(TRUE);
 }
@@ -253,7 +282,13 @@ void CShortcutsDlg::FillList(int select)
 int CShortcutsDlg::GetSelectedCommand()
 {
 	POSITION pos = m_list.GetFirstSelectedItemPosition();
-	return pos == NULL ? -1 : m_list.GetNextSelectedItem(pos);
+	return pos == NULL ? -1 : (int)m_list.GetItemData(m_list.GetNextSelectedItem(pos));
+}
+
+void CShortcutsDlg::OnSearchChange()
+{
+	GetDlgItemText(IDC_SC_SEARCH, m_search);
+	FillList(GetSelectedCommand());
 }
 
 BOOL CShortcutsDlg::OnInitDialog()
@@ -360,6 +395,13 @@ void CShortcutsDlg::OnReset()
 
 void CShortcutsDlg::OnOK()
 {
+	// Enter in the search box: go to the list instead of closing
+	if (GetFocus() == GetDlgItem(IDC_SC_SEARCH))
+	{
+		m_list.SetFocus();
+		return;
+	}
+
 	if (m_accels.empty())
 	{
 		AfxMessageBox(_T("Keep at least one shortcut (or use Reset All)."), MB_ICONINFORMATION);
