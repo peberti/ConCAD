@@ -43,6 +43,7 @@ BEGIN_MESSAGE_MAP( CDlgLibraryBox, CDialog )
 	ON_BN_CLICKED(LIBRARYBOX_NEW, OnNew)
 	ON_BN_CLICKED(LIBRARYBOX_CLEANUP, OnCleanup)
 	ON_BN_CLICKED(LIBRARYBOX_UPGRADE, OnUpgrade)
+	ON_BN_CLICKED(LIBRARYBOX_ORGANIZE, OnOrganize)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_LIBRARY_TABS, OnTabChange)
 	//}}AFX_MSG_MAP
 	ON_WM_SIZE()
@@ -375,6 +376,14 @@ void CDlgLibraryBox::OnUpgrade()
 	CLibraryCollection::Upgrade(pOldLib);
 }
 //-------------------------------------------------------------------------
+//-- Closes the dialog with LIBRARYBOX_ORGANIZE; CConCadApp::OnLibLib then
+//-- runs the Library Organizer (CConCadApp::OrganizeLibraries)
+void CDlgLibraryBox::OnOrganize()
+{
+	CLibraryCollection::SaveToRegistry();
+	EndDialog(LIBRARYBOX_ORGANIZE);
+}
+//-------------------------------------------------------------------------
 //-- single click on listbox refreshes it
 void CDlgLibraryBox::OnSelchangeAvailable()
 {
@@ -419,7 +428,7 @@ void CDlgLibraryBox::OnSize(UINT nType, int cx, int cy)
 		m_lstLibs->MoveWindow(r);
 	}
 
-	const int ids[] = {LIBRARYBOX_ADD, LIBRARYBOX_REMOVE, LIBRARYBOX_EDIT, LIBRARYBOX_NEW, LIBRARYBOX_CLEANUP, LIBRARYBOX_UPGRADE, IDOK};
+	const int ids[] = {LIBRARYBOX_ADD, LIBRARYBOX_REMOVE, LIBRARYBOX_EDIT, LIBRARYBOX_NEW, LIBRARYBOX_CLEANUP, LIBRARYBOX_UPGRADE, LIBRARYBOX_ORGANIZE, IDOK};
 
 	for (int i = 0; i < sizeof (ids) / sizeof(int); ++i)
 	{

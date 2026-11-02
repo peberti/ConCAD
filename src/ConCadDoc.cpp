@@ -16,6 +16,9 @@
 #include "ConCadMultiDoc.h"
 #include "colour.h"
 #include "DrawModuleInfo.h"
+#include "Net.h"
+
+unsigned int CConCadDoc::s_net_generation = 0;
 
 /////////////////////////////////////////////////////////////////////////////
 // CConCadDoc
@@ -47,6 +50,10 @@ CConCadDoc::CConCadDoc(CMultiSheetDoc *pParent)
 	m_DuplicateObjectOnly = FALSE;
 	m_open_group = 0;
 	m_group_frames_shown = false;
+	m_net_hl_source = NULL;
+	m_net_hl_generation = 0;
+	m_net_hl_painted = NULL;
+	m_net_hl_pending = false;
 	edit = NULL;
 	NameDir = 1;
 	PinDir = 1;
@@ -574,6 +581,7 @@ void CConCadDoc::FlushRedo()
 // Undo the last action
 void CConCadDoc::Undo(BOOL SingleLevel)
 {
+	++s_net_generation;
 	SetSelectable(NULL);
 	BOOL action_taken = FALSE;
 
@@ -686,6 +694,7 @@ void CConCadDoc::Undo(BOOL SingleLevel)
 // Redo the last action
 void CConCadDoc::Redo()
 {
+	++s_net_generation;
 	SetSelectable(NULL);
 	BOOL action_taken = FALSE;
 
@@ -814,6 +823,8 @@ CDrawingObject* CConCadDoc::Dup(CDrawingObject *p)
 
 void CConCadDoc::AddUndoAction(CDocUndoSet::action action, CDrawingObject *index_object)
 {
+	++s_net_generation; // nets may change
+
 	// Don't store Error objects
 	if (index_object && index_object->GetType() == xError)
 	{
@@ -2377,6 +2388,154 @@ bool CConCadDoc::GetSelectedText(CString &text)
 }
 
 // Frame the selected modules and the module open for editing
+static bool IsNetLine(CDrawingObject *o)
+{
+	return o->GetType() == xWire || o->GetType() == xCable;
+}
+
+// Labels are drawn with a glow box in the highlight (their rectangle)
+static bool IsNetBox(CDrawingObject *o)
+{
+	return o->GetType() == xLabelEx2;
+}
+
+// Selecting one of these highlights its net
+static bool IsNetMember(CDrawingObject *o)
+{
+	ObjType t = o->GetType();
+	return IsNetLine(o) || IsNetBox(o) || t == xJunction || t == xPower || t == xNoConnect;
+}
+
+// Collect the wires/cables, labels and the connection points (pins,
+// junctions, power, no-connects) of the net of 'source' on this sheet
+void CConCadDoc::BuildNetHighlight(CDrawingObject *source)
+{
+	m_net_hl_source = source;
+	m_net_hl_generation = s_net_generation;
+	m_net_hl_lines.clear();
+	m_net_hl_boxes.clear();
+	m_net_hl_points.clear();
+
+	if (m_pParent == NULL || !m_pParent->IsKindOf(RUNTIME_CLASS(CConCadMultiDoc)))
+	{
+		return;
+	}
+
+	// All sheets of this design (labels join nets across sheets), not the
+	// designs of hierarchical symbols
+	CNetList netlist;
+	netlist.m_follow_imports = FALSE;
+	netlist.MakeNet(static_cast<CConCadMultiDoc*> (m_pParent));
+
+	// The net of the source and the file/sheet its nodes are on
+	nodeVector *pNet = NULL;
+	int file = 0, sheet = 0;
+	for (netCollection::iterator ni = netlist.m_nets.begin(); ni != netlist.m_nets.end() && pNet == NULL; ++ni)
+	{
+		for (nodeVector::iterator vi = ni->second.begin(); vi != ni->second.end(); ++vi)
+		{
+			if (vi->m_parent == source)
+			{
+				pNet = &ni->second;
+				file = vi->getFileNameIndex();
+				sheet = vi->m_sheet;
+				break;
+			}
+		}
+	}
+	if (pNet == NULL)
+	{
+		return;
+	}
+
+	for (nodeVector::iterator vi = pNet->begin(); vi != pNet->end(); ++vi)
+	{
+		if (vi->getFileNameIndex() != file || vi->m_sheet != sheet)
+		{
+			continue;
+		}
+		if (vi->m_parent != NULL && IsNetLine(vi->m_parent))
+		{
+			m_net_hl_lines.insert(vi->m_parent);
+		}
+		else if (vi->m_parent != NULL && IsNetBox(vi->m_parent))
+		{
+			m_net_hl_boxes.insert(vi->m_parent);
+		}
+		else
+		{
+			m_net_hl_points.push_back(vi->m_a); // pins, junctions, power, no-connects
+		}
+	}
+}
+
+void CConCadDoc::PaintNetHighlight(CContext &dc)
+{
+	CDrawingObject *source = NULL;
+	if (IsSingleItemSelected())
+	{
+		CDrawingObject *o = GetSingleSelectedItem();
+		if (o != NULL && IsNetMember(o))
+		{
+			source = o;
+		}
+	}
+
+	// The highlight spans more than a selection change repaints
+	if (source != m_net_hl_painted)
+	{
+		m_net_hl_painted = source;
+		Invalidate();
+	}
+	if (source == NULL)
+	{
+		return;
+	}
+
+	if (source != m_net_hl_source || m_net_hl_generation != s_net_generation)
+	{
+		// Not while dragging (the net changes with every mouse move):
+		// NetHighlightMouseUp repaints when the button is released
+		if (GetAsyncKeyState(VK_LBUTTON) < 0)
+		{
+			m_net_hl_pending = true;
+			return;
+		}
+		BuildNetHighlight(source);
+	}
+
+	const int width = max(GetOptions()->GetWireWidth(), GetOptions()->GetCableWidth()) + 6;
+	dc.SelectPen(PS_SOLID, width, cNETHIGHLIGHT);
+	for (std::set<CDrawingObject*>::iterator it = m_net_hl_lines.begin(); it != m_net_hl_lines.end(); ++it)
+	{
+		dc.MoveTo((*it)->m_point_a);
+		dc.LineTo((*it)->m_point_b);
+	}
+
+	const double r = 4;
+	dc.SelectPen(PS_SOLID, 1, cNETHIGHLIGHT);
+	dc.SelectBrush(cNETHIGHLIGHT);
+	for (std::set<CDrawingObject*>::iterator it = m_net_hl_boxes.begin(); it != m_net_hl_boxes.end(); ++it)
+	{
+		CDRect box((*it)->m_point_a.x, (*it)->m_point_a.y, (*it)->m_point_b.x, (*it)->m_point_b.y);
+		box.NormalizeRect();
+		dc.Rectangle(CDRect(box.left - 2, box.top - 2, box.right + 2, box.bottom + 2));
+	}
+	for (std::vector<CDPoint>::iterator p = m_net_hl_points.begin(); p != m_net_hl_points.end(); ++p)
+	{
+		dc.Ellipse(CDRect(p->x - r, p->y - r, p->x + r, p->y + r));
+	}
+}
+
+void CConCadDoc::NetHighlightMouseUp()
+{
+	if (m_net_hl_pending)
+	{
+		m_net_hl_pending = false;
+		Invalidate();
+	}
+}
+
 void CConCadDoc::PaintGroupFrames(CContext &dc)
 {
 	std::set<int> groups;

@@ -155,8 +155,9 @@ void CDlgGetFindBox::BuildTree()
 		{
 			CLibraryStoreSymbol* pSymbol = m_most_recently_used[0];
 			m_most_recently_used.pop_front();
-			// Is symbol still alive?
-			if (pSymbol && pSymbol->m_pParent && CLibraryCollection::ContainsSymbol(pSymbol->m_pParent))
+			// Is symbol still alive? (pointer compare first: the records of a
+			// removed or re-read library are freed)
+			if (pSymbol && CLibraryCollection::ContainsRecord(pSymbol) && pSymbol->m_pParent && CLibraryCollection::ContainsSymbol(pSymbol->m_pParent))
 			{
 				// Place it back in MRU list
 				m_most_recently_used.push_back(pSymbol);

@@ -68,6 +68,7 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_UPDATE_COMMAND_UI(IDM_TOOLNOTETEXT, OnUpdateNoteTextText)
 	ON_UPDATE_COMMAND_UI(IDM_TOOLTEXT, OnUpdateTooltext)
 	ON_UPDATE_COMMAND_UI(IDM_TOOLWIRE, OnUpdateToolwire)
+	ON_UPDATE_COMMAND_UI(IDM_TOOLCABLE, OnUpdateToolwire)
 	ON_UPDATE_COMMAND_UI(IDM_VIEWCENTRE, OnUpdateViewcentre)
 	ON_WM_LBUTTONUP()
 	ON_WM_SETCURSOR()
@@ -765,6 +766,8 @@ void CConCadView::OnLButtonDblClk(UINT nFlags, CPoint p)
 
 void CConCadView::OnLButtonUp(UINT nFlags, CPoint p)
 {
+	GetCurrentDocument()->NetHighlightMouseUp();
+
 	if (m_captured != 0)
 	{
 		ReleaseCapture();

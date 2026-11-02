@@ -567,7 +567,7 @@ void CNetList::WriteWires()
 				}
 			}
 #endif
-			if (node.m_parent && node.m_parent->GetType() == xWire)
+			if (node.m_parent && (node.m_parent->GetType() == xWire || node.m_parent->GetType() == xCable))
 			{
 
 				//This is the only statement in this function that actually does work

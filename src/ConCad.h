@@ -163,6 +163,10 @@ public:
 	static void ResetAllSymbols();
 	static void SaveAll();
 	static bool IsLibInUse(CLibraryStore* pLib);
+	// Read the library lists from the registry and attach the libraries
+	static void LoadLibraries();
+	// Run the Library Organizer, wait for it and read the libraries again
+	static void OrganizeLibraries();
 	static void EditTextFile(const TCHAR *filename);
 	static void EditDesign(const TCHAR *filename);
 	static BOOL ChooseColor(COLORREF &col);

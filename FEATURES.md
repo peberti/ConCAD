@@ -191,7 +191,7 @@ bottom-left on sheet 1). Drag it where you want it. Its look comes from
 **What:** a thicker, wire-like line for cables/harnesses. Electrically it
 is a wire: pins connected by a cable are on the same net.
 
-**How to use:** **Shift+F2** (no toolbar button), click start and end
+**How to use:** **F3** or the *Cable* button on the Drawing toolbar, click start and end
 points; right-click or Esc to stop. Width and colour: Options → Settings →
 Drawing.
 

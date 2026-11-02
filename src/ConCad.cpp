@@ -300,8 +300,9 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 // (Workspace\Keyboard-*), which includes the user's own shortcuts
 // (Options > Keyboard Shortcuts) but not the defaults added by a newer
 // build.  Each new default is applied once, replacing whatever used that
-// key.  Add an entry (and raise 'latest') whenever the accelerator table
-// in ConCad.rc changes.
+// key; a 'remove' entry instead drops that key from that command (a
+// default that moved).  Add an entry (and raise 'latest') whenever the
+// accelerator table in ConCad.rc changes.
 static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 {
 	struct Change
@@ -310,6 +311,7 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 		BYTE fVirt;
 		WORD key;
 		WORD cmd;
+		bool remove;
 	};
 	static const Change changes[] =
 	{
@@ -320,8 +322,10 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 		{ 3, FVIRTKEY | FCONTROL | FSHIFT, 'C', IDM_EDIT_COPYTEXT },
 		{ 3, FVIRTKEY | FCONTROL | FSHIFT, 'X', IDM_EDIT_CUTTEXT },
 		{ 3, FVIRTKEY | FCONTROL | FSHIFT, VK_DELETE, IDM_EDIT_DELETETEXT },
+		{ 4, FVIRTKEY | FSHIFT, VK_F2, IDM_TOOLCABLE, true },	// Cable moved from Shift+F2 ...
+		{ 4, FVIRTKEY, VK_F3, IDM_TOOLCABLE },					// ... to F3 (was Junction)
 	};
-	const int latest = 3;
+	const int latest = 4;
 
 	CWinApp *pApp = AfxGetApp();
 	const int saved = pApp->GetProfileInt(_T("Keyboard"), _T("Version"), 0);
@@ -348,7 +352,7 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 			a.cmd = changes[c].cmd;
 			for (std::vector<ACCEL>::iterator it = accels.begin(); it != accels.end();)
 			{
-				if (CShortcutsDlg::SameKey(*it, a))
+				if (CShortcutsDlg::SameKey(*it, a) && (!changes[c].remove || it->cmd == a.cmd))
 				{
 					it = accels.erase(it);
 				}
@@ -357,7 +361,10 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 					++it;
 				}
 			}
-			accels.push_back(a);
+			if (!changes[c].remove)
+			{
+				accels.push_back(a);
+			}
 		}
 		afxKeyboardManager->UpdateAccelTable(NULL, &accels[0], (int)accels.size(), pFrame);
 	}
@@ -782,6 +789,13 @@ void CConCadApp::ReadRegistry()
 	// create singleton registry
 	g_pRegistry = new CConCadRegistry();
 
+	LoadLibraries();
+}
+
+//-------------------------------------------------------------------------
+// Read the library lists from the registry and attach the libraries
+void CConCadApp::LoadLibraries()
+{
 	// Is there a list of libraries in the registry?
 	CStringList* colLibs = CConCadRegistry::GetLibraryNames();
 	bool bMigrated = false;
@@ -1098,7 +1112,96 @@ BOOL CConCadApp::ProcessMessageFilter(int code, LPMSG lpMsg)
 //-------------------------------------------------------------------------
 void CConCadApp::OnLibLib()
 {
-	CDlgLibraryBox(AfxGetMainWnd()).DoModal();
+	if (CDlgLibraryBox(AfxGetMainWnd()).DoModal() == LIBRARYBOX_ORGANIZE)
+	{
+		OrganizeLibraries();
+	}
+}
+//-------------------------------------------------------------------------
+// Library Setup -> Organize: run the Library Organizer
+// (tools/LibraryOrganizer, CHANGES.md §26). ConCAD waits with its window
+// disabled while the organizer changes the library files and list, then
+// reads all libraries again.
+void CConCadApp::OrganizeLibraries()
+{
+	// Installed next to ConCAD.exe; in a build tree it is in
+	// tools\LibraryOrganizer (ConCAD.exe is in Debug\ or Release\)
+	TCHAR szModule[MAX_PATH];
+	GetModuleFileName(NULL, szModule, MAX_PATH);
+	CString dir(szModule);
+	dir = dir.Left(dir.ReverseFind('\\') + 1);
+	CString exe = dir + _T("LibraryOrganizer.exe");
+	if (GetFileAttributes(exe) == INVALID_FILE_ATTRIBUTES)
+	{
+		exe = dir + _T("..\\tools\\LibraryOrganizer\\LibraryOrganizer.exe");
+	}
+	if (GetFileAttributes(exe) == INVALID_FILE_ATTRIBUTES)
+	{
+		AfxMessageBox(_T("The Library Organizer (LibraryOrganizer.exe) was not found next to ConCAD.exe."));
+		return;
+	}
+
+	// The libraries are read again afterwards, so none may be open
+	for (int i = 0; CLibraryCollection::GetLibraryByIndex(i) != NULL; ++i)
+	{
+		if (IsLibInUse(CLibraryCollection::GetLibraryByIndex(i)))
+		{
+			AfxMessageBox(_T("Close the library windows and the symbol and module editors first, then click Organize again."));
+			return;
+		}
+	}
+
+	// The organizer reads ConCAD's library list from the registry
+	CLibraryCollection::SaveToRegistry();
+
+	CString cmd;
+	cmd.Format(_T("\"%s\" /concad"), (LPCTSTR)exe);
+	STARTUPINFO si = { sizeof(si) };
+	PROCESS_INFORMATION pi = {};
+	BOOL started = CreateProcess(exe, cmd.GetBuffer(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+	cmd.ReleaseBuffer();
+	if (!started)
+	{
+		DWORD err = GetLastError();
+		CLog::Write(_T("Library Organizer %s could not be started (error %u)"), (LPCTSTR)exe, err);
+		AfxMessageBox(_T("The Library Organizer could not be started."));
+		return;
+	}
+	CloseHandle(pi.hThread);
+	CLog::Write(_T("Library Organizer started: %s"), (LPCTSTR)exe);
+
+	// Wait, keeping ConCAD painted but not usable
+	CWnd* pMain = AfxGetMainWnd();
+	pMain->EnableWindow(FALSE);
+	bool quit = false;
+	while (!quit && MsgWaitForMultipleObjects(1, &pi.hProcess, FALSE, INFINITE, QS_ALLINPUT) == WAIT_OBJECT_0 + 1)
+	{
+		MSG msg;
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			if (msg.message == WM_QUIT)
+			{
+				PostQuitMessage((int) msg.wParam);
+				quit = true;
+				break;
+			}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+	CloseHandle(pi.hProcess);
+	pMain->EnableWindow(TRUE);
+	if (quit)
+	{
+		return;
+	}
+	pMain->SetForegroundWindow();
+
+	// Read the (possibly changed) library list and libraries again
+	CLibraryCollection::Clear();
+	LoadLibraries();
+	ResetAllSymbols();
+	CLog::Write(_T("Library Organizer closed; libraries read again"));
 }
 //-------------------------------------------------------------------------
 void CConCadApp::OnAppAbout()

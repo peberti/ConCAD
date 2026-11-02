@@ -664,6 +664,10 @@ namespace ConCadLibraryOrganizer
 			}
 		}
 
+		// Started from ConCAD (Library Setup → Organize, argument /concad):
+		// that ConCAD waits and reads the libraries again when we close
+		public static bool FromConCad;
+
 		public static bool ConCadRunning()
 		{
 			Process[] p = Process.GetProcessesByName("ConCAD");
@@ -671,7 +675,7 @@ namespace ConCadLibraryOrganizer
 			{
 				x.Dispose();
 			}
-			return p.Length > 0;
+			return p.Length > (FromConCad ? 1 : 0);
 		}
 	}
 
@@ -1799,6 +1803,7 @@ namespace ConCadLibraryOrganizer
 		[STAThread]
 		static void Main()
 		{
+			Places.FromConCad = Environment.GetCommandLineArgs().Skip(1).Any(a => a.Equals("/concad", StringComparison.OrdinalIgnoreCase));
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			Application.Run(new MainForm());

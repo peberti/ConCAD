@@ -28,6 +28,8 @@
 #include "Library.h"
 #include "details.h"
 #include "DSize.h"
+#include <set>
+#include <vector>
 class CConCadView;
 
 // The update hints
@@ -119,6 +121,17 @@ protected:
 	BOOL m_DuplicateObjectOnly;
 	int m_open_group; // Module group being edited, 0 = none
 	bool m_group_frames_shown; // PaintGroupFrames drew a frame last time
+
+	// Net highlight (PaintNetHighlight): the cache and what it was built for
+	static unsigned int s_net_generation; // raised by every change in any design
+	CDrawingObject *m_net_hl_source; // the net member the cache was built for
+	unsigned int m_net_hl_generation;
+	CDrawingObject *m_net_hl_painted; // source painted last time (NULL = none)
+	bool m_net_hl_pending; // not rebuilt while the mouse button was down
+	std::set<CDrawingObject*> m_net_hl_lines; // wires and cables of the net
+	std::set<CDrawingObject*> m_net_hl_boxes; // labels
+	std::vector<CDPoint> m_net_hl_points; // pins, junctions, power, no-connects
+	void BuildNetHighlight(CDrawingObject *source);
 
 public:
 	CDrawingObject* Dup(CDrawingObject *p);
@@ -239,6 +252,13 @@ public:
 	bool GetSelectionColor(COLORREF &c); // first coloured object in the selection
 	void SetSelectionColor(BOOL use, COLORREF c);
 	void PaintGroupFrames(CContext &dc);
+	// When one net member (wire, cable, label, power, junction, no-connect)
+	// is selected, draw its whole net on this sheet
+	// with a glow (called before the objects are painted)
+	void PaintNetHighlight(CContext &dc);
+	// The mouse button was released: show a net highlight held back while
+	// dragging
+	void NetHighlightMouseUp();
 
 	// Change the Z-order of the selected objects
 	void BringToFront();

@@ -574,6 +574,7 @@
 #define IDC_BUG_INTRO                   40075
 #define IDC_LIBRARY_TABS                40076
 #define IDC_MODULE_LIBRARY              40077
+#define LIBRARYBOX_ORGANIZE             40079
 #define IDM_HELP_REPORTBUG              32923
 #define IDM_EDIT_COPYTEXT               32924
 #define IDM_EDIT_CUTTEXT                32925
@@ -599,7 +600,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        192
 #define _APS_NEXT_COMMAND_VALUE         32927
-#define _APS_NEXT_CONTROL_VALUE         40079
+#define _APS_NEXT_CONTROL_VALUE         40080
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

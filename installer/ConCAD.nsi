@@ -14,6 +14,7 @@
 ; Keep the debug symbols of every installer (installer\symbols, not in
 ; git): a crash dump from a tester can only be read with the matching .pdb
 !system 'if not exist symbols mkdir symbols'
+!system '"..\tools\LibraryOrganizer\build.bat"' = 0
 !system 'copy /Y "..\Release\ConCAD.pdb" "symbols\ConCAD_${PRODUCT_VERSION}.pdb" >nul'
 !define PRODUCT_PUBLISHER "ConCAD"
 ; ConCAD has no dedicated web site; this points at the upstream TinyCAD project
@@ -87,6 +88,8 @@ Section "MainSection" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite ifnewer
   File "..\Release\ConCAD.exe"
+  ; Library Organizer (Library Setup > Organize)
+  File "..\tools\LibraryOrganizer\LibraryOrganizer.exe"
   CreateDirectory "$SMPROGRAMS\ConCAD"
   CreateShortCut "$SMPROGRAMS\ConCAD\ConCAD.lnk" "$INSTDIR\ConCAD.exe"
   CreateShortCut "$DESKTOP\ConCAD.lnk" "$INSTDIR\ConCAD.exe"
@@ -204,6 +207,7 @@ Section Uninstall
   Delete "$INSTDIR\zlib.dll"
   Delete "$INSTDIR\libpng16.dll"
   Delete "$INSTDIR\ConCAD.exe"
+  Delete "$INSTDIR\LibraryOrganizer.exe"
   Delete "$INSTDIR\installed.txt"
 
   Delete "$SMPROGRAMS\ConCAD\Uninstall.lnk"

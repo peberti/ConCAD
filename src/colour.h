@@ -31,6 +31,7 @@
 #define cBLUE			RGB(0,0,255)
 
 #define cSELECT			RGB(255,127,127)
+#define cNETHIGHLIGHT	RGB(255,214,90)	// glow under the net of the selected wire/cable
 #define cLINE			cBLACK
 #define cBOLD			cRED
 

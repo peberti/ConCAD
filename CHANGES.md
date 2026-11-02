@@ -27,7 +27,7 @@ full in the correspondingly numbered section.
   recomputed on every paint and save. (§2)
 - **Shared design details + tokens across all sheets** — title-block
   fields and tokens propagate to every sheet on Apply. (§3)
-- **Cable tool** (Shift+F2) — a wire-like object, electrically
+- **Cable tool** (F3, was Shift+F2 — see §30) — a wire-like object, electrically
   equivalent to a wire in the netlist. (§4)
 - **Connector library type + per-instance color** — symbols flagged as
   connectors can carry a per-instance color override. (§5)
@@ -269,7 +269,7 @@ internal signal wires in a schematic.
 
 ### How to use
 
-1. Press **Shift+F2** to activate the Cable tool.
+1. Press **F3** to activate the Cable tool.
 2. Click the first endpoint (snaps to the nearest pin if you're near
    one).
 3. Click the second endpoint.
@@ -1387,6 +1387,79 @@ Files: `src/ConCad.rc`, `src/resource.h`, `src/ConCad.cpp`,
 
 ---
 
+## 29. Library Setup → Organize
+
+**Library → Libraries…** has an **Organize** button under *Edit*. It
+closes the dialog and starts the Library Organizer (§26), installed next to
+`ConCAD.exe` (in a build tree ConCAD falls back to
+`tools\LibraryOrganizer\LibraryOrganizer.exe`).
+
+- ConCAD first saves its library list to the registry (the organizer reads
+  it there), then waits with its window disabled until the organizer is
+  closed, and then reads all libraries and the library list again and
+  rebuilds the symbol panel — moved, copied, deleted or edited symbols
+  and modules, and new libraries the organizer added to ConCAD's list,
+  show up without a restart.
+- Not while a library window or a symbol/module editor is open (they hold
+  the libraries that would be re-read): a message asks to close them.
+- Started this way (argument `/concad`) the organizer does not count the
+  waiting ConCAD as running: no yellow warning bar, and *New...* offers to
+  add the new library to ConCAD's list. Another ConCAD still counts.
+- The installer builds the organizer (`build.bat`) and installs
+  `LibraryOrganizer.exe` next to `ConCAD.exe`; the uninstaller removes it.
+- Fix: the symbol panel's *(recent)* list kept pointers to symbols of
+  libraries that were removed (Library Setup → Remove) and dereferenced
+  them on the next rebuild; it now checks the pointer against the attached
+  libraries first (`CLibraryCollection::ContainsRecord`).
+
+Files: `src/DlgLibraryBox.{h,cpp}`, `src/ConCad.{h,cpp}` (`LoadLibraries`,
+`OrganizeLibraries`), `src/LibraryCollection.{h,cpp}`,
+`src/DlgGetFindBox.cpp`, `src/ConCad.rc`, `src/resource.h`,
+`tools/LibraryOrganizer/LibraryOrganizer.cs`, `installer/ConCAD.nsi`,
+`manual/ConCAD.html`.
+
+---
+
+## 30. Cable tool: F3, button shows as active, tooltip
+
+- **F3** selects the Cable tool (was Shift+F2, which is now free).
+  F3 used to select *Junction*, which now has no default shortcut (one can
+  be given in Options → Keyboard Shortcuts). Existing users get the change
+  once through `ApplyNewDefaultShortcuts` (version 4, which can now also
+  remove a moved default key).
+- The **Cable** toolbar button is shown pressed while the Cable tool is
+  active, like Wire (`ON_UPDATE_COMMAND_UI(IDM_TOOLCABLE, ...)`).
+- Its tooltip/description follows Wire's: **Cable (F3)** with the
+  description *Cable connections (thick wire)*.
+
+Files: `src/ConCad.rc`, `src/ConCad.cpp`, `src/ConCadView.cpp`.
+
+---
+
+## 31. Net highlight
+
+Clicking any member of a net — a **wire, cable, label, power symbol,
+junction or no-connect** (so it is the only selected object) — highlights
+the complete net on the sheet: all wires and cables of the net get a light
+amber glow underneath, its labels an amber box, and its pins, junctions,
+power symbols and no-connects an amber dot. Nets joined by label names (also across sheets) count
+as one net, as in the netlist. Nothing changes in the file or on prints /
+exports; the highlight goes away when the selection changes.
+
+- The net is made with the normal netlist code (`CNetList::MakeNet`, this
+  design's sheets only, no hierarchical imports) when the object is selected
+  and cached until something in a design changes (undo actions, undo,
+  redo). While the mouse button is down (dragging) it is not rebuilt; it
+  comes back when the button is released.
+- Fix: `CNetList::WriteWires` now also gives cables their net number, so
+  the Line Tool Options "entire net" style change also reaches cables.
+
+Files: `src/ConCadDoc.{h,cpp}` (`PaintNetHighlight`, `BuildNetHighlight`),
+`src/Paint.cpp`, `src/ConCadView.cpp` (`OnLButtonUp`), `src/NetList.cpp`,
+`src/colour.h` (`cNETHIGHLIGHT`).
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1419,7 +1492,7 @@ XML-saved files.
    block shows `<N> of <total>`. Add a sheet; numbers update.
 3. **Shared fields** — set Title on sheet 1, OK; switch to sheet 2 —
    same Title. Repeat for a token.
-4. **Cable** — Shift+F2, click two pin points; cable renders thicker.
+4. **Cable** — F3, click two pin points; cable renders thicker.
    Run netlist; the two pins share a net. Save, reopen in Notepad,
    look for `<CABLE …/>`.
 5. **Connector** — flag a library symbol as connector, place an
@@ -1678,3 +1751,27 @@ XML-saved files.
     again → asked to replace (No → `name-2`). Import a file named
     `Simple-A4.svg` → saved as `Simple-A4-2`. Import a .txt renamed to
     .svg → an error, nothing added.
+40. **Organize** — Library → Libraries…: an *Organize* button under Edit.
+    Click it: the dialog closes, the Library Organizer opens without the
+    yellow "ConCAD is running" bar; ConCAD cannot be clicked meanwhile.
+    Move a symbol to another library, *New...* a library and add it to
+    ConCAD's list, close the organizer: ConCAD is usable again, the symbol
+    panel shows the symbol in its new library, Library → Libraries lists
+    the new library. Place a symbol first (so it is under *(recent)*),
+    then Organize and close: no crash. With a library window open,
+    Organize → message to close it first.
+41. **Cable F3 / button** — press F3: the Cable tool starts and the Cable
+    button on the Drawing toolbar is pressed (F2: the Wire button instead,
+    Cable released). Hover the Cable button: *Cable (F3)* with the
+    description *Cable connections (thick wire)*, like *Wire (F2)* / *Wire
+    connections*. Options → Keyboard Shortcuts: Cable = F3, Junction has
+    none, Shift+F2 unused. Edit → … menus show F3 next to Cable.
+42. **Net highlight** — draw two symbols joined by wires with a T, a
+    cable to a third pin, and a label `X` on that net; elsewhere (also on
+    another sheet) a wire with label `X`. Click one wire: all wires and the
+    cable of the net glow amber, the label gets a box, pins/junction get
+    dots, the unconnected wire on the same sheet does not; the `X` wire on
+    this sheet does. Click the label, the junction, a power symbol: the
+    same for their nets. Clicking a symbol shows nothing. Click empty space: the highlight disappears. Drag the wire: no
+    highlight while dragging, back after release (updated to the new
+    connections). Undo: updated. Print preview / PDF: no highlight.

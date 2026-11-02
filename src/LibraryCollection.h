@@ -76,6 +76,10 @@ public:
 	//-- Returns true if this symbol exist in any library
 	static bool ContainsSymbol(CLibraryStoreNameSet* pSymbol);
 
+	//-- Is this symbol record still part of an attached library? Only
+	//-- compares pointers, so it is safe for records of removed libraries
+	static bool ContainsRecord(const CLibraryStoreSymbol* pRecord);
+
 	//-- Returns the library with this name
 	static CLibraryStore* GetLibrary(CString sName);
 

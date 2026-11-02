@@ -122,6 +122,9 @@ protected:
 	//-- the new Microsoft Access database format.
 	afx_msg void 		OnUpgrade();
 
+	//-- Closes the dialog to run the Library Organizer
+	afx_msg void 		OnOrganize();
+
 	//-- single click on listbox refreshes it
 	afx_msg void 		OnSelchangeAvailable();
 

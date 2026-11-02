@@ -132,6 +132,27 @@ bool CLibraryCollection::ContainsSymbol(CLibraryStoreNameSet* pSymbol)
 	return bReturn;
 }
 //-------------------------------------------------------------------------
+//-- Is this symbol record still part of an attached library? Only
+//-- compares pointers, so it is safe for records of removed libraries
+bool CLibraryCollection::ContainsRecord(const CLibraryStoreSymbol* pRecord)
+{
+	for (TIterator i = m_colLibs.begin(); i != m_colLibs.end(); i++)
+	{
+		CLibraryStore::symbolCollection& symbols = (*i)->m_Symbols;
+		for (CLibraryStore::symbolCollection::iterator s = symbols.begin(); s != symbols.end(); ++s)
+		{
+			for (int r = 0; r < s->second.GetNumRecords(); ++r)
+			{
+				if (&s->second.GetRecord(r) == pRecord)
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+//-------------------------------------------------------------------------
 //-- Returns the library with this name
 CLibraryStore* CLibraryCollection::GetLibrary(CString sName)
 {

@@ -24,7 +24,7 @@ This fork extends upstream TinyCAD with:
   paint and save.
 - **Shared design details across sheets** — title-block fields and
   tokens propagate to every sheet of a design on Apply.
-- **Cable tool** (Shift+F2) — a wire-like object electrically equivalent
+- **Cable tool** (F3) — a wire-like object electrically equivalent
   to a wire in the netlist.
 - **Connector library type + per-instance color** — symbols flagged as
   connectors can carry a per-instance color override.

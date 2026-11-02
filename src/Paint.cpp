@@ -133,6 +133,12 @@ void CConCadView::OnDraw(CDC* pDC)
 		Start -= CDPoint(10, 10);
 		End += CDPoint(10, 10);
 
+		// The net of a selected wire/cable, under the objects
+		if (!pDC->IsPrinting())
+		{
+			GetCurrentDocument()->PaintNetHighlight(dc);
+		}
+
 		GetCurrentDocument()->GetSelectBegin();
 
 		drawingIterator it = GetCurrentDocument()->GetDrawingBegin();

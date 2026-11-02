@@ -71,11 +71,11 @@ Anything that touches "all sheets in the open design" lives on `CMultiSheetDoc` 
 ## Resources / IDs
 
 - `src/resource.h`, `src/ConCad.rc` — Windows resource IDs and dialog templates. **Never reuse a numeric ID**; pick fresh ones for new commands / controls.
-- `src/res/Toolbar.bmp`, `src/res/toolbar1.bmp` — drawing toolbars are 16×15-pixel sprite sheets. The "Drawing" toolbar (`IDR_DRAWING`) is currently full (15/15 slots used) — adding a new tool button means extending the bitmap and the toolbar resource. (For example, the Cable tool ships with only a keyboard shortcut for this reason; see CHANGES.md §4.)
+- `src/res/Toolbar.bmp`, `src/res/toolbar1.bmp` — drawing toolbars are 16×15-pixel sprite sheets. The "Drawing" toolbar (`IDR_DRAWING`) is currently full (15/15 slots used) — adding a new tool button means extending the bitmap and the toolbar resource. (The Cable tool button, `IDM_TOOLCABLE`, has since been added after Wire.)
 
 ## Fork-specific features
 
-`CHANGES.md` at the repo root documents the features this fork adds over upstream TinyCAD: user-defined title-block tokens, automatic "Sheets X of Y", shared design fields across sheets, the Cable drawing tool (Shift+F2), and the connector-symbol-with-per-instance-color flow. Read it before touching `CDetails`, `DrawLine`/`xCable`, or the connector color-override code in `CContext` / `CDrawMethod` — it explains both the UX and the on-disk format choices.
+`CHANGES.md` at the repo root documents the features this fork adds over upstream TinyCAD: user-defined title-block tokens, automatic "Sheets X of Y", shared design fields across sheets, the Cable drawing tool (F3 / toolbar button), and the connector-symbol-with-per-instance-color flow. Read it before touching `CDetails`, `DrawLine`/`xCable`, or the connector color-override code in `CContext` / `CDrawMethod` — it explains both the UX and the on-disk format choices.
 
 ## File-format compatibility rules
 
