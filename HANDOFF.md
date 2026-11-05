@@ -41,6 +41,10 @@
   per paint but freed). Main suspect: "Microsoft Print to PDF" driver holding
   memory in-process across exports. If it returns, watch Task Manager memory
   per export; fix would be exporting in a short-lived child process.
+  **Cause found 2026-11-05:** `_CRTDBG_DELAY_FREE_MEM_DF` in
+  `CConCadApp::InitInstance` (from TinyCAD, 2011) made Debug builds never
+  free memory; the log showed ~1 MB/s growth while painting, OOM at 1760 MB.
+  Flag removed. Release builds were never affected.
 
 - 2026-10-10: autosave/crash recovery (CHANGES.md §15, quick-test 19–20)
   built, not yet app-tested or committed.

@@ -226,6 +226,65 @@ protected:
 };
 
 /////////////////////////////////////////////////////////////////////////////
+// CDetailsPropertyPage5 - revision history (edit / delete entries)
+
+class CDetailsPropertyPage5: public CPropertyPage
+{
+	DECLARE_DYNCREATE(CDetailsPropertyPage5)
+
+private:
+	CMultiSheetDoc*   m_pDesign;
+	CRevisionHistory  m_oHistory;   // pending copy, oldest first
+	bool              m_bDirty;
+
+	void RebuildList(int selectIndex = -1);
+	int  GetSelectedIndex() const;
+	void UpdateButtons();
+
+public:
+	CDetailsPropertyPage5(CMultiSheetDoc* pDesign = NULL);
+	~CDetailsPropertyPage5();
+
+	enum { IDD = IDD_DETAILS_PAGE5 };
+
+	CListCtrl m_wndList;
+
+	virtual BOOL OnApply();
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual BOOL OnInitDialog();
+
+	afx_msg void OnEdit();
+	afx_msg void OnDelete();
+	afx_msg void OnDoubleClickList(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	DECLARE_MESSAGE_MAP()
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// CEditRevisionDlg - modal dialog for editing one revision-history entry
+
+class CEditRevisionDlg: public CDialog
+{
+public:
+	SRevisionEntry m_entry;            // in/out; description uses '\n'
+	const CRevisionHistory* m_pHistory; // for the duplicate-version check
+	int m_nIndex;                       // index of m_entry in *m_pHistory
+
+	CEditRevisionDlg(CWnd* pParent = NULL);
+	enum { IDD = IDD_EDIT_REVISION };
+
+protected:
+	CString m_sDescription;            // edit-control form ("\r\n")
+
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual BOOL OnInitDialog();
+	virtual void OnOK();
+	DECLARE_MESSAGE_MAP()
+};
+
+/////////////////////////////////////////////////////////////////////////////
 // CEditTokenDlg - modal dialog for adding/editing a single name/value pair
 
 class CEditTokenDlg: public CDialog

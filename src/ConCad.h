@@ -167,6 +167,9 @@ public:
 	static void LoadLibraries();
 	// Run the Library Organizer, wait for it and read the libraries again
 	static void OrganizeLibraries();
+	// A helper program next to ConCAD.exe (or tools\<dir>\ in a build tree);
+	// empty if not found
+	static CString FindTool(const TCHAR* exeName, const TCHAR* toolDir);
 	static void EditTextFile(const TCHAR *filename);
 	static void EditDesign(const TCHAR *filename);
 	static BOOL ChooseColor(COLORREF &col);

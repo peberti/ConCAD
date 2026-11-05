@@ -342,7 +342,7 @@ void CConCadMultiDoc::AutoSave()
 					CFile::Remove(theFileName);
 				}
 				CFile::Rename(theFileNameNew, theFileName);
-				CLog::Write(_T("Autosaved: %s"), (LPCTSTR) theFileName);
+				CLog::Write(_T("Autosaved: %s  [%d MB]"), (LPCTSTR) theFileName, CLog::PrivateMB());
 			}catch (CException *e)
 			{
 				// Could not rename the file properly

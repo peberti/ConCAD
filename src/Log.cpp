@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <map>
 #include <dbghelp.h>
+#include <psapi.h>
+#pragma comment(lib, "psapi.lib")
 #include "Log.h"
 #include "ConCad.h"
 #include "ConCadRegistry.h"
@@ -430,7 +432,37 @@ void CLog::Command(UINT id)
 {
 	if (s_file != NULL && id != 0)
 	{
-		Write(_T("Command: %s"), (LPCTSTR) CommandName(id));
+		// The memory use shows whether an out-of-memory error came from a
+		// slow leak or from one command
+		Write(_T("Command: %s  [%d MB]"), (LPCTSTR) CommandName(id), PrivateMB());
+	}
+}
+
+int CLog::PrivateMB()
+{
+	PROCESS_MEMORY_COUNTERS_EX pmc;
+	pmc.cb = sizeof(pmc);
+	if (!::GetProcessMemoryInfo(::GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*) &pmc, sizeof(pmc)))
+	{
+		return -1;
+	}
+	return (int) (pmc.PrivateUsage / (1024 * 1024));
+}
+
+void CLog::OutOfMemory()
+{
+	MEMORYSTATUSEX ms;
+	ms.dwLength = sizeof(ms);
+	::GlobalMemoryStatusEx(&ms);
+	Write(_T("Out of memory: process %d MB, free address space %I64u MB"), PrivateMB(),
+		ms.ullAvailVirtual / (1024 * 1024));
+
+	static bool s_dumped = false;
+	if (!s_dumped)
+	{
+		s_dumped = true;
+		const CString dump = WriteMiniDump(NULL);
+		Write(dump.IsEmpty() ? _T("Out of memory: no dump could be written") : _T("Out of memory: dump %s"), (LPCTSTR) dump);
 	}
 }
 

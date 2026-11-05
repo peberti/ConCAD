@@ -1185,6 +1185,7 @@
     <ClCompile Include="DrawModuleInfo.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="BugReport.cpp" />
+    <ClCompile Include="ExportBom.cpp" />
     <ClCompile Include="EditDlgModuleEdit.cpp" />
     <ClCompile Include="Paint.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
@@ -1590,6 +1591,7 @@
     <ClInclude Include="DrawModuleInfo.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="BugReport.h" />
+    <ClInclude Include="ExportBom.h" />
     <ClInclude Include="EditDlgModuleEdit.h" />
     <ClInclude Include="Registry.h" />
     <ClInclude Include="ResizeWnd.h" />

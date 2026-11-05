@@ -331,6 +331,9 @@
     <ClCompile Include="BugReport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ExportBom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="DrawModuleInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -697,6 +700,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BugReport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExportBom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DrawModuleInfo.h">

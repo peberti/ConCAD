@@ -513,6 +513,7 @@
 #define IDD_STORE_MODULE                189
 #define IDB_SPLASH                      190
 #define IDD_BUG_REPORT                  191
+#define IDD_EXPORT_BOMXL                192
 #define IDC_OPT_CONSAT_COLOR            40060
 #define IDC_OPT_FACTORY_COLOR           40061
 #define IDC_SC_LIST                     40062
@@ -575,10 +576,31 @@
 #define IDC_LIBRARY_TABS                40076
 #define IDC_MODULE_LIBRARY              40077
 #define LIBRARYBOX_ORGANIZE             40079
+#define IDC_BOM_SUMMARY                 40080
+#define IDC_BOM_TEMPLATE                40081
+#define IDC_BOM_TEMPLATE_BROWSE         40082
+#define IDC_BOM_FILENAME                40083
+#define IDC_BOM_PREVIEW                 40084
+#define IDC_BOM_FOLDER                  40085
+#define IDC_BOM_FOLDER_BROWSE           40086
+#define IDC_BOM_OPEN                    40087
+#define IDD_DETAILS_PAGE5               193
+#define IDD_EDIT_REVISION               198
+#define IDC_REV_LIST                    40088
+#define IDC_REV_EDIT                    40089
+#define IDC_REV_DELETE                  40090
+#define IDC_REV_HELP                    40091
+#define IDC_REV_VERSION                 40092
+#define IDC_REV_DATE                    40093
+#define IDC_REV_BY                      40094
+#define IDC_REV_DESCRIPTION             40095
 #define IDM_HELP_REPORTBUG              32923
 #define IDM_EDIT_COPYTEXT               32924
 #define IDM_EDIT_CUTTEXT                32925
 #define IDM_EDIT_DELETETEXT             32926
+#define IDM_TOOLWIRE_FACTORY            32927
+#define IDM_TOOLCABLE_FACTORY           32928
+#define IDM_FILE_EXPORTBOM              32929
 #define IDC_VERSION_HISTORY             40056
 #define IDC_DESIGNBOX_DESCRIPTION       40057
 #define IDC_VERSION_REVISEDBY           40058
@@ -598,9 +620,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        192
-#define _APS_NEXT_COMMAND_VALUE         32927
-#define _APS_NEXT_CONTROL_VALUE         40080
+#define _APS_NEXT_RESOURCE_VALUE        199
+#define _APS_NEXT_COMMAND_VALUE         32930
+#define _APS_NEXT_CONTROL_VALUE         40096
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

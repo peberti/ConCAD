@@ -583,7 +583,8 @@ Released versions of a design are frozen as separate, write-protected files.
   Windows user name the first time) and a **Change description** (may span
   several lines). Each version adds a record — Rev, Issue date, Change
   description, Revised by — to the design's **revision history**, stored in
-  every sheet's `<DETAILS>` and never edited afterwards.
+  every sheet's `<DETAILS>`. It can be corrected afterwards on the
+  **Revisions** tab (see below).
 - **File → Edit File** (only on a write-protected version) saves a copy as
   `Name_<version>_working.con`, clears the protection, and continues with
   that copy. If the working copy already exists you can open it or replace
@@ -601,6 +602,27 @@ design (tools, edit, undo, delete, paste, sheets, Design Details, Page Setup,
 Import, Save, …) is greyed out, and clicks on the drawing do nothing (a
 double-click explains how to get a working copy). The version file is never
 saved over; in-memory side-effects such as ERC markers are discarded on close.
+
+### Editing the revision history (Design Details → Revisions)
+
+**File → Design Details… → Revisions** lists the revision history (oldest
+first: Version, Issue date, Revised by, Change description).
+
+- **Edit…** (or double-click) changes the version name, issue date, revised
+  by and change description of one entry. The same rules as Create Version
+  apply: a version is required, cannot contain `\ / : * ? " < > | _`, and must
+  differ from the other entries; the other fields are required.
+- **Delete** removes an entry (after confirmation), e.g. one created by
+  mistake.
+- If the design's **Revision** / **Date** still show the newest entry, they
+  follow it: renaming or re-dating the newest entry updates them, deleting it
+  falls back to the entry before (deleting the only entry leaves them as they
+  are).
+- Changes are applied to every sheet on OK / Apply and save as before; the
+  revision table and `{RevN…}` tokens update at once.
+- Only the history inside the design changes — a version file already saved
+  (`Name_R7.con`) is not renamed or deleted. Like Design Details itself, the
+  tab is not available on write-protected versions; use File → Edit File.
 
 ### Drawing-Details title block
 
@@ -721,6 +743,9 @@ accidental edits; it does not secure the file.
 - `src/ConCadView.{h,cpp}` (`OnCmdMsg` command gate, mouse/key gate)
 - `src/ConCad.rc`, `src/resource.h` (menu items, status strings,
   `IDD_CREATE_VERSION`)
+- `src/DetailsPropertyPages.{h,cpp}` (`CDetailsPropertyPage5` Revisions tab,
+  `CEditRevisionDlg`), `src/DetailsPropertySheet.{h,cpp}`, `src/ConCad.rc` +
+  `src/resource.h` (`IDD_DETAILS_PAGE5`, `IDD_EDIT_REVISION`, `IDC_REV_*`)
 
 ---
 
@@ -1460,6 +1485,103 @@ Files: `src/ConCadDoc.{h,cpp}` (`PaintNetHighlight`, `BuildNetHighlight`),
 
 ---
 
+## 32. Wire / Cable in the Consat or Factory colour
+
+The Wire and Cable tools place their objects with an own colour (the
+Object → Colour override, §12):
+
+| Key | Tool | Colour |
+|---|---|---|
+| **F2** (or the Wire button) | Wire | Consat |
+| **F3** (or the Cable button) | Cable | Consat |
+| **Shift+F2** | Wire | Factory |
+| **Shift+F3** | Cable | Factory |
+
+The colours are the ones of Options → Settings → Drawing (*Consat colour…*
+/ *Factory colour…*, default blue / red), taken when the tool starts. The
+placed objects are ordinary wires/cables with `use_color`/`color`
+attributes, so Object → Colour → Default removes the colour again; a line
+split by a junction keeps it. Shift+F2 / Shift+F3 are new commands
+(`IDM_TOOLWIRE_FACTORY`, `IDM_TOOLCABLE_FACTORY`, listed in Options →
+Keyboard Shortcuts); existing users get the keys through
+`ApplyNewDefaultShortcuts` version 5.
+
+Files: `src/ConCadView.{h,cpp}` (`SelectLineTool`), `src/ConCad.rc`,
+`src/resource.h`, `src/ConCad.cpp`.
+
+---
+
+## 33. Export BoM to Excel
+
+**File → Export BoM to Excel…** (also a toolbar button after *Design
+Details*) writes the bill of materials of the design to an `.xlsx` file
+made from an Excel template.
+
+- **What is listed:** the **Partnumber** of every placed module on all
+  sheets (Module Tool Options), one row per part number with the number of
+  modules that have it, sorted by part number (CON-2 before CON-10). Type
+  and Name come from the first such module. Modules without a Partnumber
+  are left out (the dialog says how many). Nothing else is scanned.
+- **Dialog:** template (the bundled ones, the user's, or *Browse…*), file
+  name pattern with design variables (default `BOM_{Title}_{Revision}`;
+  a preview shows the result; empty variables drop out, characters Windows
+  does not allow become `_`), folder (default: the design's folder),
+  *Open the file in Excel when it is ready*. Template, pattern and the
+  check box are remembered. An existing file is replaced only after a
+  question.
+- **Templates:** `templates\bom\*.xlsx` next to `ConCAD.exe` (bundled:
+  `ConCAD-BOM.xlsx`) and `%APPDATA%\ConCAD\templates\bom\*.xlsx`
+  (*(user)*). A template is an ordinary workbook with formatting, texts
+  and formulas:
+  - `{Name}` in a cell or in the page header/footer is replaced by the
+    design variable (Design Details: `{Title}`, `{Revision}`, `{DocNo}`,
+    `{Author}`, `{Organisation}`, `{Date}`, `{Description}`,
+    `{RevisedBy}`, every user variable such as `{Customer}`, `{QTY}`,
+    `{Vehicle_Model}`; plus `{Today}` and `{FileName}`). Unknown or empty
+    variables give an empty text; a cell that holds just one variable whose
+    value is a number becomes a number (so formulas can use `{QTY}`).
+  - The first row with a `{BOM_…}` token is the **item row**, repeated
+    once per part number: `{BOM_Pos}`, `{BOM_Partnumber}`, `{BOM_Type}`,
+    `{BOM_Name}`, `{BOM_Qty}`. Its formulas follow their row
+    (`=E13*$B$10` → `=E14*$B$10` …). Rows below move down with their
+    formulas, merged cells and print area; a range that ends on the item
+    row grows over all item rows (`SUM(E13:E13)` → `SUM(E13:E20)`).
+  - Excel recalculates the file when it is opened.
+- **How:** ConCAD collects the rows and variables and runs
+  `BomExport.exe` (installed next to `ConCAD.exe`; source
+  `tools/BomExport/BomExport.cs`, built by `build.bat` with the C#
+  compiler of Windows, like the Library Organizer). Excel is not needed
+  to make the file. Errors (template missing, the file open in Excel, no
+  item row) are shown in ConCAD and logged.
+- Special → Create Parts List is unchanged.
+
+Files: `src/ExportBom.{h,cpp}`, `src/ConCadView.{h,cpp}`,
+`src/ConCad.{h,cpp}` (`FindTool`), `src/ConCad.rc`, `src/resource.h`,
+`src/res/Toolbar.bmp`, `tools/BomExport/`, `templates/bom/ConCAD-BOM.xlsx`,
+`installer/ConCAD.nsi`.
+
+---
+
+## 34. Copy / Cut / Paste of text selected in Tool Options
+
+Refines §16: when you have **selected text in a Tool Options field**
+(text, label, note, pin or power name, module parameters, line width, …),
+**Copy, Cut and Paste act on that text**: Ctrl+C / Ctrl+X / Ctrl+V
+(whatever keys they are assigned to), the Edit menu and the toolbar
+buttons alike. Paste replaces the selection with the clipboard's text
+(disabled when the clipboard holds no text).
+
+Otherwise they work on the drawing as before: with no text selected (just
+a caret), and when the **whole** name of a text, label, pin or power
+symbol is selected, as it is right after the object was clicked, Ctrl+C
+still copies the object.
+
+Files: `src/EditDlg.cpp`, `src/Diag.h` (`CEditDlg::GetSelectedTextField`),
+`src/ConCadView.{h,cpp}` (`OnEditCopyCmd` / `OnEditCutCmd` /
+`OnEditPasteCmd` and their update handlers).
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1775,3 +1897,40 @@ XML-saved files.
     same for their nets. Clicking a symbol shows nothing. Click empty space: the highlight disappears. Drag the wire: no
     highlight while dragging, back after release (updated to the new
     connections). Undo: updated. Print preview / PDF: no highlight.
+43. **Consat / Factory wires** — F2, draw a wire: it is in the Consat
+    colour (blue by default); F3 → a Consat cable. Shift+F2 / Shift+F3 →
+    wire / cable in the Factory colour (red). The Wire / Cable button is
+    pressed for both variants. Change the Consat colour in Options →
+    Settings → Drawing, F2 again → new colour (old wires keep theirs). Save,
+    reopen: colours kept. Object → Colour → Default on a wire → normal
+    wire colour. Options → Keyboard Shortcuts lists *Wire (Factory)* =
+    Shift+F2 and *Cable (Factory)* = Shift+F3.
+44. **Export BoM** — place three modules, two with Partnumber `CON-10`
+    and one with `CON-2`, one more without a Partnumber; Design Details:
+    Title, Revision, user variables `QTY` = 5 and `Customer`. File →
+    Export BoM to Excel… (or the new toolbar button): the dialog says
+    "2 part number(s) from 3 placed module(s). 1 module(s) without a
+    Partnumber are left out."; the preview shows `BOM_<Title>_<Revision>.xlsx`;
+    the folder is the design's. Export: Excel opens the file — header
+    filled in, rows `1 CON-2 … 1 5` and `2 CON-10 … 2 10`, totals 3 and 15.
+    Export again with the file still open in Excel → replace? Yes → an
+    error saying the file is open. A design without modules → message, no
+    dialog. Copy `ConCAD-BOM.xlsx` to `%APPDATA%\ConCAD\templates\bom`
+    as `Mine.xlsx`: the list shows *Mine (user)*.
+45. **Edit revisions** — on a working copy with three history entries
+    (`R6`, `R7`, `R8`; Revision `R8`): Design Details → Revisions lists all
+    three, newest selected. Edit `R7`: change description to two lines,
+    Revised by and date → OK; the list updates; OK → the revision table
+    shows the new text. Edit `R8` → rename to `R8b`: Revision on the Design
+    tab becomes `R8b`. Rename an entry to `R6` → refused (duplicate); to
+    `R_9` → refused. Delete `R8b` → confirm; OK → Revision and Date fall
+    back to `R7` and its date, the table loses a row. Cancel the dialog
+    after edits → nothing changes. Save, reopen → edits kept.
+46. **Copy/paste text in Tool Options** — click a text object: Ctrl+C,
+    then Ctrl+V pastes a copy of the object (unchanged). Now drag-select
+    part of its text in Tool Options: Ctrl+C, then select another part
+    and press Ctrl+V: the text is replaced inside the field and no object is
+    pasted. Repeat with Edit → Copy / Edit → Paste and the toolbar buttons.
+    Ctrl+X on a selection cuts only the text. With just a caret in the
+    field, Ctrl+C copies the object again. Also try a module parameter
+    field.

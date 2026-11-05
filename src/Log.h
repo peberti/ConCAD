@@ -24,6 +24,11 @@ public:
 	static void Command(UINT id);
 	// Version, Windows, screens, libraries
 	static void WriteStartupInfo();
+	// Out of memory (CMemoryException): log the memory use and, the first
+	// time in a session, write a dump of all threads
+	static void OutOfMemory();
+	// The memory committed by this process, in MB
+	static int PrivateMB();
 
 	static CString GetLogDir();
 	// The newest crash dump written within 'days' days, or empty

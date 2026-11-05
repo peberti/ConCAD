@@ -27,6 +27,8 @@
 #include "DlgColours.h"
 #include "MainFrm.h"
 #include "ConCadRegistry.h"
+#include "ExportBom.h"
+#include "ConCadMultiDoc.h"
 #include "ShortcutsDlg.h"
 #include "DrawModuleInfo.h"
 #include "diag.h"
@@ -86,9 +88,9 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_UPDATE_COMMAND_UI(IDM_REPEATNAMEUP, OnUpdateRepeatnameup)
 	ON_UPDATE_COMMAND_UI(IDM_REPEATPINDOWN, OnUpdateRepeatpindown)
 	ON_UPDATE_COMMAND_UI(IDM_REPEATPINUP, OnUpdateRepeatpinup)
-	ON_UPDATE_COMMAND_UI(IDM_EDITPASTE, OnUpdateEditpaste)
-	ON_UPDATE_COMMAND_UI(IDM_EDITCUT, OnUpdateEditcut)
-	ON_UPDATE_COMMAND_UI(IDM_EDITCOPY, OnUpdateEditcopy)
+	ON_UPDATE_COMMAND_UI(IDM_EDITPASTE, OnUpdateEditPasteCmd)
+	ON_UPDATE_COMMAND_UI(IDM_EDITCUT, OnUpdateEditCutCmd)
+	ON_UPDATE_COMMAND_UI(IDM_EDITCOPY, OnUpdateEditCopyCmd)
 	ON_UPDATE_COMMAND_UI(IDM_EDITDELITEM, OnUpdateEditDelete)
 	ON_UPDATE_COMMAND_UI(IDM_EDITSELECTALL, OnUpdateEditSelectAll)
 	ON_UPDATE_COMMAND_UI(IDM_EDITROTATELEFT, OnUpdateEditRotateLRF)
@@ -148,6 +150,8 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_COMMAND(IDM_EDIT_REVISIONHISTORY, OnEditRevisionHistory)
 	ON_UPDATE_COMMAND_UI(IDM_EDIT_REVISIONHISTORY, OnUpdateEditRevisionHistory)
 	ON_COMMAND(ID_FILE_EXPORTPDF, OnFileExportpdf)
+	ON_COMMAND(IDM_FILE_EXPORTBOM, OnFileExportBom)
+	ON_UPDATE_COMMAND_UI(IDM_FILE_EXPORTBOM, OnUpdateFileExportBom)
 	ON_COMMAND(ID_OPTIONS_COLOURS, OnOptionsColours)
 	ON_COMMAND(ID_CONTEXT_REPLACESYMBOL, OnContextReplacesymbol)
 	ON_COMMAND(ID_EDIT_INSERTPICTURE, OnEditInsertpicture)
@@ -196,9 +200,9 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_COMMAND( IDM_EDITDUP, OnEditDup )
 	ON_COMMAND( IDM_EDITROTATE, OnEditRotate )
 	ON_COMMAND( ID_FIND_FIND, OnFindFind )
-	ON_COMMAND( IDM_EDITCOPY, OnEditCopy )
-	ON_COMMAND( IDM_EDITCUT, OnEditCut )
-	ON_COMMAND( IDM_EDITPASTE, OnEditPaste )
+	ON_COMMAND( IDM_EDITCOPY, OnEditCopyCmd )
+	ON_COMMAND( IDM_EDITCUT, OnEditCutCmd )
+	ON_COMMAND( IDM_EDITPASTE, OnEditPasteCmd )
 	ON_COMMAND( IDM_EDITSELECTALL, OnEditSelectAll )
 	ON_COMMAND( IDM_EDITDUPLICATE, OnEditDuplicate )
 	ON_COMMAND( IDM_EDITROTATELEFT, OnEditRotateLeft )
@@ -224,6 +228,8 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_COMMAND( IDM_TOOLPOLYGON, OnSelectPolygon )
 	ON_COMMAND( IDM_TOOLWIRE, OnSelectWire )
 	ON_COMMAND( IDM_TOOLCABLE, OnSelectCable )
+	ON_COMMAND( IDM_TOOLWIRE_FACTORY, OnSelectWireFactory )
+	ON_COMMAND( IDM_TOOLCABLE_FACTORY, OnSelectCableFactory )
 	ON_COMMAND( IDM_TOOLJUNC, OnSelectJunction )
 	ON_COMMAND( IDM_TOOLARC, OnSelectArc )
 	ON_COMMAND( IDM_TOOLSQUARE, OnSelectSquare )
@@ -1431,6 +1437,72 @@ void CConCadView::OnUpdateEditcopy(CCmdUI* pCmdUI)
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
 }
 
+// Edit -> Cut / Copy / Paste (menu, toolbar, shortcut): while the user has
+// text selected in a Tool Options field they act on that text, otherwise on
+// the drawing (CEditDlg::GetSelectedTextField)
+void CConCadView::OnEditCopyCmd()
+{
+	if (CWnd* pField = CEditDlg::GetSelectedTextField())
+	{
+		pField->SendMessage(WM_COPY);
+		return;
+	}
+	OnEditCopy();
+}
+
+void CConCadView::OnEditCutCmd()
+{
+	if (CWnd* pField = CEditDlg::GetSelectedTextField())
+	{
+		pField->SendMessage(WM_CUT);
+		return;
+	}
+	OnEditCut();
+}
+
+void CConCadView::OnEditPasteCmd()
+{
+	if (CWnd* pField = CEditDlg::GetSelectedTextField())
+	{
+		if (::IsClipboardFormatAvailable(CF_UNICODETEXT))
+		{
+			pField->SendMessage(WM_PASTE);
+		}
+		return;
+	}
+	OnEditPaste();
+}
+
+void CConCadView::OnUpdateEditCopyCmd(CCmdUI* pCmdUI)
+{
+	if (CEditDlg::GetSelectedTextField() != NULL)
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	OnUpdateEditcopy(pCmdUI);
+}
+
+void CConCadView::OnUpdateEditCutCmd(CCmdUI* pCmdUI)
+{
+	if (CEditDlg::GetSelectedTextField() != NULL)
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	OnUpdateEditcut(pCmdUI);
+}
+
+void CConCadView::OnUpdateEditPasteCmd(CCmdUI* pCmdUI)
+{
+	if (CEditDlg::GetSelectedTextField() != NULL)
+	{
+		pCmdUI->Enable(::IsClipboardFormatAvailable(CF_UNICODETEXT));
+		return;
+	}
+	OnUpdateEditpaste(pCmdUI);
+}
+
 void CConCadView::OnUpdateEditDelete(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetCurrentDocument()->IsSelected());
@@ -2296,6 +2368,51 @@ void CConCadView::OnUpdateModuleFinishEdit(CCmdUI* pCmdUI)
 }
 
 // Object -> Colour (also on the right-click menu)
+// The Wire and Cable tools place their objects with the Consat colour
+// (F2 / F3, toolbar) or the Factory colour (Shift+F2 / Shift+F3) as their
+// own colour (Object > Colour; Options > Settings > Drawing)
+void CConCadView::SelectLineTool(ObjType type, COLORREF color)
+{
+	CDrawLine *pLine = new CDrawLine(GetCurrentDocument(), type);
+	pLine->m_use_color = TRUE;
+	pLine->m_color = color;
+	GetCurrentDocument()->SelectObject(pLine);
+}
+
+void CConCadView::OnSelectWire()
+{
+	SelectLineTool(xWire, CConCadRegistry::GetConsatColor());
+}
+
+void CConCadView::OnSelectCable()
+{
+	SelectLineTool(xCable, CConCadRegistry::GetConsatColor());
+}
+
+void CConCadView::OnSelectWireFactory()
+{
+	SelectLineTool(xWire, CConCadRegistry::GetFactoryColor());
+}
+
+void CConCadView::OnSelectCableFactory()
+{
+	SelectLineTool(xCable, CConCadRegistry::GetFactoryColor());
+}
+
+// File > Export BoM to Excel (CHANGES.md §33)
+void CConCadView::OnFileExportBom()
+{
+	if (GetDocument()->IsKindOf(RUNTIME_CLASS(CConCadMultiDoc)))
+	{
+		CDlgExportBom::Export(static_cast<CConCadMultiDoc*> (GetDocument()));
+	}
+}
+
+void CConCadView::OnUpdateFileExportBom(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(GetDocument()->IsKindOf(RUNTIME_CLASS(CConCadMultiDoc)));
+}
+
 void CConCadView::OnColorConsat()
 {
 	GetCurrentDocument()->SetSelectionColor(TRUE, CConCadRegistry::GetConsatColor());

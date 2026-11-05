@@ -150,6 +150,9 @@ public:
 	void changeSelected(CDrawingObject *previous, CDrawingObject *pObject);
 	void Close();
 
+	// The Tool Options text field holding text the user has selected, or NULL
+	static CWnd* GetSelectedTextField();
+
 protected:
 	//{{AFX_MSG(CEditDlg)
 	// No message handlers

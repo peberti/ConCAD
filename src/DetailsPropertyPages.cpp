@@ -24,6 +24,7 @@
 #include "resource.h"
 #include "MultiSheetDoc.h"
 #include "DetailsPropertyPages.h"
+#include "DetailsPropertySheet.h"
 #include "ConCadDoc.h"
 #include "Object.h"
 #include "Log.h"
@@ -32,6 +33,7 @@ IMPLEMENT_DYNCREATE(CDetailsPropertyPage1, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage2, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage3, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage4, CPropertyPage)
+IMPLEMENT_DYNCREATE(CDetailsPropertyPage5, CPropertyPage)
 
 // Reserved token names (built-ins exposed by CDetails::Resolve)
 static bool IsReservedTokenName(const CString& sName)
@@ -1176,4 +1178,288 @@ void CPickTitleTemplateDlg::OnOK()
 void CPickTitleTemplateDlg::OnListDblClk()
 {
 	OnOK();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CDetailsPropertyPage5 - Revisions: edit or delete revision-history entries
+
+// A change description on one list row: line breaks shown as " / ".
+static CString OneLine(const CString& s)
+{
+	CString r = s;
+	r.Replace(_T("\r\n"), _T("\n"));
+	r.Replace(_T("\n"), _T(" / "));
+	return r;
+}
+
+CDetailsPropertyPage5::CDetailsPropertyPage5(CMultiSheetDoc* pDesign) :
+	CPropertyPage(CDetailsPropertyPage5::IDD)
+{
+	m_pDesign = pDesign;
+	m_bDirty = false;
+	if (m_pDesign != NULL)
+	{
+		m_oHistory = m_pDesign->GetCurrentSheet()->GetDetails().GetRevisionHistory();
+	}
+}
+
+CDetailsPropertyPage5::~CDetailsPropertyPage5()
+{
+}
+
+void CDetailsPropertyPage5::DoDataExchange(CDataExchange* pDX)
+{
+	CPropertyPage::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_REV_LIST, m_wndList);
+}
+
+BEGIN_MESSAGE_MAP(CDetailsPropertyPage5, CPropertyPage)
+	ON_BN_CLICKED(IDC_REV_EDIT, OnEdit)
+	ON_BN_CLICKED(IDC_REV_DELETE, OnDelete)
+	ON_NOTIFY(NM_DBLCLK, IDC_REV_LIST, OnDoubleClickList)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_REV_LIST, OnItemChanged)
+END_MESSAGE_MAP()
+
+BOOL CDetailsPropertyPage5::OnInitDialog()
+{
+	CPropertyPage::OnInitDialog();
+
+	m_wndList.SetExtendedStyle(m_wndList.GetExtendedStyle()
+		| LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+	CRect rc;
+	m_wndList.GetClientRect(&rc);
+	const int w = rc.Width();
+	const int wRev = w * 14 / 100, wDate = w * 22 / 100, wBy = w * 24 / 100;
+	m_wndList.InsertColumn(0, _T("Version"), LVCFMT_LEFT, wRev);
+	m_wndList.InsertColumn(1, _T("Issue date"), LVCFMT_LEFT, wDate);
+	m_wndList.InsertColumn(2, _T("Revised by"), LVCFMT_LEFT, wBy);
+	m_wndList.InsertColumn(3, _T("Change description"), LVCFMT_LEFT, max(60, w - wRev - wDate - wBy - 4));
+
+	RebuildList(static_cast<int>(m_oHistory.size()) - 1);   // newest selected
+	return TRUE;
+}
+
+void CDetailsPropertyPage5::RebuildList(int selectIndex)
+{
+	m_wndList.DeleteAllItems();
+	for (int i = 0; i < static_cast<int>(m_oHistory.size()); ++i)
+	{
+		const SRevisionEntry& e = m_oHistory[i];
+		m_wndList.InsertItem(i, e.rev);
+		m_wndList.SetItemText(i, 1, e.date);
+		m_wndList.SetItemText(i, 2, e.revisedBy);
+		m_wndList.SetItemText(i, 3, OneLine(e.description));
+	}
+	if (selectIndex >= 0 && selectIndex < m_wndList.GetItemCount())
+	{
+		m_wndList.SetItemState(selectIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		m_wndList.EnsureVisible(selectIndex, FALSE);
+	}
+	UpdateButtons();
+}
+
+int CDetailsPropertyPage5::GetSelectedIndex() const
+{
+	POSITION pos = m_wndList.GetFirstSelectedItemPosition();
+	if (pos == NULL)
+	{
+		return -1;
+	}
+	int idx = m_wndList.GetNextSelectedItem(pos);
+	return (idx >= 0 && idx < static_cast<int>(m_oHistory.size())) ? idx : -1;
+}
+
+void CDetailsPropertyPage5::UpdateButtons()
+{
+	const BOOL bSel = GetSelectedIndex() >= 0;
+	GetDlgItem(IDC_REV_EDIT)->EnableWindow(bSel);
+	GetDlgItem(IDC_REV_DELETE)->EnableWindow(bSel);
+}
+
+void CDetailsPropertyPage5::OnItemChanged(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+{
+	UpdateButtons();
+	*pResult = 0;
+}
+
+void CDetailsPropertyPage5::OnEdit()
+{
+	const int idx = GetSelectedIndex();
+	if (idx < 0)
+	{
+		return;
+	}
+	CEditRevisionDlg dlg(this);
+	dlg.m_entry = m_oHistory[idx];
+	dlg.m_pHistory = &m_oHistory;
+	dlg.m_nIndex = idx;
+	if (dlg.DoModal() == IDOK)
+	{
+		m_oHistory[idx] = dlg.m_entry;
+		RebuildList(idx);
+		m_bDirty = true;
+		SetModified(TRUE);
+	}
+}
+
+void CDetailsPropertyPage5::OnDelete()
+{
+	const int idx = GetSelectedIndex();
+	if (idx < 0)
+	{
+		return;
+	}
+	CString msg;
+	msg.Format(_T("Delete version %s (%s) from the revision history?\n\n")
+		_T("Only the history entry is removed; a saved version file is left as it is."),
+		(LPCTSTR)m_oHistory[idx].rev, (LPCTSTR)m_oHistory[idx].date);
+	if (AfxMessageBox(msg, MB_YESNO | MB_ICONQUESTION) != IDYES)
+	{
+		return;
+	}
+	m_oHistory.erase(m_oHistory.begin() + idx);
+	RebuildList(min(idx, static_cast<int>(m_oHistory.size()) - 1));
+	m_bDirty = true;
+	SetModified(TRUE);
+}
+
+void CDetailsPropertyPage5::OnDoubleClickList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+{
+	OnEdit();
+	*pResult = 0;
+}
+
+BOOL CDetailsPropertyPage5::OnApply()
+{
+	if (m_bDirty && m_pDesign != NULL)
+	{
+		// Runs after the Design page's OnApply.  If Revision / Date still show
+		// the newest version, follow it: renaming or re-dating the newest
+		// entry updates them, deleting it falls back to the one before.
+		const CDetails& cur = m_pDesign->GetCurrentSheet()->GetDetails();
+		const CRevisionHistory& oldHistory = cur.GetRevisionHistory();
+		CString sRevision = cur.GetRevision();
+		CString sDate = cur.GetLastChange();
+		if (!oldHistory.empty() && !m_oHistory.empty())
+		{
+			if (sRevision == oldHistory.back().rev)
+			{
+				sRevision = m_oHistory.back().rev;
+			}
+			if (sDate == oldHistory.back().date)
+			{
+				sDate = m_oHistory.back().date;
+			}
+		}
+
+		const int total = m_pDesign->GetNumberOfSheets();
+		for (int i = 0; i < total; ++i)
+		{
+			CConCadDoc* pSheet = m_pDesign->GetSheet(i);
+			if (pSheet != NULL)
+			{
+				CDetails& d = pSheet->GetDetails();
+				d.SetRevision(sRevision);
+				d.SetLastChange(sDate);
+				d.SetRevisionHistory(m_oHistory);
+			}
+		}
+
+		// Keep the Design page in step, so a later Apply/OK there does not
+		// write the old Revision back.
+		CDetailsPropertySheet* pSheetDlg = DYNAMIC_DOWNCAST(CDetailsPropertySheet, GetParent());
+		if (pSheetDlg != NULL && ::IsWindow(pSheetDlg->m_Page1.GetSafeHwnd()))
+		{
+			pSheetDlg->m_Page1.SetDlgItemText(DESIGNBOX_REVISION, sRevision);
+			pSheetDlg->m_Page1.SetDlgItemText(DESIGNBOX_DATE, sDate);
+		}
+
+		CLog::Write(_T("Revision history edited: %d entries"), static_cast<int>(m_oHistory.size()));
+		m_pDesign->GetCurrentSheet()->GetParent()->SetModifiedFlag();
+		m_bDirty = false;
+	}
+	return CPropertyPage::OnApply();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CEditRevisionDlg
+
+CEditRevisionDlg::CEditRevisionDlg(CWnd* pParent) :
+	CDialog(CEditRevisionDlg::IDD, pParent),
+	m_pHistory(NULL),
+	m_nIndex(-1)
+{
+}
+
+void CEditRevisionDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_REV_VERSION, m_entry.rev);
+	DDX_Text(pDX, IDC_REV_DATE, m_entry.date);
+	DDX_Text(pDX, IDC_REV_BY, m_entry.revisedBy);
+	DDX_Text(pDX, IDC_REV_DESCRIPTION, m_sDescription);
+}
+
+BEGIN_MESSAGE_MAP(CEditRevisionDlg, CDialog)
+END_MESSAGE_MAP()
+
+BOOL CEditRevisionDlg::OnInitDialog()
+{
+	m_sDescription = m_entry.description;
+	m_sDescription.Replace(_T("\r\n"), _T("\n"));
+	m_sDescription.Replace(_T("\n"), _T("\r\n"));
+	CDialog::OnInitDialog();   // DDX fills the controls
+	return TRUE;
+}
+
+void CEditRevisionDlg::OnOK()
+{
+	if (!UpdateData(TRUE))
+	{
+		return;
+	}
+	m_entry.rev.Trim();
+	if (m_entry.rev.IsEmpty() || m_entry.rev.FindOneOf(_T("\\/:*?\"<>|_")) >= 0)
+	{
+		AfxMessageBox(_T("Enter a version, e.g. R7 or 1.0. It cannot contain \\ / : * ? \" < > | or _"), MB_ICONEXCLAMATION);
+		GetDlgItem(IDC_REV_VERSION)->SetFocus();
+		return;
+	}
+	if (m_pHistory != NULL)
+	{
+		for (int i = 0; i < static_cast<int>(m_pHistory->size()); ++i)
+		{
+			if (i != m_nIndex && (*m_pHistory)[i].rev.CompareNoCase(m_entry.rev) == 0)
+			{
+				AfxMessageBox(_T("Another entry in the revision history already has that version."), MB_ICONEXCLAMATION);
+				GetDlgItem(IDC_REV_VERSION)->SetFocus();
+				return;
+			}
+		}
+	}
+	m_entry.date.Trim();
+	if (m_entry.date.IsEmpty())
+	{
+		AfxMessageBox(_T("Enter the issue date (YYYY-MM-DD)."), MB_ICONEXCLAMATION);
+		GetDlgItem(IDC_REV_DATE)->SetFocus();
+		return;
+	}
+	m_entry.revisedBy.Trim();
+	if (m_entry.revisedBy.IsEmpty())
+	{
+		AfxMessageBox(_T("Enter who revised the design."), MB_ICONEXCLAMATION);
+		GetDlgItem(IDC_REV_BY)->SetFocus();
+		return;
+	}
+	m_sDescription.Trim();
+	if (m_sDescription.IsEmpty())
+	{
+		AfxMessageBox(_T("Enter a short change description."), MB_ICONEXCLAMATION);
+		GetDlgItem(IDC_REV_DESCRIPTION)->SetFocus();
+		return;
+	}
+	m_entry.description = m_sDescription;
+	m_entry.description.Replace(_T("\r\n"), _T("\n"));
+	CDialog::OnOK();
 }

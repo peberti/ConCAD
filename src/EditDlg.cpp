@@ -94,7 +94,9 @@ static UINT FindShortcutCommand(const MSG* pMsg)
 // the dialog would take the copy/cut keys for the field's text. Send them to
 // the drawing instead, so they copy/cut the selected objects. Paste goes to
 // the drawing only when the clipboard holds ConCAD objects; plain text is
-// still pasted into the field.  Delete deletes the object while the name
+// still pasted into the field.  When the user has selected text in a field
+// (other than the whole name, as right after the click), Copy / Cut / Paste
+// act on that text instead.  Delete deletes the object while the name
 // field of a text, label, pin or power symbol still has all its text
 // selected (as it has right after the object was clicked); once the caret
 // is placed in the field, Delete edits the text.
@@ -118,6 +120,45 @@ bool CEditDlg::IsWholeNameFieldSelected()
 	return start == 0 && end == pEdit->GetWindowTextLength();
 }
 
+// The focus is in a text field of a Tool Options dialog (also an edit box
+// inside a combo box or list) and the user has selected text in it: Copy /
+// Cut / Paste act on that text (keys, Edit menu and toolbar alike).  The
+// whole text of a text / label / pin / power name field selected does not
+// count: that is the state right after the object was clicked, where Copy /
+// Cut / Paste act on the objects.
+CWnd* CEditDlg::GetSelectedTextField()
+{
+	CWnd *pFocus = CWnd::GetFocus();
+	if (pFocus == NULL)
+	{
+		return NULL;
+	}
+	TCHAR cls[32] = { 0 };
+	::GetClassName(pFocus->m_hWnd, cls, _countof(cls));
+	CString sClass(cls);
+	sClass.MakeLower();
+	if (sClass.Find(_T("edit")) < 0)
+	{
+		return NULL;
+	}
+	CEditDlg *pDlg = NULL;
+	for (HWND h = ::GetParent(pFocus->m_hWnd); h != NULL && pDlg == NULL; h = ::GetParent(h))
+	{
+		pDlg = dynamic_cast<CEditDlg*>(CWnd::FromHandlePermanent(h));
+	}
+	if (pDlg == NULL)
+	{
+		return NULL;
+	}
+	DWORD start = 0, end = 0;
+	pFocus->SendMessage(EM_GETSEL, reinterpret_cast<WPARAM>(&start), reinterpret_cast<LPARAM>(&end));
+	if (start == end || pDlg->IsWholeNameFieldSelected())
+	{
+		return NULL;
+	}
+	return pFocus;
+}
+
 BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 {
 	extern CConCadView *g_currentview;
@@ -125,6 +166,18 @@ BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 	if ((pMsg->message == WM_KEYDOWN || pMsg->message == WM_SYSKEYDOWN) && g_currentview)
 	{
 		UINT id = FindShortcutCommand(pMsg);
+		CWnd *pTextField = (id == IDM_EDITCOPY || id == IDM_EDITCUT || id == IDM_EDITPASTE)
+			? GetSelectedTextField() : NULL;
+		if (pTextField != NULL)
+		{
+			// Text selected in a field: copy / cut / paste act on that text
+			if (id == IDM_EDITPASTE && !::IsClipboardFormatAvailable(CF_UNICODETEXT))
+			{
+				return TRUE;	// nothing to paste into the field
+			}
+			pTextField->SendMessage(id == IDM_EDITCOPY ? WM_COPY : id == IDM_EDITCUT ? WM_CUT : WM_PASTE);
+			return TRUE;
+		}
 		if (id == IDM_EDITCOPY || id == IDM_EDITCUT
 			|| (id == IDM_EDITPASTE && g_currentview->IsClipboardAvailable()))
 		{

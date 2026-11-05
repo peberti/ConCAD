@@ -105,6 +105,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Export as image file...",     ID_FILE_SAVEASBITMAP
         MENUITEM "Export as PDF...",            ID_FILE_EXPORTPDF
+        MENUITEM "Export &BoM to Excel...",     IDM_FILE_EXPORTBOM
         MENUITEM SEPARATOR
         MENUITEM "&Print...\tCtrl+P",           ID_FILE_PRINT
         MENUITEM "Print Preview",               ID_FILE_PRINT_PREVIEW
@@ -355,9 +356,11 @@ BEGIN
     VK_F7,          IDM_TOOLBUSNAME,        VIRTKEY, NOINVERT
     VK_F5,          IDM_TOOLCONNECT,        VIRTKEY, NOINVERT
     VK_F3,          IDM_TOOLCABLE,          VIRTKEY, NOINVERT
+    VK_F3,          IDM_TOOLCABLE_FACTORY,  VIRTKEY, SHIFT, NOINVERT
     VK_F1,          IDM_TOOLLABEL,          VIRTKEY, NOINVERT
     VK_F4,          IDM_TOOLPOWER,          VIRTKEY, NOINVERT
     VK_F2,          IDM_TOOLWIRE,           VIRTKEY, NOINVERT
+    VK_F2,          IDM_TOOLWIRE_FACTORY,   VIRTKEY, SHIFT, NOINVERT
     VK_PRIOR,       IDM_VIEWZOOMIN,         VIRTKEY, NOINVERT
     VK_NEXT,        IDM_VIEWZOOMOUT,        VIRTKEY, NOINVERT
 END
@@ -833,6 +836,27 @@ BEGIN
     PUSHBUTTON      "Upgrade",LIBRARYBOX_UPGRADE,535,164,50,14
 END
 
+IDD_EXPORT_BOMXL DIALOGEX 0, 0, 320, 150
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export BoM to Excel"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "",IDC_BOM_SUMMARY,7,7,306,18
+    LTEXT           "Template:",IDC_STATIC,7,32,50,8
+    COMBOBOX        IDC_BOM_TEMPLATE,60,30,196,120,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Browse...",IDC_BOM_TEMPLATE_BROWSE,262,29,51,14
+    LTEXT           "File name:",IDC_STATIC,7,51,50,8
+    EDITTEXT        IDC_BOM_FILENAME,60,49,253,13,ES_AUTOHSCROLL
+    LTEXT           "",IDC_BOM_PREVIEW,60,65,253,8,SS_PATHELLIPSIS
+    LTEXT           "Save in:",IDC_STATIC,7,81,50,8
+    EDITTEXT        IDC_BOM_FOLDER,60,79,196,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...",IDC_BOM_FOLDER_BROWSE,262,78,51,14
+    CONTROL         "Open the file in Excel when it is ready",IDC_BOM_OPEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,97,200,10
+    LTEXT           "The file name may use the design variables, e.g. {Title}, {Revision}, {Customer}, {Today}.",IDC_STATIC,7,113,306,8
+    DEFPUSHBUTTON   "Export",IDOK,209,129,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,263,129,50,14
+END
+
 IDD_AUTOSAVE DIALOG 0, 0, 204, 86
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Backup settings"
@@ -1204,6 +1228,7 @@ STRINGTABLE
 BEGIN
     ID_FILE_SAVEASBITMAP    "Save this design as a PNG or EMF file"
     ID_FILE_EXPORTPDF       "Export this design as a PDF file\nExport to PDF"
+    IDM_FILE_EXPORTBOM      "Export the bill of materials (the Partnumber of the placed modules) to an Excel file\nExport BoM to Excel"
     IDM_FILE_CREATEVERSION  "Save a write-protected version of this design\nCreate version"
     IDM_FILE_EDITFILE       "Make an editable working copy of this write-protected version\nEdit file"
     IDM_EDIT_REVISIONHISTORY "Show or hide the revision history table on the first sheet\nRevision history"
@@ -1663,6 +1688,34 @@ BEGIN
     LTEXT           "Current: built-in title block",IDC_TBSVG_STATE,7,134,236,8
 END
 
+IDD_DETAILS_PAGE5 DIALOGEX 0, 0, 250, 246
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Revisions"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Versions added by File > Create Version, oldest first. Edit or delete an entry; a saved version file is not changed.",IDC_REV_HELP,7,7,236,16
+    CONTROL         "",IDC_REV_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,26,236,192
+    PUSHBUTTON      "&Edit...",IDC_REV_EDIT,139,224,50,14
+    PUSHBUTTON      "&Delete",IDC_REV_DELETE,193,224,50,14
+END
+
+IDD_EDIT_REVISION DIALOGEX 0, 0, 250, 140
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Revision"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "&Version:",IDC_STATIC,7,10,40,8
+    EDITTEXT        IDC_REV_VERSION,50,8,80,14,ES_AUTOHSCROLL
+    LTEXT           "Issue &date:",IDC_STATIC,7,28,40,8
+    EDITTEXT        IDC_REV_DATE,50,26,80,14,ES_AUTOHSCROLL
+    LTEXT           "&Revised by:",IDC_STATIC,7,46,40,8
+    EDITTEXT        IDC_REV_BY,50,44,193,14,ES_AUTOHSCROLL
+    LTEXT           "&Change description (Enter starts a new line):",IDC_STATIC,7,64,236,8
+    EDITTEXT        IDC_REV_DESCRIPTION,7,75,236,40,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,139,120,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,193,120,50,14
+END
+
 IDD_PICK_TITLE_TEMPLATE DIALOGEX 0, 0, 230, 170
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "New Design"
@@ -1792,6 +1845,22 @@ BEGIN
         BOTTOMMARGIN, 142
     END
 
+    IDD_DETAILS_PAGE5, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 243
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 239
+    END
+
+    IDD_EDIT_REVISION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 243
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 133
+    END
+
     IDD_EDIT_TOKEN, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -1836,6 +1905,7 @@ BEGIN
     BUTTON      ID_FILE_PRINT
     SEPARATOR
     BUTTON      IDM_FILEDESIGN
+    BUTTON      IDM_FILE_EXPORTBOM
 END
 
 IDR_DRAWING TOOLBAR 16, 15
@@ -2283,7 +2353,7 @@ END
 STRINGTABLE
 BEGIN
     IDM_TOOLLABEL           "Label a wire\nLabel"
-    IDM_TOOLWIRE            "Wire connections\nWire"
+    IDM_TOOLWIRE            "Wire connections in the Consat colour\nWire"
     IDM_TOOLJUNC            "Junction\nJunction"
     IDM_TOOLPOWER           "Power\nPower"
     IDM_TOOLBUSNAME         "Bus name\nBus name"
@@ -2303,7 +2373,9 @@ END
 STRINGTABLE
 BEGIN
     IDM_TOOLNOTETEXT        "Multi-Line Text annotations\nNote"
-    IDM_TOOLCABLE           "Cable connections (thick wire)\nCable"
+    IDM_TOOLCABLE           "Cable connections (thick wire) in the Consat colour\nCable"
+    IDM_TOOLWIRE_FACTORY    "Wire connections in the Factory colour\nWire (Factory)"
+    IDM_TOOLCABLE_FACTORY   "Cable connections (thick wire) in the Factory colour\nCable (Factory)"
 END
 
 STRINGTABLE

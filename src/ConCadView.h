@@ -300,6 +300,12 @@ protected:
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditPaste();
+	afx_msg void OnEditCopyCmd();
+	afx_msg void OnEditCutCmd();
+	afx_msg void OnEditPasteCmd();
+	afx_msg void OnUpdateEditCopyCmd(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateEditCutCmd(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateEditPasteCmd(CCmdUI* pCmdUI);
 	afx_msg void OnEditSelectAll();
 	afx_msg void OnEditDuplicate();
 	afx_msg void OnEditRotateLeft();
@@ -317,8 +323,14 @@ protected:
 	afx_msg void OnVScroll(UINT,UINT,CScrollBar *);
 
    	// The Toolbar Menu
-	afx_msg void OnSelectWire() { GetCurrentDocument()->SelectObject(new CDrawLine(GetCurrentDocument(),xWire)); }
-	afx_msg void OnSelectCable() { GetCurrentDocument()->SelectObject(new CDrawLine(GetCurrentDocument(),xCable)); }
+	// Wire / Cable tools: Consat colour (F2 / F3), Factory colour (Shift+)
+	void SelectLineTool(ObjType type, COLORREF color);
+	afx_msg void OnSelectWire();
+	afx_msg void OnSelectCable();
+	afx_msg void OnSelectWireFactory();
+	afx_msg void OnSelectCableFactory();
+	afx_msg void OnFileExportBom();
+	afx_msg void OnUpdateFileExportBom(CCmdUI* pCmdUI);
 	afx_msg void OnSelectBus() { GetCurrentDocument()->SelectObject(new CDrawLine(GetCurrentDocument(),xBus)); }
 	afx_msg void OnSelectBusSlash() { GetCurrentDocument()->SelectObject(new CDrawBusSlash(GetCurrentDocument(),0)); }
 	afx_msg void OnSelectBusBack() { GetCurrentDocument()->SelectObject(new CDrawBusSlash(GetCurrentDocument(),1)); }

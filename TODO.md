@@ -118,7 +118,7 @@ Implement an **Align to Grid** command in TinyCAD based on the following require
 
 Add tests covering off-grid components, rotated and mirrored symbols, scaled symbols, incompatible pin pitches, junctions, wire crossings, labels, no-connect markers, short segments, and closely spaced separate nets. Verify that accepted changes land on the grid and that connectivity changes only where the user explicitly accepted a repair.
 
-## generate BoM
+## generate BoM — done 2026-11-02 (CHANGES.md §33): Partnumber of the placed modules only (decided with the user), template with {BOM_...} item row; untested in the app; the sample BOM_Bergkvara_Trelleborg_Volvo_R7.xlsx was not available
 
 a tool to extract all part numbers from all text object (text boxes, variables, labels, etc.) based on prefix like "CON-". The prefix shall be configurable in the settings menu.  The output shall be an excel file. 
 if tokens exists for project details such as: "Project name", "Customer", "Project number", etc. and Vehicle details such as: "Vehicle manufacturer", "vehicle model", "vehicle length", "quantity", etc. This should be included in the top of the BoM excel file. Default storage location is same as the .con file. Default filename should be configurable with all avilible tokens. Se sample file "BOM_Bergkvara_Trelleborg_Volvo_R7" 

@@ -324,8 +324,10 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 		{ 3, FVIRTKEY | FCONTROL | FSHIFT, VK_DELETE, IDM_EDIT_DELETETEXT },
 		{ 4, FVIRTKEY | FSHIFT, VK_F2, IDM_TOOLCABLE, true },	// Cable moved from Shift+F2 ...
 		{ 4, FVIRTKEY, VK_F3, IDM_TOOLCABLE },					// ... to F3 (was Junction)
+		{ 5, FVIRTKEY | FSHIFT, VK_F2, IDM_TOOLWIRE_FACTORY },
+		{ 5, FVIRTKEY | FSHIFT, VK_F3, IDM_TOOLCABLE_FACTORY },
 	};
-	const int latest = 4;
+	const int latest = 5;
 
 	CWinApp *pApp = AfxGetApp();
 	const int saved = pApp->GetProfileInt(_T("Keyboard"), _T("Version"), 0);
@@ -374,7 +376,10 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 BOOL CConCadApp::InitInstance()
 {
 
-	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	// Debug builds: report leaks at exit.  (_CRTDBG_DELAY_FREE_MEM_DF is not
+	// used: it never frees memory, so a Debug build ran out of memory after
+	// some minutes of painting.)
+	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 
 	//djl - this next line doesn't work, presumably because this is not the console!
 	_cwprintf(_T("CConCadApp::InitInstance():  This is displayed by _cwprintf() prior to InitCommonControls()\r\n"));
@@ -597,6 +602,10 @@ LRESULT CConCadApp::ProcessWndProcException(CException* e, const MSG* pMsg)
 		e->GetErrorMessage(text, 512);
 	}
 	CLog::Write(_T("Error (MFC exception) in message 0x%04X: %s"), pMsg != NULL ? pMsg->message : 0, text);
+	if (e != NULL && e->IsKindOf(RUNTIME_CLASS(CMemoryException)))
+	{
+		CLog::OutOfMemory();
+	}
 	return CWinAppEx::ProcessWndProcException(e, pMsg);
 }
 
@@ -1122,20 +1131,26 @@ void CConCadApp::OnLibLib()
 // (tools/LibraryOrganizer, CHANGES.md §26). ConCAD waits with its window
 // disabled while the organizer changes the library files and list, then
 // reads all libraries again.
-void CConCadApp::OrganizeLibraries()
+// Installed next to ConCAD.exe; in a build tree it is in tools\<toolDir>
+// (ConCAD.exe is in Debug\ or Release\)
+CString CConCadApp::FindTool(const TCHAR* exeName, const TCHAR* toolDir)
 {
-	// Installed next to ConCAD.exe; in a build tree it is in
-	// tools\LibraryOrganizer (ConCAD.exe is in Debug\ or Release\)
 	TCHAR szModule[MAX_PATH];
 	GetModuleFileName(NULL, szModule, MAX_PATH);
 	CString dir(szModule);
 	dir = dir.Left(dir.ReverseFind('\\') + 1);
-	CString exe = dir + _T("LibraryOrganizer.exe");
+	CString exe = dir + exeName;
 	if (GetFileAttributes(exe) == INVALID_FILE_ATTRIBUTES)
 	{
-		exe = dir + _T("..\\tools\\LibraryOrganizer\\LibraryOrganizer.exe");
+		exe = dir + _T("..\\tools\\") + toolDir + _T("\\") + exeName;
 	}
-	if (GetFileAttributes(exe) == INVALID_FILE_ATTRIBUTES)
+	return GetFileAttributes(exe) == INVALID_FILE_ATTRIBUTES ? CString() : exe;
+}
+
+void CConCadApp::OrganizeLibraries()
+{
+	const CString exe = FindTool(_T("LibraryOrganizer.exe"), _T("LibraryOrganizer"));
+	if (exe.IsEmpty())
 	{
 		AfxMessageBox(_T("The Library Organizer (LibraryOrganizer.exe) was not found next to ConCAD.exe."));
 		return;
