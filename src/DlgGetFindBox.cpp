@@ -131,13 +131,14 @@ HTREEITEM GetNextTreeItem(const CTreeCtrl & Tree, HTREEITEM cur)
 	HTREEITEM res;
 	res = Tree.GetChildItem(cur);
 	if (res != NULL) return res;
-	res = Tree.GetNextSiblingItem(cur);
-	if (res != NULL) return res;
 
-	HTREEITEM hParent = Tree.GetParentItem(cur);
-	if (hParent == NULL) return NULL; // no more items in the tree
-	res = Tree.GetNextSiblingItem(hParent);
-	return res;
+	// The next sibling of this item or of the nearest ancestor that has one
+	for (; cur != NULL; cur = Tree.GetParentItem(cur))
+	{
+		res = Tree.GetNextSiblingItem(cur);
+		if (res != NULL) return res;
+	}
+	return NULL; // no more items in the tree
 }
 
 void CDlgGetFindBox::BuildTree()
@@ -191,8 +192,26 @@ void CDlgGetFindBox::BuildTree()
 		}
 	}
 
-	// Fill libraries
-	CLibraryCollection::FillMatchingSymbols(&m_Tree, m_search_string);
+	// Fill libraries: symbol libraries under "Symbols", module libraries
+	// under "Modules" (each left out when nothing matches)
+	HTREEITEM hGroups[2];
+	for (int g = 0; g < 2; ++g)
+	{
+		const bool modules = g == 1;
+		const TCHAR* title = modules ? _T("Modules") : _T("Symbols");
+		hGroups[g] = m_Tree.InsertItem(title, TVI_ROOT);
+		m_Tree.SetItemState(hGroups[g], TVIS_BOLD, TVIS_BOLD);
+		const int matches = CLibraryCollection::FillMatchingSymbols(&m_Tree, m_search_string, modules, hGroups[g]);
+		if (matches == 0)
+		{
+			m_Tree.DeleteItem(hGroups[g]);
+			hGroups[g] = NULL;
+			continue;
+		}
+		CString sCaption;
+		sCaption.Format(_T("%s (%d)"), title, matches);
+		m_Tree.SetItemText(hGroups[g], sCaption);
+	}
 
 	CRect r;
 	m_Tree.GetClientRect(&r);
@@ -201,9 +220,23 @@ void CDlgGetFindBox::BuildTree()
 	{
 		// expand matching libraries
 		HTREEITEM cur = m_Tree.GetRootItem();
-		for (; cur != NULL; cur = m_Tree.GetNextSiblingItem(cur))
+		for (; cur != NULL; cur = GetNextTreeItem(m_Tree, cur))
 		{
-			m_Tree.Expand(cur, TVE_EXPAND);
+			if (m_Tree.ItemHasChildren(cur))
+			{
+				m_Tree.Expand(cur, TVE_EXPAND);
+			}
+		}
+	}
+	else
+	{
+		// Always show the libraries of both groups
+		for (int g = 0; g < 2; ++g)
+		{
+			if (hGroups[g] != NULL)
+			{
+				m_Tree.Expand(hGroups[g], TVE_EXPAND);
+			}
 		}
 	}
 

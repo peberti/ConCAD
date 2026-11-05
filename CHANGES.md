@@ -1463,13 +1463,16 @@ Files: `src/ConCad.rc`, `src/ConCad.cpp`, `src/ConCadView.cpp`.
 
 ## 31. Net highlight
 
-Clicking any member of a net — a **wire, cable, label, power symbol,
-junction or no-connect** (so it is the only selected object) — highlights
-the complete net on the sheet: all wires and cables of the net get a light
+**Double-clicking** any member of a net — a **wire, cable, label, power
+symbol, junction or no-connect** — highlights the complete net on the
+sheet (a single click only selects; earlier builds highlighted on a single
+click): all wires and cables of the net get a light
 amber glow underneath, its labels an amber box, and its pins, junctions,
 power symbols and no-connects an amber dot. Nets joined by label names (also across sheets) count
 as one net, as in the netlist. Nothing changes in the file or on prints /
-exports; the highlight goes away when the selection changes.
+exports; the highlight stays while that object is the only one selected
+and goes away when the selection changes. Double-clicking a module (closed
+group) still opens it for editing instead.
 
 - The net is made with the normal netlist code (`CNetList::MakeNet`, this
   design's sheets only, no hierarchical imports) when the object is selected
@@ -1479,8 +1482,10 @@ exports; the highlight goes away when the selection changes.
 - Fix: `CNetList::WriteWires` now also gives cables their net number, so
   the Line Tool Options "entire net" style change also reaches cables.
 
-Files: `src/ConCadDoc.{h,cpp}` (`PaintNetHighlight`, `BuildNetHighlight`),
-`src/Paint.cpp`, `src/ConCadView.cpp` (`OnLButtonUp`), `src/NetList.cpp`,
+Files: `src/ConCadDoc.{h,cpp}` (`PaintNetHighlight`, `BuildNetHighlight`,
+`HighlightSelectedNet`), `src/Item.cpp` (double-click in
+`CDrawEditItem::LButtonDown`), `src/Paint.cpp`, `src/ConCadView.cpp`
+(`OnLButtonUp`), `src/NetList.cpp`,
 `src/colour.h` (`cNETHIGHLIGHT`).
 
 ---
@@ -1579,6 +1584,21 @@ still copies the object.
 Files: `src/EditDlg.cpp`, `src/Diag.h` (`CEditDlg::GetSelectedTextField`),
 `src/ConCadView.{h,cpp}` (`OnEditCopyCmd` / `OnEditCutCmd` /
 `OnEditPasteCmd` and their update handlers).
+
+---
+
+## 35. Find Symbol: Symbols and Modules apart
+
+The **Find Symbol** panel lists the libraries in two groups, **Symbols**
+(symbol libraries, `.TCLib`) and **Modules** (module libraries, `.CCMod`),
+each with its number of matches, e.g. `Symbols (120)` / `Modules (8)`.
+The groups are always open, so their libraries show; a group with no
+matches for the filter is left out. **(recent)** stays on top and still
+mixes both. Placing works as before (double-click or Place Symbol).
+
+Files: `src/DlgGetFindBox.cpp` (`BuildTree`, `GetNextTreeItem` now walks
+any depth), `src/LibraryCollection.{h,cpp}` (`FillMatchingSymbols`
+per kind, under a parent node).
 
 ---
 
@@ -1890,11 +1910,12 @@ XML-saved files.
     none, Shift+F2 unused. Edit → … menus show F3 next to Cable.
 42. **Net highlight** — draw two symbols joined by wires with a T, a
     cable to a third pin, and a label `X` on that net; elsewhere (also on
-    another sheet) a wire with label `X`. Click one wire: all wires and the
+    another sheet) a wire with label `X`. Double-click one wire: all wires and the
     cable of the net glow amber, the label gets a box, pins/junction get
     dots, the unconnected wire on the same sheet does not; the `X` wire on
-    this sheet does. Click the label, the junction, a power symbol: the
-    same for their nets. Clicking a symbol shows nothing. Click empty space: the highlight disappears. Drag the wire: no
+    this sheet does. (Double-click, not click: a single click only selects
+    and shows no highlight.) Double-click the label, the junction, a power
+    symbol: the same for their nets. Clicking a symbol shows nothing. Click empty space: the highlight disappears. Drag the wire: no
     highlight while dragging, back after release (updated to the new
     connections). Undo: updated. Print preview / PDF: no highlight.
 43. **Consat / Factory wires** — F2, draw a wire: it is in the Consat
@@ -1934,3 +1955,10 @@ XML-saved files.
     Ctrl+X on a selection cuts only the text. With just a caret in the
     field, Ctrl+C copies the object again. Also try a module parameter
     field.
+47. **Find Symbol groups** — with at least one symbol library and one
+    module library loaded, the Find Symbol panel shows `Symbols (N)` and
+    `Modules (M)` in bold, open, with the libraries under them. Type a
+    filter that only matches a module: only `Modules` remains, its library
+    expanded. Select a symbol, change the filter so it still matches: the
+    symbol stays selected. Double-click a module: it is placed. Clear the
+    filter: both groups come back.

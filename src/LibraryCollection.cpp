@@ -279,16 +279,19 @@ void CLibraryCollection::FillMatchingSymbols(CListBox* lstSymbols, CString sSear
 	}
 }
 //-------------------------------------------------------------------------
-//-- Fills listbox with all symbols(of all libraries), whoose symbol name
-//-- matches the search string
-void CLibraryCollection::FillMatchingSymbols(CTreeCtrl* Tree, const CString& sSearch)
+//-- Fills the tree with the symbols (or modules) of all symbol (or module)
+//-- libraries whose name matches the search string
+int CLibraryCollection::FillMatchingSymbols(CTreeCtrl* Tree, const CString& sSearch, bool modules, HTREEITEM hParent)
 {
 	int index = 0;
+	int total = 0;
 	for (TIterator i = m_colLibs.begin(); i != m_colLibs.end(); i++)
 	{
 		CLibraryStore* pLib = *i;
+		if (pLib->m_modules != modules) continue;
 		int matches = pLib->GetMatchCount(sSearch);
 		if (matches == 0) continue;
+		total += matches;
 
 		CString sCaption;
 		CString sName = pLib->m_name;
@@ -297,7 +300,7 @@ void CLibraryCollection::FillMatchingSymbols(CTreeCtrl* Tree, const CString& sSe
 			sName = sName.Mid(sName.ReverseFind('\\') + 1);
 		}
 		sCaption.Format(_T("%s (%d)"), (LPCTSTR)sName, matches);
-		HTREEITEM hLib = Tree->InsertItem(sCaption, TVI_ROOT);
+		HTREEITEM hLib = Tree->InsertItem(sCaption, hParent);
 		Tree->SetItemData(hLib, index);
 
 		pLib->AddToTreeCtrl(sSearch, Tree, hLib);
@@ -305,6 +308,7 @@ void CLibraryCollection::FillMatchingSymbols(CTreeCtrl* Tree, const CString& sSe
 		Tree->SortChildren(hLib);
 		++index;
 	}
+	return total;
 }
 
 //-------------------------------------------------------------------------

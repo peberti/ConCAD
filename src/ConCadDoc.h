@@ -128,6 +128,7 @@ protected:
 	unsigned int m_net_hl_generation;
 	CDrawingObject *m_net_hl_painted; // source painted last time (NULL = none)
 	bool m_net_hl_pending; // not rebuilt while the mouse button was down
+	CDrawingObject *m_net_hl_requested; // net member double-clicked (NULL = none)
 	std::set<CDrawingObject*> m_net_hl_lines; // wires and cables of the net
 	std::set<CDrawingObject*> m_net_hl_boxes; // labels
 	std::vector<CDPoint> m_net_hl_points; // pins, junctions, power, no-connects
@@ -252,10 +253,14 @@ public:
 	bool GetSelectionColor(COLORREF &c); // first coloured object in the selection
 	void SetSelectionColor(BOOL use, COLORREF c);
 	void PaintGroupFrames(CContext &dc);
-	// When one net member (wire, cable, label, power, junction, no-connect)
-	// is selected, draw its whole net on this sheet
-	// with a glow (called before the objects are painted)
+	// When the net member (wire, cable, label, power, junction, no-connect)
+	// that was double-clicked is still the only selected object, draw its
+	// whole net on this sheet with a glow (called before the objects are
+	// painted)
 	void PaintNetHighlight(CContext &dc);
+	// Double-click: highlight the net of the selected object, if it is a net
+	// member; false if it is not
+	bool HighlightSelectedNet();
 	// The mouse button was released: show a net highlight held back while
 	// dragging
 	void NetHighlightMouseUp();

@@ -425,6 +425,15 @@ void CDrawEditItem::LButtonDown(CDPoint p, CDPoint no_snap_p)
 
 	ClickSelection(p, no_snap_p);
 
+	// Double-click a wire, cable, label, power symbol, junction or
+	// no-connect: highlight its net
+	if (double_click && m_pDesign->HighlightSelectedNet())
+	{
+		InMove = FALSE;
+		m_pDesign->ForceSetCursor();
+		return;
+	}
+
 	// Was a selection found?
 	// Or force selection of grabbox by holding down ALT?
 	if (!m_pDesign->IsSelected() || GetAsyncKeyState(VK_MENU) < 0)

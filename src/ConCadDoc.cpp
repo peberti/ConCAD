@@ -54,6 +54,7 @@ CConCadDoc::CConCadDoc(CMultiSheetDoc *pParent)
 	m_net_hl_generation = 0;
 	m_net_hl_painted = NULL;
 	m_net_hl_pending = false;
+	m_net_hl_requested = NULL;
 	edit = NULL;
 	NameDir = 1;
 	PinDir = 1;
@@ -2399,7 +2400,7 @@ static bool IsNetBox(CDrawingObject *o)
 	return o->GetType() == xLabelEx2;
 }
 
-// Selecting one of these highlights its net
+// Double-clicking one of these highlights its net
 static bool IsNetMember(CDrawingObject *o)
 {
 	ObjType t = o->GetType();
@@ -2469,16 +2470,31 @@ void CConCadDoc::BuildNetHighlight(CDrawingObject *source)
 	}
 }
 
+bool CConCadDoc::HighlightSelectedNet()
+{
+	CDrawingObject *o = IsSingleItemSelected() ? GetSingleSelectedItem() : NULL;
+	if (o == NULL || !IsNetMember(o))
+	{
+		return false;
+	}
+	m_net_hl_requested = o;
+	Invalidate();
+	return true;
+}
+
 void CConCadDoc::PaintNetHighlight(CContext &dc)
 {
+	// Only the double-clicked object, while it stays the only one selected;
+	// any other selection ends the highlight
 	CDrawingObject *source = NULL;
-	if (IsSingleItemSelected())
+	CDrawingObject *o = IsSingleItemSelected() ? GetSingleSelectedItem() : NULL;
+	if (o != NULL && o == m_net_hl_requested && IsNetMember(o))
 	{
-		CDrawingObject *o = GetSingleSelectedItem();
-		if (o != NULL && IsNetMember(o))
-		{
-			source = o;
-		}
+		source = o;
+	}
+	else
+	{
+		m_net_hl_requested = NULL;
 	}
 
 	// The highlight spans more than a selection change repaints

@@ -100,7 +100,9 @@ public:
 	//-- Fills listbox with all symbols(of all libraries), whoose symbol name
 	//-- matches the search string
 	static void FillMatchingSymbols(CListBox* lstSymbols, CString sSearch, CListBox* mask);
-	static void FillMatchingSymbols(CTreeCtrl* Tree, const CString& sSearch);
+	// Adds a node per symbol library (modules = false) or module library
+	// (modules = true) with matches under hParent; returns the number of matches
+	static int FillMatchingSymbols(CTreeCtrl* Tree, const CString& sSearch, bool modules, HTREEITEM hParent);
 
 	//-- Write the all library file pathes back to the registry
 	static void SaveToRegistry();
