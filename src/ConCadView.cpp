@@ -28,6 +28,7 @@
 #include "MainFrm.h"
 #include "ConCadRegistry.h"
 #include "ExportBom.h"
+#include "ReplaceTextDlg.h"
 #include "ConCadMultiDoc.h"
 #include "ShortcutsDlg.h"
 #include "DrawModuleInfo.h"
@@ -141,6 +142,7 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_UPDATE_COMMAND_UI(IDM_COLOR_CUSTOM, OnUpdateColor)
 	ON_UPDATE_COMMAND_UI(IDM_COLOR_DEFAULT, OnUpdateColor)
 	ON_COMMAND(IDM_EDIT_COPYTEXT, OnEditCopyText)
+	ON_COMMAND(IDM_EDIT_REPLACETEXT, OnEditReplaceText)
 	ON_COMMAND(IDM_EDIT_CUTTEXT, OnEditCutText)
 	ON_COMMAND(IDM_EDIT_DELETETEXT, OnEditDeleteText)
 	ON_UPDATE_COMMAND_UI(IDM_EDIT_COPYTEXT, OnUpdateEditText)
@@ -729,6 +731,14 @@ void CConCadView::OnMouseMove(UINT nFlags, CPoint p)
 
 void CConCadView::OnLButtonDown(UINT nFlags, CPoint p)
 {
+	// Keys go to the drawing after a click in it, also when a Tool Options
+	// field had the focus (a text, label or pin selected before); selecting
+	// a text below gives its field the focus again
+	if (::GetFocus() != m_hWnd)
+	{
+		SetFocus();
+	}
+
 	// No selecting, placing or dragging on a write-protected version.
 	if (IsWriteProtected())
 	{
@@ -879,6 +889,11 @@ BOOL CConCadView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 
 void CConCadView::OnRButtonDown(UINT nFlags, CPoint p)
 {
+	if (::GetFocus() != m_hWnd)
+	{
+		SetFocus();
+	}
+
 	// Create a Context for this Click
 	CContext theContext(this, GetTransform());
 
@@ -2368,35 +2383,35 @@ void CConCadView::OnUpdateModuleFinishEdit(CCmdUI* pCmdUI)
 }
 
 // Object -> Colour (also on the right-click menu)
-// The Wire and Cable tools place their objects with the Consat colour
-// (F2 / F3, toolbar) or the Factory colour (Shift+F2 / Shift+F3) as their
-// own colour (Object > Colour; Options > Settings > Drawing)
-void CConCadView::SelectLineTool(ObjType type, COLORREF color)
+// The Wire and Cable tools (F2 / F3, toolbar) place their objects in the
+// default wire / cable colour (Options > Colours); Shift+F2 / Shift+F3 give
+// them the Factory colour as their own colour (Object > Colour)
+void CConCadView::SelectLineTool(ObjType type, BOOL use_color, COLORREF color)
 {
 	CDrawLine *pLine = new CDrawLine(GetCurrentDocument(), type);
-	pLine->m_use_color = TRUE;
-	pLine->m_color = color;
+	pLine->m_use_color = use_color;
+	pLine->m_color = use_color ? color : RGB(0, 0, 0);
 	GetCurrentDocument()->SelectObject(pLine);
 }
 
 void CConCadView::OnSelectWire()
 {
-	SelectLineTool(xWire, CConCadRegistry::GetConsatColor());
+	SelectLineTool(xWire, FALSE, RGB(0, 0, 0));
 }
 
 void CConCadView::OnSelectCable()
 {
-	SelectLineTool(xCable, CConCadRegistry::GetConsatColor());
+	SelectLineTool(xCable, FALSE, RGB(0, 0, 0));
 }
 
 void CConCadView::OnSelectWireFactory()
 {
-	SelectLineTool(xWire, CConCadRegistry::GetFactoryColor());
+	SelectLineTool(xWire, TRUE, CConCadRegistry::GetFactoryColor());
 }
 
 void CConCadView::OnSelectCableFactory()
 {
-	SelectLineTool(xCable, CConCadRegistry::GetFactoryColor());
+	SelectLineTool(xCable, TRUE, CConCadRegistry::GetFactoryColor());
 }
 
 // File > Export BoM to Excel (CHANGES.md §33)
@@ -2411,6 +2426,12 @@ void CConCadView::OnFileExportBom()
 void CConCadView::OnUpdateFileExportBom(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(GetDocument()->IsKindOf(RUNTIME_CLASS(CConCadMultiDoc)));
+}
+
+// Edit > Replace Text (Ctrl+H)
+void CConCadView::OnEditReplaceText()
+{
+	CReplaceTextDlg::Show();
 }
 
 void CConCadView::OnColorConsat()

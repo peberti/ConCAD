@@ -210,10 +210,6 @@ public:
 	int      m_cableWidth;
 	BOOL     m_noteFill;
 	BOOL     m_noteRounded;
-	COLORREF m_wireColor;
-	COLORREF m_cableColor;
-	COLORREF m_consatColor;
-	COLORREF m_factoryColor;
 	LOGFONT  m_compFont;
 	BOOL     m_askTitleBlock;
 
@@ -223,10 +219,6 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 	void UpdateFontLabel();
-	afx_msg void OnWireColor();
-	afx_msg void OnCableColor();
-	afx_msg void OnConsatColor();
-	afx_msg void OnFactoryColor();
 	afx_msg void OnCompFont();
 	DECLARE_MESSAGE_MAP()
 };

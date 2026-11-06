@@ -61,12 +61,23 @@ public:
 	// Implementation
 public:
 	virtual ~CDetailsPropertySheet();
+	virtual BOOL OnInitDialog();
+
+private:
+	// Resizable: the tab control and the active page follow the frame, the
+	// buttons stay at the bottom right; never smaller than it opens.
+	CAnchorLayout m_layout;
+	CSize m_szMin;
+	void ResizeActivePage();
 
 	// Generated message map functions
 protected:
 	//{{AFX_MSG(CDetailsPropertySheet)
 	// NOTE - the ClassWizard will add and remove member functions here.
 	//}}AFX_MSG
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+	afx_msg LRESULT OnResizePage(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 };
 

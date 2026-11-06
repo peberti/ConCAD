@@ -10,6 +10,7 @@
 #include "DlgColours.h"
 #include "concad.h"
 #include "assert.h"
+#include "ConCadRegistry.h"
 
 BEGIN_MESSAGE_MAP(CDlgColours, CDialog)
 //{{AFX_MSG_MAP(CDlgColours)
@@ -19,6 +20,9 @@ BEGIN_MESSAGE_MAP(CDlgColours, CDialog)
 	ON_BN_CLICKED(IDC_COL_PIN, OnColPin)
 	ON_BN_CLICKED(IDC_COL_POWER, OnColPower)
 	ON_BN_CLICKED(IDC_COL_WIRE, OnColWire)
+	ON_BN_CLICKED(IDC_COL_CABLE, OnColCable)
+	ON_BN_CLICKED(IDC_COL_CONSAT, OnColConsat)
+	ON_BN_CLICKED(IDC_COL_FACTORY, OnColFactory)
 	ON_BN_CLICKED(IDC_COL_BACKGROUND, OnColBackground )
 	ON_BN_CLICKED(IDC_COL_NOTETEXT_FILL, OnColNoteTextFill )
 	ON_BN_CLICKED(IDC_COL_NOTETEXT_LINE, OnColNoteTextLine )
@@ -47,6 +51,10 @@ CDlgColours::CDlgColours( CUserColor& oColor )
 	m_id_map[ IDC_COL_PIN ] = CUserColor::PIN;
 	m_id_map[ IDC_COL_POWER ] = CUserColor::POWER;
 	m_id_map[ IDC_COL_WIRE ] = CUserColor::WIRE;
+	m_id_map[ IDC_COL_CABLE ] = CUserColor::CABLE;
+
+	m_consatColor  = CConCadRegistry::GetConsatColor();
+	m_factoryColor = CConCadRegistry::GetFactoryColor();
 	m_id_map[ IDC_COL_BACKGROUND ] = CUserColor::BACKGROUND;
 	m_id_map[ IDC_COL_NOTETEXT_FILL ] = CUserColor::NOTETEXT_FILL;
 	m_id_map[ IDC_COL_NOTETEXT_LINE ] = CUserColor::NOTETEXT_LINE;
@@ -94,6 +102,37 @@ void CDlgColours::OnColWire()
 	EditColor(CUserColor::WIRE);
 }
 //-------------------------------------------------------------------------
+void CDlgColours::OnColCable()
+{
+	EditColor(CUserColor::CABLE);
+}
+//-------------------------------------------------------------------------
+void CDlgColours::OnColConsat()
+{
+	PickColor(m_consatColor);
+}
+//-------------------------------------------------------------------------
+void CDlgColours::OnColFactory()
+{
+	PickColor(m_factoryColor);
+}
+//-------------------------------------------------------------------------
+void CDlgColours::PickColor(COLORREF& c)
+{
+	CHOOSECOLOR oDlg;
+	memset(&oDlg, 0, sizeof (oDlg));
+	oDlg.lStructSize = sizeof (oDlg);
+	oDlg.hwndOwner = m_hWnd;
+	oDlg.rgbResult = c;
+	oDlg.Flags = CC_ANYCOLOR | CC_RGBINIT;
+	oDlg.lpCustColors = m_oaCustomColors;
+	if (ChooseColor(&oDlg))
+	{
+		c = oDlg.rgbResult;
+	}
+	RedrawWindow();
+}
+//-------------------------------------------------------------------------
 void CDlgColours::OnColNoteTextFill()
 {
 	EditColor(CUserColor::NOTETEXT_FILL);
@@ -111,7 +150,9 @@ void CDlgColours::OnColNoteTextText()
 //-------------------------------------------------------------------------
 void CDlgColours::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
-	COLORREF crButton = m_oColor.Get(m_id_map[nIDCtl]);
+	COLORREF crButton = nIDCtl == IDC_COL_CONSAT ? m_consatColor
+		: nIDCtl == IDC_COL_FACTORY ? m_factoryColor
+		: m_oColor.Get(m_id_map[nIDCtl]);
 	CDC dc;
 	CBrush brush(crButton);
 
@@ -148,6 +189,8 @@ void CDlgColours::OnOK()
 {
 	m_oColorRef = CUserColor(m_oColor);
 	m_oColorRef.WriteRegistry();
+	CConCadRegistry::SetConsatColor(m_consatColor);
+	CConCadRegistry::SetFactoryColor(m_factoryColor);
 
 	EndDialog(IDOK);
 }
@@ -155,6 +198,8 @@ void CDlgColours::OnOK()
 void CDlgColours::OnReset()
 {
 	m_oColor.Init();
+	m_consatColor  = RGB(0, 0, 255);
+	m_factoryColor = RGB(255, 0, 0);
 	RedrawWindow();
 }
 //-------------------------------------------------------------------------

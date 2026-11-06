@@ -124,6 +124,7 @@ public:
 	afx_msg void OnColorDefault();
 	afx_msg void OnUpdateColor(CCmdUI* pCmdUI);
 	afx_msg void OnEditCopyText();
+	afx_msg void OnEditReplaceText();
 	afx_msg void OnEditCutText();
 	afx_msg void OnEditDeleteText();
 	afx_msg void OnUpdateEditText(CCmdUI* pCmdUI);
@@ -324,7 +325,7 @@ protected:
 
    	// The Toolbar Menu
 	// Wire / Cable tools: Consat colour (F2 / F3), Factory colour (Shift+)
-	void SelectLineTool(ObjType type, COLORREF color);
+	void SelectLineTool(ObjType type, BOOL use_color, COLORREF color);
 	afx_msg void OnSelectWire();
 	afx_msg void OnSelectCable();
 	afx_msg void OnSelectWireFactory();

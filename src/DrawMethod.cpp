@@ -424,6 +424,37 @@ int CDrawMethod::GetRefVal()
 	return _tstoi(GetRef().Mid(GetRef().FindOneOf(_T("0123456789"))));
 }
 
+// "P1-12" with the prefix "1-" -> 12
+int CDrawMethod::GetPagedRefVal(const CString &pagePrefix)
+{
+	const CString ref = GetRef();
+	const int first = ref.FindOneOf(_T("0123456789"));
+	if (first < 0 || ref.Mid(first, pagePrefix.GetLength()) != pagePrefix)
+	{
+		return -1;
+	}
+	const int start = first + pagePrefix.GetLength();
+	int end = start;
+	while (end < ref.GetLength() && _istdigit(ref[end]))
+	{
+		++end;
+	}
+	if (end == start)
+	{
+		return -1;
+	}
+	return _tstoi(ref.Mid(start, end - start));
+}
+
+// The reference "P?" becomes "P" + sheet number + value
+void CDrawMethod::SetRefVal(int value, const CString &pagePrefix)
+{
+	CString number;
+	number.Format(_T("%s%d"), (LPCTSTR)pagePrefix, value);
+	m_fields[Ref].m_value = GetSymbolData()->reference;
+	m_fields[Ref].m_value = m_fields[Ref].m_value.Left(m_fields[Ref].m_value.ReverseFind('?')) + number;
+}
+
 // Set the reference value
 void CDrawMethod::SetRefVal(int value)
 {
@@ -1499,7 +1530,7 @@ int CDrawMethod::SetCursorEdit(CDPoint p)
 }
 
 // Add/remove the next references
-void CDrawMethod::AddReference(int min_ref, bool all_sheets)
+void CDrawMethod::AddReference(int min_ref, bool all_sheets, const CString &pagePrefix)
 {
 	// Search the document for a gap in our references
 	// 
@@ -1513,7 +1544,21 @@ void CDrawMethod::AddReference(int min_ref, bool all_sheets)
 	bool alter_subpart = !GetSymbolData()->IsHeterogeneous() && ppp > 1;
 
 	CMultiSheetDoc *pMultiDoc = m_pDesign->GetParent();
+	const bool paged = !pagePrefix.IsEmpty();
 	int sheet = all_sheets ? 0 : pMultiDoc->GetActiveSheetIndex();
+	if (paged)
+	{
+		// Numbered per sheet: only this sheet's references count
+		all_sheets = false;
+		for (int i = 0; i < pMultiDoc->GetNumberOfSheets(); ++i)
+		{
+			if (pMultiDoc->GetSheet(i) == m_pDesign)
+			{
+				sheet = i;
+				break;
+			}
+		}
+	}
 	do
 	{
 		bool our_sheet = pMultiDoc->GetSheet(sheet) == m_pDesign;
@@ -1533,8 +1578,13 @@ void CDrawMethod::AddReference(int min_ref, bool all_sheets)
 				{
 					// This is the same reference, so we keep track
 					// of the maximum value
-					int ref_number = pMethod->GetRefVal();
+					int ref_number = paged ? pMethod->GetPagedRefVal(pagePrefix) : pMethod->GetRefVal();
 					int ppp_number = pMethod->GetSubPart();
+					if (ref_number < 0)
+					{
+						++it;
+						continue;	// another sheet's numbering
+					}
 
 					// Ok, we must keep track of the next available reference
 					if (next_available_ref <= ref_number)
@@ -1573,11 +1623,11 @@ void CDrawMethod::AddReference(int min_ref, bool all_sheets)
 			last_same_symbol_ref = next_available_ref;
 		}
 		SetPart(last_ppp_number);
-		SetRefVal(last_same_symbol_ref);
+		SetRefVal(last_same_symbol_ref, pagePrefix);
 	}
 	else
 	{
-		SetRefVal(next_available_ref);
+		SetRefVal(next_available_ref, pagePrefix);
 		if (alter_subpart)
 		{
 			SetPart(0);

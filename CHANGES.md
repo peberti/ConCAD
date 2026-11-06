@@ -1602,6 +1602,180 @@ per kind, under a parent node).
 
 ---
 
+## 36. Design Details: Keep values, resizable, Tab through variables
+
+**Keep.** On the Design tab, Title, Author, Organisation, Description,
+Revision, Document and every variable have a **Keep** tick box. A new
+design (File → New) starts with the kept values. Author and Organisation
+are ticked from the start, and Organisation is **Consat Telematics AB**
+until you change it. A value is stored when you press OK/Apply after
+editing it or newly ticking it. Opening someone else's design and pressing
+OK without changes leaves your stored values alone. Unticking stops the
+field or variable being kept. Kept variables are added to a new design's
+variables, so a title-block template that uses them shows the values at
+once. Existing files keep what they contain.
+
+Stored in the registry, not in the design: `KeepDesign<Field>` (bool),
+`DesignDefault<Field>` (text), and `KeptDesignVariables` (name/value pairs
+separated by 0x1F/0x1E).
+
+**Resizable.** The dialog is taller (the Design page is 290 instead of
+246 dialog units) and can be resized, but never smaller than it opens.
+The text fields grow with the width. On the Design page the variable list
+fills the height and shows more rows. The Title Block and Revisions lists
+grow too.
+
+**Tab.** Tab from the last visible variable scrolls the next one into view
+and selects it, so Tab walks through all variables. Shift+Tab works
+backwards. The mouse wheel scrolls the variables. The Keep boxes are not
+Tab stops.
+
+Files: `src/Details.{h,cpp}` (`IsFieldKept`, `GetKeptValue`,
+`GetKeptTokens`, `ApplyKeptValues`), `src/ConCadMultiDoc.cpp`
+(`OnNewDocument`), `src/DetailsPropertyPages.{h,cpp}` (`CAnchorLayout`,
+variable rows created at run time, Tab handling), `src/DetailsPropertySheet.{h,cpp}`
+(resizable frame), `src/ConCad.rc`, `src/resource.h`.
+
+---
+
+## 37. Find Symbol: right-click to edit
+
+Right-click an entry in the **Find Symbol** panel: **Edit Module** (for a
+module) or **Edit Symbol** opens it for editing, the same as Edit in the
+library window. **Edit Library** opens its library window. Right-clicking
+a library title offers **Edit Library**.
+
+Files: `src/DlgGetFindBox.{h,cpp}` (`OnRclickTree`).
+
+---
+
+## 38. Colour a whole wire / cable
+
+Object → Colour (Consat, Factory, Custom…, Default), from the menu or the
+right-click menu, colours the **whole length** of a selected wire or
+cable, not just the clicked segment. The run follows segments of the same
+kind (wire or cable) joined end to end, through bends. Where the line
+branches (a junction dot, more than one other line end, or a line passing
+through), it only goes straight on, so branches keep their colour. Undo
+restores all segments in one step.
+
+Files: `src/ConCadDoc.{h,cpp}` (`SetSelectionColor`, `CollectLineRun`).
+
+---
+
+## 39. Wires and cables in the default colour; colours in Options → Colours
+
+**F2 / F3** (and the Wire / Cable buttons) place wires and cables in the
+**default colour** of Options → Colours. They no longer get the Consat
+colour as their own colour. **Shift+F2 / Shift+F3** still place them in the
+Factory colour. Object → Colour works as before (§12, §38). Wires already
+placed with a colour keep it, and Object → Colour → Default removes it.
+
+All the colour settings are now in **Options → Colours**. Next to Wire,
+Bus, etc. there is **Cable**, and a new group *Object colours* has
+**Consat** and **Factory**. *Defaults* also resets Consat to blue and
+Factory to red. Options → Settings → Drawing no longer has the Wire
+colour, Cable colour, Consat colour and Factory colour buttons (it keeps
+the widths). This supersedes the colour part of §32.
+
+Files: `src/ConCadView.{h,cpp}` (`SelectLineTool`), `src/DlgColours.{h,cpp}`,
+`src/OptionsSheets.{h,cpp}`, `src/ConCad.rc`, `src/resource.h`.
+
+---
+
+## 40. Shortcuts work after a text was selected
+
+Fix: after selecting a text, label, pin or power symbol, its Tool Options
+field has the keyboard focus. Clicking a wire or cable afterwards left the
+focus there, so shortcuts (e.g. Ctrl+D assigned to Object → Colour →
+Default Colour, F2, Shift+F3) were swallowed by the Tool Options dialog
+and nothing happened. The right-click menu was not affected. Now:
+
+- A click in the drawing (left or right) gives it the keyboard focus.
+  Selecting a text still puts the focus in its name field.
+- While a Tool Options field has the focus, any Ctrl, Alt or function-key
+  shortcut is passed on to the drawing. The field keeps its own editing
+  keys: Ctrl+A, Ctrl+Z, Ctrl+Y, Ctrl with the arrow keys, Home, End,
+  Backspace, Delete and Insert. Copy, cut, paste and delete are handled
+  as before (§34).
+
+Files: `src/ConCadView.cpp` (`OnLButtonDown`, `OnRButtonDown`),
+`src/EditDlg.cpp` (`IsDrawingShortcut`).
+
+---
+
+## 41. Edit → Replace Text (Ctrl+H)
+
+A find-and-replace window for text. It stays open while you work, and
+acts on the design in the active drawing window.
+
+- **Find** / **Replace with** boxes.
+- **Where:** *Current sheet* or *All sheets*. All sheets starts with the
+  current sheet, then goes through the others in order.
+- **Search in:** tick boxes for Free text, Notes, Labels, Bus names,
+  Power names, Component references and Component fields (all fields
+  except the reference, e.g. name and value). A reference is matched
+  without its part letter (`U1`, not `U1A`).
+- **Options:** *Whole word* and *Match case*.
+- **Find Next** selects the next match, switches to its sheet and centres
+  it. The status line shows the object, the component's field and the
+  sheet. The search wraps around.
+- **Replace** replaces the current match (if it is still there) and goes
+  to the next one. Each Replace is one undo step.
+- **Replace All** replaces every match in the scope and reports how many.
+  It is **one undo step per sheet**: Ctrl+Z on a sheet restores all of
+  that sheet's replacements. With *All sheets*, each changed sheet needs
+  its own Ctrl+Z, because ConCAD keeps a separate undo history for each
+  sheet.
+- Replacing keeps each object's font, position and style. Only the text
+  changes.
+- The settings and the last Find / Replace strings are remembered
+  (registry `ReplaceText`). Ctrl+H is added to existing users' shortcuts
+  (`ApplyNewDefaultShortcuts` version 6).
+
+Files: `src/ReplaceTextDlg.{h,cpp}` (new), `src/Object.h` (`SetText` on
+text, label, power and note; `Get/SetFieldValue` on components),
+`src/ConCadView.{h,cpp}`, `src/ConCad.cpp`, `src/ConCad.rc`,
+`src/resource.h`, project files.
+
+---
+
+## 42. Generate Symbol References: sheet number prefix
+
+Special → Generate Symbol References has a new tick box, **Sheet number
+prefix (P1-1, P1-2 ...)**. When ticked, each sheet is numbered
+separately, and the number starts with the sheet number and a `-`:
+
+| Sheet | References |
+|---|---|
+| 1 | P1-1, P1-2, … P1-12, P1-13 … |
+| 2 | P2-1, P2-2, … |
+| 11 | P11-1, P11-2, … |
+
+The separator keeps the references distinct, also from sheet 10 on.
+
+- It works with the other choices. *All References* renumbers
+  everything. *Un-numbered References* only numbers the `?` ones and
+  continues after the highest existing number on that sheet. *Start at
+  value* is the number after the separator (start 5 gives P1-5,
+  P1-6 …). *All Sheets* numbers every sheet, each with its own prefix.
+- A reference that doesn't carry its sheet's prefix (e.g. `P5` or `P2-3`
+  on sheet 1, after a component was copied from another sheet) is
+  renumbered, even when *Start at value* would otherwise keep it.
+- Multi-part symbols get parts as before (U1-1A, U1-1B …).
+- **Reference painter**: with the box ticked, *Use reference painter*
+  numbers the clicked symbols the same way, with the prefix of the sheet
+  they are on. It takes the next free number on that sheet, starting at
+  *Start at value*.
+- The tick box is remembered (registry `Annotate.sheetprefix`).
+
+Files: `src/DrawMethod.cpp` / `src/Object.h` (`AddReference` with
+`pagePrefix`, `GetPagedRefVal`, `SetRefVal(value, prefix)`),
+`src/Special.{h,cpp}` (`AnnotatePagePrefix`), `src/DrawRefPainter.cpp`,
+`src/DlgAnnotateBox.cpp`, `src/ConCad.rc`, `src/resource.h`.
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -1962,3 +2136,62 @@ XML-saved files.
     expanded. Select a symbol, change the filter so it still matches: the
     symbol stays selected. Double-click a module: it is placed. Clear the
     filter: both groups come back.
+48. **Design Details Keep / resize / Tab** — File → New → Design Details:
+    Keep is ticked for Author and Organisation, Organisation is
+    `Consat Telematics AB`. Enter Author `PB`, a Title, tick Keep on Title
+    → OK. File → New: Author, Organisation and Title are filled in. Untick
+    Title → OK; the next new design has an empty Title. With a title block
+    that uses more variables than fit: Tab from Document goes to the
+    first variable, and Tab from the last visible one scrolls down. Shift+Tab
+    scrolls back up. Tick Keep on a variable, enter a value → OK. A new
+    design with the same template shows the value. Drag the dialog border:
+    the fields widen and more variable rows show. It can't be made smaller
+    than it opens. Switch to Title Block / Revisions: the lists fill the
+    page. Open a colleague's design and press OK → your kept Author is
+    unchanged.
+49. **Find Symbol right-click** — right-click a module in Find Symbol →
+    Edit Module: the module opens in an editing window. Save stores it
+    back. Right-click a symbol → Edit Symbol opens the symbol editor.
+    Right-click a library title → Edit Library opens the library window.
+    Right-clicking `Symbols` / `Modules` / `(recent)` shows nothing.
+50. **Whole wire colour** — draw a wire with two bends, then right-click
+    one segment → Colour → Factory: all three segments turn red. Add a
+    branch with a junction in the middle of a straight part. Colour the
+    main wire → Consat: the main wire on both sides of the junction
+    changes, but the branch does not. Colour the branch: only the branch
+    changes. Ctrl+Z restores the whole run in one step. A cable joined to
+    a wire end to end: colouring the cable does not change the wire.
+51. **Default wire colour / Options → Colours** — press F2 and draw a
+    wire: it has the Wire colour from Options → Colours. Do the same with
+    F3 for the Cable colour. Change the Wire colour in Options → Colours:
+    the new wire changes with it. Shift+F2 draws a red (Factory) wire.
+    Options → Colours shows Cable, Consat and Factory. Change Consat →
+    OK → Object → Colour → Consat uses the new colour. Defaults → Consat
+    blue, Factory red. Options → Settings → Drawing has no colour buttons.
+52. **Shortcuts after a text** — assign Ctrl+D to Object → Colour →
+    Default Colour. Click a text (its name field gets the caret), then
+    click a blue (Consat) cable → Ctrl+D: it gets the default colour.
+    In the name field, Ctrl+A selects all and Ctrl+Z
+    undoes typing. Press F2 while the text field has the focus: the Wire
+    tool starts.
+53. **Replace Text** — Edit → Replace Text (or Ctrl+H). Find `GND`,
+    Current sheet, all boxes ticked → Find Next: the first GND object
+    is selected and centred, and the status line names it. Find Next
+    again moves on and wraps at the end. Replace with `0V` → Replace:
+    the selected one changes and the next is found. Ctrl+Z restores
+    it. Replace All: the status reports the count. Ctrl+Z restores all
+    of them at once. Tick Whole word and search `R1`: `R10` is not
+    matched. Match case: `gnd` does not match `GND`. Untick Labels:
+    labels are skipped. With All sheets, Replace All changes the other
+    sheets too, and each sheet's Ctrl+Z restores that sheet. Component
+    fields: replace in a Value field; the reference is untouched unless
+    Component references is ticked. Fonts and positions stay the same.
+54. **Sheet number prefix** — a design with two sheets, some P? and R?
+    on each. Special → Generate Symbol References → All References, All
+    Sheets, tick Sheet number prefix → OK: sheet 1 has P1-1, P1-2 …, R1-1 …
+    and sheet 2 has P2-1 …. The 10th on a sheet is P1-10. Add a new P? on
+    sheet 1 → Un-numbered References → it gets the next free number (e.g.
+    P1-13). Start at value 5 → numbers continue from P1-5. Reference
+    painter (box ticked) on sheet 2: clicked symbols get P2-…. Ctrl+Z
+    restores the references of each sheet. Untick the box: numbering is
+    as before (P1, P2 … across the design), the painter too.

@@ -44,6 +44,11 @@ private:
 	CUserColor m_oColor;
 private:
 	std::map<int, int> m_id_map;
+private:
+	// Object > Colour colours (registry, not CUserColor)
+	COLORREF m_consatColor;
+	COLORREF m_factoryColor;
+	void PickColor(COLORREF& c);
 
 	//=====================================================================
 	//== ctor/dtor/initializing                                          ==
@@ -69,6 +74,9 @@ protected:
 	afx_msg void OnColPin();
 	afx_msg void OnColPower();
 	afx_msg void OnColWire();
+	afx_msg void OnColCable();
+	afx_msg void OnColConsat();
+	afx_msg void OnColFactory();
 	afx_msg void OnColNoteTextFill();
 	afx_msg void OnColNoteTextLine();
 	afx_msg void OnColNoteTextText();

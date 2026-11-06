@@ -26,6 +26,33 @@
 #include "Details.h"
 #include <vector>
 
+// Posted to the Design Details sheet when a page becomes active, so the
+// page is sized to the (resizable) sheet's current tab area.
+#define WM_DETAILS_RESIZEPAGE (WM_APP + 0x51)
+
+/////////////////////////////////////////////////////////////////////////////
+// CAnchorLayout - keeps controls in place in a resizable window: each control
+// moves and/or grows by how much the parent's client area has grown since
+// Init().
+
+class CAnchorLayout
+{
+public:
+	enum { MoveX = 1, MoveY = 2, SizeX = 4, SizeY = 8 };
+
+	CAnchorLayout() : m_pParent(NULL) {}
+	void Init(CWnd* pParent);
+	void Add(UINT nID, int flags);
+	void Add(HWND hWnd, int flags);
+	void Apply();
+
+private:
+	struct SItem { HWND hWnd; CRect rc; int flags; };
+	CWnd* m_pParent;
+	CSize m_szInit;
+	std::vector<SItem> m_items;
+};
+
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage1 dialog
 
@@ -36,15 +63,38 @@ class CDetailsPropertyPage1: public CPropertyPage
 private:
 	CMultiSheetDoc* m_pDesign;
 
-	// User-defined variables (tokens) editor, embedded on this page.  A fixed
+	// User-defined variables (tokens) editor, embedded on this page.  The
+	// rows (name, value, Keep) are created at run time - as many as fit -
+	// and virtualised over the token list via the scrollbar.  (Was: a fixed
 	// set of Name/Value edit rows is virtualised over the full token list via
 	// a scrollbar.  See DetailsPropertyPages.cpp for the row-commit logic.
-	struct STokenRow { CString name; CString value; };
+	struct STokenRow
+	{
+		CString name;
+		CString value;
+		bool keep;              // "Keep" ticked
+		bool keepInitial;       // ... when the dialog opened / last applied
+		CString initialValue;   // value when the dialog opened / last applied
+	};
 	std::vector<STokenRow> m_tokenRows;
 	int   m_scrollTop;        // index of the first token shown in the visible rows
 	bool  m_tokensDirty;
 	CScrollBar m_tokenScroll;
-	static const int kVisibleRows = 6;
+	static const int kMaxRows = 100;   // IDs reserved per row base in resource.h
+	int   m_visibleRows;      // rows that fit in the token area
+	int   m_createdRows;      // row controls created so far
+
+	// "Keep" of the fixed fields (CDetails::EKeepField order)
+	BOOL    m_bKeep[CDetails::kfCount];
+	bool    m_bKeepInitial[CDetails::kfCount];
+	CString m_sInitial[CDetails::kfCount];
+	CString GetFieldValue(int f) const;
+
+	CAnchorLayout m_layout;
+	bool  m_bLayoutReady;
+	void LayoutTokenRows();         // fit, create and place the rows in the token area
+	void ScrollTokensTo(int top);
+	int  TokenRowFromWnd(HWND hWnd) const;   // visible row of a value edit, or -1
 
 	void LoadTokens();              // build m_tokenRows from the tokens currently referenced in the design
 	void CollectReferencedTokenNames(std::vector<CString>& out);  // ordered, de-duped {name}s actually used
@@ -80,6 +130,8 @@ public:
 	//{{AFX_VIRTUAL(CDetailsPropertyPage1)
 public:
 	virtual BOOL OnApply();
+	virtual BOOL OnSetActive();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX); // DDX/DDV support
 	//}}AFX_VIRTUAL
@@ -91,6 +143,8 @@ protected:
 	virtual BOOL OnInitDialog();
 	//}}AFX_MSG
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	DECLARE_MESSAGE_MAP()
 
 };
@@ -129,6 +183,7 @@ public:
 	//{{AFX_VIRTUAL(CDetailsPropertyPage2)
 public:
 	virtual BOOL OnApply();
+	virtual BOOL OnSetActive();
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX); // DDX/DDV support
 	//}}AFX_VIRTUAL
@@ -214,6 +269,7 @@ public:
 	enum { IDD = IDD_DETAILS_PAGE4 };
 
 	virtual BOOL OnApply();
+	virtual BOOL OnSetActive();
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
@@ -222,7 +278,10 @@ protected:
 	afx_msg void OnImport();
 	afx_msg void OnUseBuiltin();
 	afx_msg void OnListSelChange();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	DECLARE_MESSAGE_MAP()
+
+	CAnchorLayout m_layout;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -250,6 +309,7 @@ public:
 	CListCtrl m_wndList;
 
 	virtual BOOL OnApply();
+	virtual BOOL OnSetActive();
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
@@ -259,7 +319,10 @@ protected:
 	afx_msg void OnDelete();
 	afx_msg void OnDoubleClickList(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	DECLARE_MESSAGE_MAP()
+
+	CAnchorLayout m_layout;
 };
 
 /////////////////////////////////////////////////////////////////////////////

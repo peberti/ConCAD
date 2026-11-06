@@ -26,7 +26,7 @@
 IMPLEMENT_DYNAMIC(CDetailsPropertySheet, CPropertySheet)
 
 CDetailsPropertySheet::CDetailsPropertySheet(CMultiSheetDoc* pDesign, CWnd* pWndParent) :
-	CPropertySheet(IDS_PROPSHT_CAPTION1, pWndParent), m_pDesign(pDesign),
+	CPropertySheet(IDS_PROPSHT_CAPTION1, pWndParent), m_pDesign(pDesign), m_szMin(0, 0),
 	m_Page1(pDesign), m_Page2(pDesign), m_Page3(pDesign), m_Page4(pDesign), m_Page5(pDesign)
 {
 	// Add all of the property pages here.  Note that
@@ -52,7 +52,86 @@ BEGIN_MESSAGE_MAP(CDetailsPropertySheet, CPropertySheet)
 //{{AFX_MSG_MAP(CDetailsPropertySheet)
 // NOTE - the ClassWizard will add and remove mapping macros here.
 //}}AFX_MSG_MAP
+	ON_WM_SIZE()
+	ON_WM_GETMINMAXINFO()
+	ON_MESSAGE(WM_DETAILS_RESIZEPAGE, OnResizePage)
 END_MESSAGE_MAP()
+
+BOOL CDetailsPropertySheet::OnInitDialog()
+{
+	BOOL bResult = CPropertySheet::OnInitDialog();
+
+	// Make the frame resizable, keeping the client area as it was
+	CRect rcClient;
+	GetClientRect(rcClient);
+	ModifyStyle(0, WS_THICKFRAME);
+	CRect rcWnd = rcClient;
+	::AdjustWindowRectEx(&rcWnd, GetStyle(), FALSE, GetExStyle());
+	SetWindowPos(NULL, 0, 0, rcWnd.Width(), rcWnd.Height(),
+		SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+
+	GetWindowRect(rcWnd);
+	m_szMin = rcWnd.Size();
+
+	m_layout.Init(this);
+	m_layout.Add(GetTabControl()->GetSafeHwnd(), CAnchorLayout::SizeX | CAnchorLayout::SizeY);
+	const UINT buttons[] = { IDOK, IDCANCEL, ID_APPLY_NOW, IDHELP };
+	for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i)
+	{
+		CWnd* pButton = GetDlgItem(buttons[i]);
+		if (pButton != NULL)
+		{
+			m_layout.Add(pButton->GetSafeHwnd(), CAnchorLayout::MoveX | CAnchorLayout::MoveY);
+		}
+	}
+	return bResult;
+}
+
+void CDetailsPropertySheet::ResizeActivePage()
+{
+	CPropertyPage* pPage = GetActivePage();
+	CTabCtrl* pTab = GetTabControl();
+	if (pPage == NULL || pTab == NULL || pPage->GetSafeHwnd() == NULL || pTab->GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+	CRect rc;
+	pTab->GetWindowRect(rc);
+	ScreenToClient(rc);
+	pTab->AdjustRect(FALSE, rc);
+	pPage->MoveWindow(rc);
+}
+
+void CDetailsPropertySheet::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertySheet::OnSize(nType, cx, cy);
+	if (m_szMin.cx > 0 && nType != SIZE_MINIMIZED)
+	{
+		m_layout.Apply();
+		ResizeActivePage();
+	}
+}
+
+void CDetailsPropertySheet::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	CPropertySheet::OnGetMinMaxInfo(lpMMI);
+	if (m_szMin.cx > 0)
+	{
+		lpMMI->ptMinTrackSize.x = m_szMin.cx;
+		lpMMI->ptMinTrackSize.y = m_szMin.cy;
+	}
+}
+
+// A page that just became active is sized to the current tab area (the
+// property sheet itself only places it at the size the dialog opened with).
+LRESULT CDetailsPropertySheet::OnResizePage(WPARAM, LPARAM)
+{
+	if (m_szMin.cx > 0)
+	{
+		ResizeActivePage();
+	}
+	return 0;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertySheet message handlers

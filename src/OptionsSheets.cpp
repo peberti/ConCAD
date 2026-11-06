@@ -359,8 +359,6 @@ COptionsDrawing::COptionsDrawing() :
 	m_cableWidth  = 3;
 	m_noteFill    = TRUE;
 	m_noteRounded = TRUE;
-	m_wireColor   = RGB(0, 0, 0);
-	m_cableColor  = RGB(0, 0, 0);
 	ZeroMemory(&m_compFont, sizeof(m_compFont));
 	m_askTitleBlock = TRUE;
 }
@@ -387,10 +385,6 @@ void COptionsDrawing::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(COptionsDrawing, CPropertyPage)
-	ON_BN_CLICKED(IDC_OPT_WIRE_COLOR, OnWireColor)
-	ON_BN_CLICKED(IDC_OPT_CABLE_COLOR, OnCableColor)
-	ON_BN_CLICKED(IDC_OPT_CONSAT_COLOR, OnConsatColor)
-	ON_BN_CLICKED(IDC_OPT_FACTORY_COLOR, OnFactoryColor)
 	ON_BN_CLICKED(IDC_OPT_COMP_FONT, OnCompFont)
 END_MESSAGE_MAP()
 
@@ -401,10 +395,6 @@ BOOL COptionsDrawing::OnInitDialog()
 	m_cableWidth  = pOpt->GetCableWidth();
 	m_noteFill    = pOpt->GetNoteDefaultFill();
 	m_noteRounded = pOpt->GetNoteDefaultRounded();
-	m_wireColor   = pOpt->GetUserColor().Get(CUserColor::WIRE);
-	m_cableColor  = pOpt->GetUserColor().Get(CUserColor::CABLE);
-	m_consatColor  = CConCadRegistry::GetConsatColor();
-	m_factoryColor = CConCadRegistry::GetFactoryColor();
 	m_compFont    = *pOpt->GetComponentLabelFont();
 	m_askTitleBlock = CConCadRegistry::GetAskNewTitleBlock();
 
@@ -430,42 +420,6 @@ void COptionsDrawing::UpdateFontLabel()
 	SetDlgItemText(IDC_OPT_COMP_FONT_NAME, s);
 }
 
-void COptionsDrawing::OnWireColor()
-{
-	CColorDialog dlg(m_wireColor, CC_FULLOPEN | CC_ANYCOLOR, this);
-	if (dlg.DoModal() == IDOK)
-	{
-		m_wireColor = dlg.GetColor();
-	}
-}
-
-void COptionsDrawing::OnCableColor()
-{
-	CColorDialog dlg(m_cableColor, CC_FULLOPEN | CC_ANYCOLOR, this);
-	if (dlg.DoModal() == IDOK)
-	{
-		m_cableColor = dlg.GetColor();
-	}
-}
-
-void COptionsDrawing::OnConsatColor()
-{
-	CColorDialog dlg(m_consatColor, CC_FULLOPEN | CC_ANYCOLOR, this);
-	if (dlg.DoModal() == IDOK)
-	{
-		m_consatColor = dlg.GetColor();
-	}
-}
-
-void COptionsDrawing::OnFactoryColor()
-{
-	CColorDialog dlg(m_factoryColor, CC_FULLOPEN | CC_ANYCOLOR, this);
-	if (dlg.DoModal() == IDOK)
-	{
-		m_factoryColor = dlg.GetColor();
-	}
-}
-
 void COptionsDrawing::OnCompFont()
 {
 	CFontDialog dlg(&m_compFont, CF_SCREENFONTS | CF_NOSIZESEL, NULL, this);
@@ -489,17 +443,12 @@ BOOL COptionsDrawing::OnApply()
 	pOpt->SetNoteDefaultFill(m_noteFill);
 	pOpt->SetNoteDefaultRounded(m_noteRounded);
 
-	pOpt->GetUserColor().Set(CUserColor::WIRE, m_wireColor);
-	pOpt->GetUserColor().Set(CUserColor::CABLE, m_cableColor);
-	pOpt->GetUserColor().WriteRegistry();
-
 	pOpt->SetComponentLabelFont(m_compFont);
 
 	CConCadRegistry::SetAskNewTitleBlock(m_askTitleBlock == TRUE);
-	CConCadRegistry::SetConsatColor(m_consatColor);
-	CConCadRegistry::SetFactoryColor(m_factoryColor);
 
-	// Widths / colours / label font are applied live, so refresh the drawing.
+	// Widths / label font are applied live, so refresh the drawing.
+	// (Wire, cable, Consat and Factory colours: Options > Colours.)
 	GetDocument()->Invalidate();
 
 	return CPropertyPage::OnApply();

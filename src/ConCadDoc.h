@@ -252,6 +252,8 @@ public:
 	bool GetSelectedText(CString &text);
 	bool GetSelectionColor(COLORREF &c); // first coloured object in the selection
 	void SetSelectionColor(BOOL use, COLORREF c);
+	// The whole run of a wire/cable (see ConCadDoc.cpp), added to 'run'
+	void CollectLineRun(CDrawingObject *start, std::set<CDrawingObject*> &run);
 	void PaintGroupFrames(CContext &dc);
 	// When the net member (wire, cable, label, power, junction, no-connect)
 	// that was double-clicked is still the only selected object, draw its

@@ -24,6 +24,7 @@
 #include "diag.h"
 #include "colour.h"
 #include "option.h"
+#include "special.h"
 
 ////// The Symbol reference painter object //////
 
@@ -52,7 +53,7 @@ void CDrawRefPainter::LButtonDown(CDPoint p, CDPoint no_snap_p)
 			{
 				CDrawMethod *pMethod = (CDrawMethod *) pointer;
 				m_pDesign->MarkChangeForUndo(pMethod);
-				pMethod->AddReference(m_starting_point, false);
+				pMethod->AddReference(m_starting_point, false, AnnotatePagePrefix(m_pDesign));
 				pMethod->Display(TRUE);
 			}
 		}

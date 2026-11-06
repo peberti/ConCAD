@@ -334,6 +334,9 @@
     <ClCompile Include="ExportBom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ReplaceTextDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="DrawModuleInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -703,6 +706,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ExportBom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ReplaceTextDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DrawModuleInfo.h">

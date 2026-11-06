@@ -155,6 +155,20 @@ public:
 	//-- User token accessors
 	const CDetailsTokenMap& GetUserTokens() const;
 	void SetUserTokens(const CDetailsTokenMap& tokens);
+
+	//-- "Keep" in Design Details: fields and variables whose values new
+	//-- designs start with.  Stored in the registry, not in the design.
+	enum EKeepField { kfTitle, kfAuthor, kfOrganisation, kfDescription, kfRevision, kfDocument, kfCount };
+	static bool IsFieldKept(int f);
+	static void SetFieldKept(int f, bool bKeep);
+	static CString GetKeptValue(int f);
+	static void SetKeptValue(int f, const CString& sValue);
+	static void GetKeptTokens(CDetailsTokenMap& tokens);
+	static void SetKeptTokens(const CDetailsTokenMap& tokens);
+	CString GetField(int f) const;
+	void SetField(int f, const CString& sValue);
+	//-- A new design: take the kept fields and variables
+	void ApplyKeptValues();
 	//-- Resolve {token} references inside a string.  Built-in tokens map to the
 	//-- fixed title-block fields; user-defined tokens override built-ins.
 	CString Resolve(const CString& sInput) const;

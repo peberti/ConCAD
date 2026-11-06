@@ -222,6 +222,117 @@ void CDetails::SetUserTokens(const CDetailsTokenMap& tokens)
 	m_oUserTokens = tokens;
 }
 //-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+//-- "Keep" in Design Details.  Author and Organisation are kept unless the
+//-- user unticks them; Organisation starts as Consat Telematics AB.
+static LPCTSTR const KeepFieldKey[CDetails::kfCount] =
+{
+	_T("Title"), _T("Author"), _T("Organisation"), _T("Description"), _T("Revision"), _T("Document")
+};
+static const TCHAR KeptTokenSep = _T('\x1F');     // between name and value
+static const TCHAR KeptTokenEnd = _T('\x1E');     // after each variable
+
+bool CDetails::IsFieldKept(int f)
+{
+	return CConCadRegistry::GetBool(CString(_T("KeepDesign")) + KeepFieldKey[f], f == kfAuthor || f == kfOrganisation);
+}
+//-------------------------------------------------------------------------
+void CDetails::SetFieldKept(int f, bool bKeep)
+{
+	CConCadRegistry::Set(CString(_T("KeepDesign")) + KeepFieldKey[f], bKeep);
+}
+//-------------------------------------------------------------------------
+CString CDetails::GetKeptValue(int f)
+{
+	return CConCadRegistry::GetString(CString(_T("DesignDefault")) + KeepFieldKey[f],
+		f == kfOrganisation ? CString(_T("Consat Telematics AB")) : CString());
+}
+//-------------------------------------------------------------------------
+void CDetails::SetKeptValue(int f, const CString& sValue)
+{
+	CConCadRegistry::Set(CString(_T("DesignDefault")) + KeepFieldKey[f], sValue);
+}
+//-------------------------------------------------------------------------
+void CDetails::GetKeptTokens(CDetailsTokenMap& tokens)
+{
+	tokens.clear();
+	const CString s = CConCadRegistry::GetString(_T("KeptDesignVariables"), _T(""));
+	int pos = 0;
+	while (pos < s.GetLength())
+	{
+		int end = s.Find(KeptTokenEnd, pos);
+		if (end < 0)
+		{
+			end = s.GetLength();
+		}
+		const CString entry = s.Mid(pos, end - pos);
+		pos = end + 1;
+		const int sep = entry.Find(KeptTokenSep);
+		if (sep > 0)
+		{
+			tokens[entry.Left(sep)] = entry.Mid(sep + 1);
+		}
+	}
+}
+//-------------------------------------------------------------------------
+void CDetails::SetKeptTokens(const CDetailsTokenMap& tokens)
+{
+	CString s;
+	for (CDetailsTokenMap::const_iterator it = tokens.begin(); it != tokens.end(); ++it)
+	{
+		s += it->first;
+		s += KeptTokenSep;
+		s += it->second;
+		s += KeptTokenEnd;
+	}
+	CConCadRegistry::Set(CString(_T("KeptDesignVariables")), s);
+}
+//-------------------------------------------------------------------------
+CString CDetails::GetField(int f) const
+{
+	switch (f)
+	{
+		case kfTitle:        return m_sTitle;
+		case kfAuthor:       return m_sAuthor;
+		case kfOrganisation: return m_sOrg;
+		case kfDescription:  return m_sDescription;
+		case kfRevision:     return m_sRevision;
+		case kfDocument:     return m_sDocNo;
+		default:             return CString();
+	}
+}
+//-------------------------------------------------------------------------
+void CDetails::SetField(int f, const CString& sValue)
+{
+	switch (f)
+	{
+		case kfTitle:        m_sTitle = sValue;       break;
+		case kfAuthor:       m_sAuthor = sValue;      break;
+		case kfOrganisation: m_sOrg = sValue;         break;
+		case kfDescription:  m_sDescription = sValue; break;
+		case kfRevision:     m_sRevision = sValue;    break;
+		case kfDocument:     m_sDocNo = sValue;       break;
+		default:             break;
+	}
+}
+//-------------------------------------------------------------------------
+void CDetails::ApplyKeptValues()
+{
+	for (int f = 0; f < kfCount; ++f)
+	{
+		if (IsFieldKept(f))
+		{
+			SetField(f, GetKeptValue(f));
+		}
+	}
+	CDetailsTokenMap kept;
+	GetKeptTokens(kept);
+	if (!kept.empty())
+	{
+		m_oUserTokens = kept;
+	}
+}
+//-------------------------------------------------------------------------
 void CDetails::SetSheetContext(int num, int total)
 {
 	m_iSheetNum = num;

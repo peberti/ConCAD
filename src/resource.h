@@ -594,6 +594,41 @@
 #define IDC_REV_DATE                    40093
 #define IDC_REV_BY                      40094
 #define IDC_REV_DESCRIPTION             40095
+#define IDC_KEEP_HEADER                 40096
+#define IDC_KEEP_TITLE                  40097
+#define IDC_KEEP_AUTHOR                 40098
+#define IDC_KEEP_ORGANISATION           40099
+#define IDC_KEEP_DESCRIPTION            40100
+#define IDC_KEEP_REVISION               40101
+#define IDC_KEEP_DOCUMENT               40102
+#define IDC_TOK_HEADER                  40103
+// Design Details variable rows are created at run time: 100 IDs from each base
+#define IDC_TOK_NAME_BASE               40110
+#define IDC_TOK_VAL_BASE                40210
+#define IDC_TOK_KEEP_BASE               40310
+#define IDC_COL_CABLE                   40410
+#define IDC_COL_CONSAT                  40411
+#define IDC_COL_FACTORY                 40412
+#define IDC_RT_FIND                     40413
+#define IDC_RT_REPLACE                  40414
+#define IDC_RT_SHEET                    40415
+#define IDC_RT_ALLSHEETS                40416
+#define IDC_RT_TEXT                     40417
+#define IDC_RT_NOTES                    40418
+#define IDC_RT_LABELS                   40419
+#define IDC_RT_BUSNAMES                 40420
+#define IDC_RT_POWER                    40421
+#define IDC_RT_REFS                     40422
+#define IDC_RT_FIELDS                   40423
+#define IDC_RT_WHOLEWORD                40424
+#define IDC_RT_MATCHCASE                40425
+#define IDC_RT_FINDNEXT                 40426
+#define IDC_RT_REPLACEONE               40427
+#define IDC_RT_REPLACEALL               40428
+#define IDC_RT_STATUS                   40429
+#define IDC_ANNOTATE_SHEETPREFIX        40430
+#define IDD_REPLACE_TEXT                199
+#define IDM_EDIT_REPLACETEXT            32930
 #define IDM_HELP_REPORTBUG              32923
 #define IDM_EDIT_COPYTEXT               32924
 #define IDM_EDIT_CUTTEXT                32925
@@ -620,9 +655,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        199
-#define _APS_NEXT_COMMAND_VALUE         32930
-#define _APS_NEXT_CONTROL_VALUE         40096
+#define _APS_NEXT_RESOURCE_VALUE        200
+#define _APS_NEXT_COMMAND_VALUE         32931
+#define _APS_NEXT_CONTROL_VALUE         40431
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

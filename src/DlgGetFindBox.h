@@ -88,6 +88,7 @@ public:
 	afx_msg void OnDestroy();
     afx_msg void OnTreeSelect(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnDblclkTree(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnRclickTree(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 };
 

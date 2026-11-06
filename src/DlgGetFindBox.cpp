@@ -62,6 +62,7 @@ BEGIN_MESSAGE_MAP(CDlgGetFindBox, CInitDialogBar)
 	ON_WM_DESTROY()
 	ON_NOTIFY(TVN_SELCHANGED, IDC_SYMBOL_TREE, &CDlgGetFindBox::OnTreeSelect)
 	ON_NOTIFY(NM_DBLCLK, IDC_SYMBOL_TREE, &CDlgGetFindBox::OnDblclkTree)
+	ON_NOTIFY(NM_RCLICK, IDC_SYMBOL_TREE, &CDlgGetFindBox::OnRclickTree)
 	ON_WM_SHOWWINDOW()
 	//ON_MESSAGE(WM_INITDIALOG, &CDlgGetFindBox::HandleInitDialog)
 END_MESSAGE_MAP()
@@ -97,6 +98,79 @@ void CDlgGetFindBox::OnDblclkTree(NMHDR * /*pNMHDR*/, LRESULT *pResult)
 	HTREEITEM hItem = m_Tree.GetSelectedItem();
 	if (!m_Tree.ItemHasChildren(hItem)) AfxGetMainWnd()->PostMessage(WM_COMMAND, IDM_TOOLGET);
 	*pResult = 0;
+}
+
+// Right-click: Edit Module / Edit Symbol on an entry, Edit Library on a
+// library title
+void CDlgGetFindBox::OnRclickTree(NMHDR * /*pNMHDR*/, LRESULT *pResult)
+{
+	*pResult = 1;	// handled: no WM_CONTEXTMENU
+	CPoint ptScreen;
+	GetCursorPos(&ptScreen);
+	CPoint pt = ptScreen;
+	m_Tree.ScreenToClient(&pt);
+	UINT flags = 0;
+	HTREEITEM hItem = m_Tree.HitTest(pt, &flags);
+	if (hItem == NULL || (flags & TVHT_ONITEM) == 0)
+	{
+		return;
+	}
+	m_Tree.SelectItem(hItem);
+
+	enum { CmdEditEntry = 1, CmdEditLibrary = 2 };
+	CMenu menu;
+	menu.CreatePopupMenu();
+	CLibraryStoreSymbol* pSymbol = NULL;
+	CLibraryStore* pLib = NULL;
+	if (!m_Tree.ItemHasChildren(hItem))
+	{
+		pSymbol = reinterpret_cast<CLibraryStoreSymbol*> (m_Tree.GetItemData(hItem));
+		if (pSymbol == NULL || pSymbol->m_pParent == NULL || pSymbol->m_pParent->lib == NULL)
+		{
+			return;
+		}
+		menu.AppendMenu(MF_STRING, CmdEditEntry, pSymbol->is_module ? _T("Edit Module") : _T("Edit Symbol"));
+		menu.AppendMenu(MF_STRING, CmdEditLibrary, _T("Edit Library"));
+		pLib = pSymbol->m_pParent->lib;
+	}
+	else if (m_Tree.GetParentItem(hItem) != NULL)
+	{
+		// A library title: its library is the one of its entries
+		HTREEITEM hChild = m_Tree.GetChildItem(hItem);
+		if (hChild == NULL || m_Tree.ItemHasChildren(hChild))
+		{
+			return;
+		}
+		CLibraryStoreSymbol* pFirst = reinterpret_cast<CLibraryStoreSymbol*> (m_Tree.GetItemData(hChild));
+		if (pFirst == NULL || pFirst->m_pParent == NULL || pFirst->m_pParent->lib == NULL)
+		{
+			return;
+		}
+		pLib = pFirst->m_pParent->lib;
+		menu.AppendMenu(MF_STRING, CmdEditLibrary, _T("Edit Library"));
+	}
+	else
+	{
+		return;	// "Symbols" / "Modules" / "(recent)"
+	}
+
+	const UINT cmd = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+		ptScreen.x, ptScreen.y, this);
+	if (cmd == CmdEditEntry && pSymbol != NULL)
+	{
+		if (pSymbol->is_module)
+		{
+			CConCadApp::EditModule(pSymbol->m_pParent->lib, *pSymbol->m_pParent);
+		}
+		else
+		{
+			CConCadApp::EditSymbol(pSymbol->m_pParent->lib, *pSymbol->m_pParent);
+		}
+	}
+	else if (cmd == CmdEditLibrary && pLib != NULL)
+	{
+		CConCadApp::EditLibrary(pLib);
+	}
 }
 
 void CDlgGetFindBox::OnTreeSelect(NMHDR * /*pNMHDR*/, LRESULT *pResult)

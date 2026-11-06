@@ -326,8 +326,9 @@ static void ApplyNewDefaultShortcuts(CFrameWnd *pFrame)
 		{ 4, FVIRTKEY, VK_F3, IDM_TOOLCABLE },					// ... to F3 (was Junction)
 		{ 5, FVIRTKEY | FSHIFT, VK_F2, IDM_TOOLWIRE_FACTORY },
 		{ 5, FVIRTKEY | FSHIFT, VK_F3, IDM_TOOLCABLE_FACTORY },
+		{ 6, FVIRTKEY | FCONTROL, 'H', IDM_EDIT_REPLACETEXT },
 	};
-	const int latest = 5;
+	const int latest = 6;
 
 	CWinApp *pApp = AfxGetApp();
 	const int saved = pApp->GetProfileInt(_T("Keyboard"), _T("Version"), 0);

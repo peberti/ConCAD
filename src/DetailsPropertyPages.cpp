@@ -28,6 +28,7 @@
 #include "ConCadDoc.h"
 #include "Object.h"
 #include "Log.h"
+#include "ConCadRegistry.h"
 
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage1, CPropertyPage)
 IMPLEMENT_DYNCREATE(CDetailsPropertyPage2, CPropertyPage)
@@ -116,6 +117,94 @@ static void AppendReferencedNames(const CString& text, std::vector<CString>& out
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// CAnchorLayout
+
+void CAnchorLayout::Init(CWnd* pParent)
+{
+	m_pParent = pParent;
+	m_items.clear();
+	CRect rc;
+	pParent->GetClientRect(rc);
+	m_szInit = rc.Size();
+}
+
+void CAnchorLayout::Add(UINT nID, int flags)
+{
+	CWnd* pWnd = (m_pParent != NULL) ? m_pParent->GetDlgItem(nID) : NULL;
+	if (pWnd != NULL)
+	{
+		Add(pWnd->GetSafeHwnd(), flags);
+	}
+}
+
+void CAnchorLayout::Add(HWND hWnd, int flags)
+{
+	if (m_pParent == NULL || hWnd == NULL)
+	{
+		return;
+	}
+	SItem item;
+	item.hWnd = hWnd;
+	item.flags = flags;
+	::GetWindowRect(hWnd, &item.rc);
+	m_pParent->ScreenToClient(&item.rc);
+	m_items.push_back(item);
+}
+
+void CAnchorLayout::Apply()
+{
+	if (m_pParent == NULL || !::IsWindow(m_pParent->GetSafeHwnd()) || m_items.empty())
+	{
+		return;
+	}
+	CRect rcClient;
+	m_pParent->GetClientRect(rcClient);
+	const int dx = max(0, rcClient.Width() - m_szInit.cx);
+	const int dy = max(0, rcClient.Height() - m_szInit.cy);
+
+	HDWP hdwp = ::BeginDeferWindowPos(static_cast<int>(m_items.size()));
+	for (size_t i = 0; i < m_items.size(); ++i)
+	{
+		CRect rc = m_items[i].rc;
+		const int flags = m_items[i].flags;
+		if (flags & MoveX) rc.OffsetRect(dx, 0);
+		if (flags & MoveY) rc.OffsetRect(0, dy);
+		if (flags & SizeX) rc.right += dx;
+		if (flags & SizeY) rc.bottom += dy;
+		if (hdwp != NULL)
+		{
+			hdwp = ::DeferWindowPos(hdwp, m_items[i].hWnd, NULL, rc.left, rc.top, rc.Width(), rc.Height(),
+				SWP_NOZORDER | SWP_NOACTIVATE);
+		}
+	}
+	if (hdwp != NULL)
+	{
+		::EndDeferWindowPos(hdwp);
+	}
+	m_pParent->Invalidate();
+}
+
+// A page that becomes active asks the sheet to size it to the tab area
+static void ResizeToSheet(CPropertyPage* pPage)
+{
+	CWnd* pSheet = pPage->GetParent();
+	if (pSheet != NULL)
+	{
+		pSheet->PostMessage(WM_DETAILS_RESIZEPAGE);
+	}
+}
+
+// Design page: edit and "Keep" box of each CDetails::EKeepField
+static const UINT KeepFieldEdit[CDetails::kfCount] =
+{
+	DESIGNBOX_TITLE, DESIGNBOX_AUTHOR, DESIGNBOX_ORGANISATION, IDC_DESIGNBOX_DESCRIPTION, DESIGNBOX_REVISION, DESIGNBOX_DOCUMENT
+};
+static const UINT KeepFieldBox[CDetails::kfCount] =
+{
+	IDC_KEEP_TITLE, IDC_KEEP_AUTHOR, IDC_KEEP_ORGANISATION, IDC_KEEP_DESCRIPTION, IDC_KEEP_REVISION, IDC_KEEP_DOCUMENT
+};
+
+/////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage1 property page
 
 CDetailsPropertyPage1::CDetailsPropertyPage1(CMultiSheetDoc* pDesign) :
@@ -136,6 +225,14 @@ CDetailsPropertyPage1::CDetailsPropertyPage1(CMultiSheetDoc* pDesign) :
 	m_pDesign = pDesign;
 	m_scrollTop = 0;
 	m_tokensDirty = false;
+	m_visibleRows = 0;
+	m_createdRows = 0;
+	m_bLayoutReady = false;
+	for (int f = 0; f < CDetails::kfCount; ++f)
+	{
+		m_bKeep[f] = FALSE;
+		m_bKeepInitial[f] = false;
+	}
 }
 
 CDetailsPropertyPage1::~CDetailsPropertyPage1()
@@ -157,13 +254,39 @@ void CDetailsPropertyPage1::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, DESIGNBOX_DISPLAY, m_bIsVisible);
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDC_TOK_SCROLL, m_tokenScroll);
+	for (int f = 0; f < CDetails::kfCount; ++f)
+	{
+		DDX_Check(pDX, KeepFieldBox[f], m_bKeep[f]);
+	}
 }
 
 BEGIN_MESSAGE_MAP(CDetailsPropertyPage1, CPropertyPage)
 //{{AFX_MSG_MAP(CDetailsPropertyPage1)
 //}}AFX_MSG_MAP
 	ON_WM_VSCROLL()
+	ON_WM_SIZE()
+	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
+
+CString CDetailsPropertyPage1::GetFieldValue(int f) const
+{
+	switch (f)
+	{
+		case CDetails::kfTitle:        return m_sTitle;
+		case CDetails::kfAuthor:       return m_sAuthor;
+		case CDetails::kfOrganisation: return m_sOrg;
+		case CDetails::kfDescription:  return m_sDescription;
+		case CDetails::kfRevision:     return m_sRevision;
+		case CDetails::kfDocument:     return m_sDoc;
+		default:                       return CString();
+	}
+}
+
+BOOL CDetailsPropertyPage1::OnSetActive()
+{
+	ResizeToSheet(this);
+	return CPropertyPage::OnSetActive();
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CDetailsPropertyPage2 property page
@@ -233,6 +356,54 @@ BOOL CDetailsPropertyPage1::OnApply()
 			return FALSE;
 		}
 		newTokens[name] = m_tokenRows[r].value;   // duplicate names collapse (last wins)
+	}
+
+	// Keep: ticked values are what new designs start with.  A value is
+	// stored only when it was edited or newly ticked, so pressing OK in
+	// someone else's design does not take over their values.
+	for (int f = 0; f < CDetails::kfCount; ++f)
+	{
+		const CString value = GetFieldValue(f);
+		const bool keep = (m_bKeep[f] != FALSE);
+		if (keep && (!m_bKeepInitial[f] || value != m_sInitial[f]))
+		{
+			CDetails::SetKeptValue(f, value);
+		}
+		if (keep != m_bKeepInitial[f])
+		{
+			CDetails::SetFieldKept(f, keep);
+		}
+		m_bKeepInitial[f] = keep;
+		m_sInitial[f] = value;
+	}
+	CDetailsTokenMap kept;
+	CDetails::GetKeptTokens(kept);
+	bool bKeptChanged = false;
+	for (size_t r = 0; r < m_tokenRows.size(); ++r)
+	{
+		STokenRow& row = m_tokenRows[r];
+		CString name = row.name;
+		name.Trim();
+		if (name.IsEmpty())
+		{
+			continue;
+		}
+		if (row.keep && (!row.keepInitial || row.value != row.initialValue))
+		{
+			kept[name] = row.value;
+			bKeptChanged = true;
+		}
+		else if (!row.keep && row.keepInitial)
+		{
+			kept.erase(name);
+			bKeptChanged = true;
+		}
+		row.keepInitial = row.keep;
+		row.initialValue = row.value;
+	}
+	if (bKeptChanged)
+	{
+		CDetails::SetKeptTokens(kept);
 	}
 
 	CDetails& current = m_pDesign->GetCurrentSheet()->GetDetails();
@@ -360,12 +531,18 @@ void CDetailsPropertyPage1::LoadTokens()
 	std::vector<CString> referenced;
 	CollectReferencedTokenNames(referenced);
 
+	CDetailsTokenMap kept;
+	CDetails::GetKeptTokens(kept);
+
 	for (size_t i = 0; i < referenced.size(); ++i)
 	{
 		STokenRow row;
 		row.name = referenced[i];
 		CDetailsTokenMap::const_iterator it = stored.find(referenced[i]);
 		row.value = (it != stored.end()) ? it->second : CString();
+		row.keep = (kept.find(referenced[i]) != kept.end());
+		row.keepInitial = row.keep;
+		row.initialValue = row.value;
 		m_tokenRows.push_back(row);
 	}
 }
@@ -373,29 +550,24 @@ void CDetailsPropertyPage1::LoadTokens()
 void CDetailsPropertyPage1::RefreshTokenView()
 {
 	const int count = (int)m_tokenRows.size();
-	for (int i = 0; i < kVisibleRows; ++i)
+	for (int i = 0; i < m_visibleRows; ++i)
 	{
 		int idx = m_scrollTop + i;
-		CWnd* pName = GetDlgItem(IDC_TOK_NAME0 + i);
-		CWnd* pVal  = GetDlgItem(IDC_TOK_VAL0 + i);
-		if (pName == NULL || pVal == NULL)
+		CWnd* pName = GetDlgItem(IDC_TOK_NAME_BASE + i);
+		CWnd* pVal  = GetDlgItem(IDC_TOK_VAL_BASE + i);
+		CWnd* pKeep = GetDlgItem(IDC_TOK_KEEP_BASE + i);
+		if (pName == NULL || pVal == NULL || pKeep == NULL)
 		{
 			continue;
 		}
-		if (idx < count)
-		{
-			pName->SetWindowText(m_tokenRows[idx].name);
-			pVal->SetWindowText(m_tokenRows[idx].value);
-			pName->EnableWindow(TRUE);
-			pVal->EnableWindow(TRUE);
-		}
-		else
-		{
-			pName->SetWindowText(_T(""));
-			pVal->SetWindowText(_T(""));
-			pName->EnableWindow(FALSE);
-			pVal->EnableWindow(FALSE);
-		}
+		const bool bUsed = (idx < count);
+		pName->SetWindowText(bUsed ? m_tokenRows[idx].name : CString());
+		pVal->SetWindowText(bUsed ? m_tokenRows[idx].value : CString());
+		CheckDlgButton(IDC_TOK_KEEP_BASE + i, (bUsed && m_tokenRows[idx].keep) ? BST_CHECKED : BST_UNCHECKED);
+		pName->EnableWindow(bUsed);
+		pVal->EnableWindow(bUsed);
+		pKeep->EnableWindow(bUsed);
+		pKeep->ShowWindow(bUsed ? SW_SHOW : SW_HIDE);
 	}
 	UpdateTokenScrollBar();
 }
@@ -403,15 +575,15 @@ void CDetailsPropertyPage1::RefreshTokenView()
 void CDetailsPropertyPage1::CommitVisibleRows()
 {
 	const int count = (int)m_tokenRows.size();
-	for (int i = 0; i < kVisibleRows; ++i)
+	for (int i = 0; i < m_visibleRows; ++i)
 	{
 		int idx = m_scrollTop + i;
 		if (idx >= count)
 		{
 			break;
 		}
-		CWnd* pName = GetDlgItem(IDC_TOK_NAME0 + i);
-		CWnd* pVal  = GetDlgItem(IDC_TOK_VAL0 + i);
+		CWnd* pName = GetDlgItem(IDC_TOK_NAME_BASE + i);
+		CWnd* pVal  = GetDlgItem(IDC_TOK_VAL_BASE + i);
 		if (pName == NULL || pVal == NULL)
 		{
 			continue;
@@ -422,6 +594,7 @@ void CDetailsPropertyPage1::CommitVisibleRows()
 		n.Trim();
 		m_tokenRows[idx].name = n;
 		m_tokenRows[idx].value = v;
+		m_tokenRows[idx].keep = (IsDlgButtonChecked(IDC_TOK_KEEP_BASE + i) == BST_CHECKED);
 	}
 }
 
@@ -438,36 +611,190 @@ void CDetailsPropertyPage1::UpdateTokenScrollBar()
 	si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS;
 	si.nMin   = 0;
 	si.nMax   = (count > 0) ? count - 1 : 0;
-	si.nPage  = kVisibleRows;
+	si.nPage  = m_visibleRows;
 	si.nPos   = m_scrollTop;
 	m_tokenScroll.SetScrollInfo(&si, TRUE);
-	m_tokenScroll.EnableWindow(count > kVisibleRows);
+	m_tokenScroll.EnableWindow(count > m_visibleRows);
+}
+
+void CDetailsPropertyPage1::ScrollTokensTo(int top)
+{
+	CommitVisibleRows();
+	const int count  = (int)m_tokenRows.size();
+	const int maxTop = (count > m_visibleRows) ? (count - m_visibleRows) : 0;
+	if (top > maxTop) top = maxTop;
+	if (top < 0)      top = 0;
+	m_scrollTop = top;
+	RefreshTokenView();
+}
+
+int CDetailsPropertyPage1::TokenRowFromWnd(HWND hWnd) const
+{
+	if (hWnd == NULL || ::GetParent(hWnd) != m_hWnd)
+	{
+		return -1;
+	}
+	const int row = ::GetDlgCtrlID(hWnd) - IDC_TOK_VAL_BASE;
+	return (row >= 0 && row < m_visibleRows) ? row : -1;
+}
+
+// Fit as many variable rows as the token area (the scrollbar's height) holds,
+// creating row controls on demand, and place them.
+void CDetailsPropertyPage1::LayoutTokenRows()
+{
+	CWnd* pKeepTitle = GetDlgItem(IDC_KEEP_TITLE);
+	if (m_tokenScroll.GetSafeHwnd() == NULL || pKeepTitle == NULL)
+	{
+		return;
+	}
+	CRect rcArea, rcKeep;
+	m_tokenScroll.GetWindowRect(rcArea);
+	ScreenToClient(rcArea);
+	pKeepTitle->GetWindowRect(rcKeep);
+	ScreenToClient(rcKeep);
+
+	CRect m1(8, 16, 73, 12);      // name x, row pitch, value x, edit height (DLUs)
+	MapDialogRect(m1);
+	CRect m2(4, 2, 62, 10);       // gap, label offset, name width, label height
+	MapDialogRect(m2);
+	const int nameX = m1.left, pitch = m1.top, valX = m1.right, editH = m1.bottom;
+	const int gap = m2.left, labelDY = m2.top, nameW = m2.right, labelH = m2.bottom;
+
+	int rows = (rcArea.Height() + (pitch - editH)) / pitch;
+	if (rows < 1)        rows = 1;
+	if (rows > kMaxRows) rows = kMaxRows;
+
+	CommitVisibleRows();
+
+	HFONT hFont = (HFONT)GetFont()->GetSafeHandle();
+	HINSTANCE hInst = AfxGetInstanceHandle();
+	while (m_createdRows < rows)
+	{
+		const int i = m_createdRows;
+		HWND hName = ::CreateWindowEx(0, _T("STATIC"), _T(""), WS_CHILD | SS_LEFT | SS_NOPREFIX | SS_ENDELLIPSIS,
+			0, 0, 0, 0, m_hWnd, (HMENU)(UINT_PTR)(IDC_TOK_NAME_BASE + i), hInst, NULL);
+		HWND hVal = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL,
+			0, 0, 0, 0, m_hWnd, (HMENU)(UINT_PTR)(IDC_TOK_VAL_BASE + i), hInst, NULL);
+		HWND hKeep = ::CreateWindowEx(0, _T("BUTTON"), _T(""), WS_CHILD | BS_AUTOCHECKBOX,
+			0, 0, 0, 0, m_hWnd, (HMENU)(UINT_PTR)(IDC_TOK_KEEP_BASE + i), hInst, NULL);
+		HWND created[] = { hName, hVal, hKeep };
+		for (int c = 0; c < 3; ++c)
+		{
+			if (created[c] != NULL)
+			{
+				::SendMessage(created[c], WM_SETFONT, (WPARAM)hFont, FALSE);
+				// Tab order = z-order: after all template controls, row by row
+				::SetWindowPos(created[c], HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+			}
+		}
+		++m_createdRows;
+	}
+
+	const int valW = max(20, rcKeep.left - gap - valX);
+	for (int i = 0; i < m_createdRows; ++i)
+	{
+		CWnd* pName = GetDlgItem(IDC_TOK_NAME_BASE + i);
+		CWnd* pVal  = GetDlgItem(IDC_TOK_VAL_BASE + i);
+		CWnd* pKeep = GetDlgItem(IDC_TOK_KEEP_BASE + i);
+		if (pName == NULL || pVal == NULL || pKeep == NULL)
+		{
+			continue;
+		}
+		if (i < rows)
+		{
+			const int y = rcArea.top + i * pitch;
+			pName->SetWindowPos(NULL, nameX, y + labelDY, nameW, labelH, SWP_NOZORDER | SWP_NOACTIVATE);
+			pVal->SetWindowPos(NULL, valX, y, valW, editH, SWP_NOZORDER | SWP_NOACTIVATE);
+			pKeep->SetWindowPos(NULL, rcKeep.left, y + (editH - rcKeep.Height()) / 2, rcKeep.Width(), rcKeep.Height(),
+				SWP_NOZORDER | SWP_NOACTIVATE);
+			pName->ShowWindow(SW_SHOW);
+			pVal->ShowWindow(SW_SHOW);
+		}
+		else
+		{
+			pName->ShowWindow(SW_HIDE);
+			pVal->ShowWindow(SW_HIDE);
+			pKeep->ShowWindow(SW_HIDE);
+		}
+	}
+	m_visibleRows = rows;
+
+	const int count  = (int)m_tokenRows.size();
+	const int maxTop = (count > m_visibleRows) ? (count - m_visibleRows) : 0;
+	if (m_scrollTop > maxTop)
+	{
+		m_scrollTop = maxTop;
+	}
+	RefreshTokenView();   // also shows the Keep boxes of the rows in use
+}
+
+void CDetailsPropertyPage1::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertyPage::OnSize(nType, cx, cy);
+	if (m_bLayoutReady)
+	{
+		m_layout.Apply();
+		LayoutTokenRows();
+	}
+}
+
+BOOL CDetailsPropertyPage1::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	if ((int)m_tokenRows.size() > m_visibleRows)
+	{
+		ScrollTokensTo(m_scrollTop - zDelta / WHEEL_DELTA);
+		return TRUE;
+	}
+	return CPropertyPage::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+// Tab from the last visible variable scrolls the next one into view (and
+// Shift+Tab from the first scrolls back), so Tab walks every variable.
+BOOL CDetailsPropertyPage1::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_TAB
+		&& (GetKeyState(VK_CONTROL) & 0x8000) == 0 && (GetKeyState(VK_MENU) & 0x8000) == 0)
+	{
+		const int row = TokenRowFromWnd(pMsg->hwnd);
+		if (row >= 0)
+		{
+			const bool bBack = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+			const int count = (int)m_tokenRows.size();
+			if (!bBack && row == m_visibleRows - 1 && m_scrollTop + row + 1 < count)
+			{
+				ScrollTokensTo(m_scrollTop + 1);
+				GotoDlgCtrl(GetDlgItem(IDC_TOK_VAL_BASE + row));
+				return TRUE;
+			}
+			if (bBack && row == 0 && m_scrollTop > 0)
+			{
+				ScrollTokensTo(m_scrollTop - 1);
+				GotoDlgCtrl(GetDlgItem(IDC_TOK_VAL_BASE));
+				return TRUE;
+			}
+		}
+	}
+	return CPropertyPage::PreTranslateMessage(pMsg);
 }
 
 void CDetailsPropertyPage1::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	if (pScrollBar != NULL && pScrollBar->GetSafeHwnd() == m_tokenScroll.GetSafeHwnd())
 	{
-		CommitVisibleRows();
-		const int count  = (int)m_tokenRows.size();
-		const int maxTop = (count > kVisibleRows) ? (count - kVisibleRows) : 0;
 		int top = m_scrollTop;
 		switch (nSBCode)
 		{
-			case SB_LINEUP:        top -= 1;            break;
-			case SB_LINEDOWN:      top += 1;            break;
-			case SB_PAGEUP:        top -= kVisibleRows; break;
-			case SB_PAGEDOWN:      top += kVisibleRows; break;
+			case SB_LINEUP:        top -= 1;             break;
+			case SB_LINEDOWN:      top += 1;             break;
+			case SB_PAGEUP:        top -= m_visibleRows; break;
+			case SB_PAGEDOWN:      top += m_visibleRows; break;
 			case SB_THUMBTRACK:
-			case SB_THUMBPOSITION: top = (int)nPos;     break;
-			case SB_TOP:           top = 0;             break;
-			case SB_BOTTOM:        top = maxTop;        break;
+			case SB_THUMBPOSITION: top = (int)nPos;      break;
+			case SB_TOP:           top = 0;              break;
+			case SB_BOTTOM:        top = (int)m_tokenRows.size(); break;
 			default: break;
 		}
-		if (top < 0)      top = 0;
-		if (top > maxTop) top = maxTop;
-		m_scrollTop = top;
-		RefreshTokenView();
+		ScrollTokensTo(top);
 		return;
 	}
 	CPropertyPage::OnVScroll(nSBCode, nPos, pScrollBar);
@@ -523,9 +850,33 @@ BOOL CDetailsPropertyPage1::OnInitDialog()
 		pDateCtrl->EnableWindow(FALSE);
 	}
 
+	// Keep boxes of the fixed fields: ticked as stored in the registry
+	for (int f = 0; f < CDetails::kfCount; ++f)
+	{
+		m_bKeepInitial[f] = CDetails::IsFieldKept(f);
+		m_bKeep[f] = m_bKeepInitial[f] ? TRUE : FALSE;
+		m_sInitial[f] = GetFieldValue(f);
+		CheckDlgButton(KeepFieldBox[f], m_bKeep[f] ? BST_CHECKED : BST_UNCHECKED);
+	}
+
+	// Resizing: the text fields grow, the Keep column and the variables'
+	// scrollbar move with the right edge; the variable rows fill the height.
+	m_layout.Init(this);
+	for (int f = 0; f < CDetails::kfCount; ++f)
+	{
+		if (f != CDetails::kfRevision)
+		{
+			m_layout.Add(KeepFieldEdit[f], CAnchorLayout::SizeX);
+		}
+		m_layout.Add(KeepFieldBox[f], CAnchorLayout::MoveX);
+	}
+	m_layout.Add(IDC_KEEP_HEADER, CAnchorLayout::MoveX);
+	m_layout.Add(IDC_TOK_SCROLL, CAnchorLayout::MoveX | CAnchorLayout::SizeY);
+
 	// Populate the embedded variables (token) editor.
 	LoadTokens();
-	RefreshTokenView();
+	LayoutTokenRows();
+	m_bLayoutReady = true;
 
 	return TRUE; // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -543,6 +894,12 @@ BOOL CDetailsPropertyPage2::OnApply()
 	m_pDesign->GetCurrentSheet()->GetDetails().SetRulers(m_bHasRulers == TRUE, v, h);
 
 	return CPropertyPage::OnApply();
+}
+
+BOOL CDetailsPropertyPage2::OnSetActive()
+{
+	ResizeToSheet(this);
+	return CPropertyPage::OnSetActive();
 }
 
 BOOL CDetailsPropertyPage2::OnInitDialog()
@@ -934,7 +1291,20 @@ BEGIN_MESSAGE_MAP(CDetailsPropertyPage4, CPropertyPage)
 	ON_BN_CLICKED(IDC_TBSVG_IMPORT,      OnImport)
 	ON_BN_CLICKED(IDC_TBSVG_USE_BUILTIN, OnUseBuiltin)
 	ON_LBN_SELCHANGE(IDC_TBSVG_LIST,     OnListSelChange)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
+
+BOOL CDetailsPropertyPage4::OnSetActive()
+{
+	ResizeToSheet(this);
+	return CPropertyPage::OnSetActive();
+}
+
+void CDetailsPropertyPage4::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertyPage::OnSize(nType, cx, cy);
+	m_layout.Apply();
+}
 
 BOOL CDetailsPropertyPage4::OnInitDialog()
 {
@@ -955,6 +1325,13 @@ BOOL CDetailsPropertyPage4::OnInitDialog()
 	}
 
 	UpdateStateLabel();
+
+	m_layout.Init(this);
+	m_layout.Add(IDC_TBSVG_HELP, CAnchorLayout::SizeX);
+	m_layout.Add(IDC_TBSVG_LIST, CAnchorLayout::SizeX | CAnchorLayout::SizeY);
+	m_layout.Add(IDC_TBSVG_IMPORT, CAnchorLayout::MoveX);
+	m_layout.Add(IDC_TBSVG_USE_BUILTIN, CAnchorLayout::MoveX);
+	m_layout.Add(IDC_TBSVG_STATE, CAnchorLayout::MoveY | CAnchorLayout::SizeX);
 	return TRUE;
 }
 
@@ -1218,7 +1595,26 @@ BEGIN_MESSAGE_MAP(CDetailsPropertyPage5, CPropertyPage)
 	ON_BN_CLICKED(IDC_REV_DELETE, OnDelete)
 	ON_NOTIFY(NM_DBLCLK, IDC_REV_LIST, OnDoubleClickList)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_REV_LIST, OnItemChanged)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
+
+BOOL CDetailsPropertyPage5::OnSetActive()
+{
+	ResizeToSheet(this);
+	return CPropertyPage::OnSetActive();
+}
+
+void CDetailsPropertyPage5::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertyPage::OnSize(nType, cx, cy);
+	m_layout.Apply();
+	// The change description column takes the extra width
+	if (m_wndList.GetSafeHwnd() != NULL && m_wndList.GetHeaderCtrl() != NULL
+		&& m_wndList.GetHeaderCtrl()->GetItemCount() == 4)
+	{
+		m_wndList.SetColumnWidth(3, LVSCW_AUTOSIZE_USEHEADER);
+	}
+}
 
 BOOL CDetailsPropertyPage5::OnInitDialog()
 {
@@ -1237,6 +1633,12 @@ BOOL CDetailsPropertyPage5::OnInitDialog()
 	m_wndList.InsertColumn(3, _T("Change description"), LVCFMT_LEFT, max(60, w - wRev - wDate - wBy - 4));
 
 	RebuildList(static_cast<int>(m_oHistory.size()) - 1);   // newest selected
+
+	m_layout.Init(this);
+	m_layout.Add(IDC_REV_HELP, CAnchorLayout::SizeX);
+	m_layout.Add(IDC_REV_LIST, CAnchorLayout::SizeX | CAnchorLayout::SizeY);
+	m_layout.Add(IDC_REV_EDIT, CAnchorLayout::MoveX | CAnchorLayout::MoveY);
+	m_layout.Add(IDC_REV_DELETE, CAnchorLayout::MoveX | CAnchorLayout::MoveY);
 	return TRUE;
 }
 

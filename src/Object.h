@@ -480,6 +480,14 @@ public:
 	{
 		str = s;
 	}
+	// Edit > Replace Text: new text, same font and position
+	void SetText(const CString &s)
+	{
+		Display();
+		str = s;
+		CalcLayout();
+		Display();
+	}
 	void NewFont(LOGFONT *); // Change the font
 	virtual void NewOptions();
 
@@ -586,6 +594,14 @@ public:
 	{
 		return str;
 	}
+	// Edit > Replace Text: new text, same font and position
+	void SetText(const CString &s)
+	{
+		Display();
+		str = s;
+		CalcLayout();
+		Display();
+	}
 	void NewFont(LOGFONT *); // Change the font
 	virtual void NewOptions();
 
@@ -645,6 +661,14 @@ public:
 	CString GetValue()
 	{
 		return str;
+	}
+	// Edit > Replace Text: new text, same position
+	void SetText(const CString &s)
+	{
+		Display();
+		str = s;
+		CalcLayout();
+		Display();
 	}
 	CString Find(const TCHAR *);
 
@@ -913,6 +937,14 @@ public:
 	virtual CString GetName() const;
 	CString GetValue() const { return str; }	// The raw note text (for token discovery)
 	void SetValue(const CString &s) { str = s; }
+	// Edit > Replace Text: new text, same box and font
+	void SetText(const CString &s)
+	{
+		Display();
+		str = s;
+		CalcLayout();
+		Display();
+	}
 	virtual void BeginEdit(BOOL re_edit);
 	virtual void EndEdit();
 	virtual BOOL CanEdit();
@@ -1351,6 +1383,18 @@ public:
 		return m_fields[i].m_type;
 	}
 	CString GetFieldName(int);
+	// Edit > Replace Text: the raw value of a field (the reference without
+	// its part letter)
+	CString GetFieldValue(int i) const
+	{
+		return m_fields[i].m_value;
+	}
+	void SetFieldValue(int i, const CString &s)
+	{
+		Display();
+		m_fields[i].m_value = s;
+		Display();
+	}
 	CString Find(const TCHAR *);
 	CDPoint GetFieldPos(int q)
 	{
@@ -1366,6 +1410,9 @@ public:
 		return show_power;
 	}
 	int GetRefVal();
+	// Number after a sheet-number prefix ("P1-12", prefix "1-" -> 12), -1 if
+	// the reference does not start with that prefix
+	int GetPagedRefVal(const CString &pagePrefix);
 	int GetSubPart()
 	{
 		return part;
@@ -1375,6 +1422,7 @@ public:
 		return rotate;
 	}
 	virtual void SetRefVal(int value);
+	void SetRefVal(int value, const CString &pagePrefix);
 	void SetRef(const TCHAR *NewRef)
 	{
 		m_fields[Ref].m_value = NewRef;
@@ -1386,7 +1434,9 @@ public:
 	}
 
 	// Add/remove the next references
-	void AddReference(int min_ref, bool all_sheets);
+	// pagePrefix: number per sheet, after the sheet number (Generate
+	// Symbol References -> Sheet number prefix); empty = as TinyCAD
+	void AddReference(int min_ref, bool all_sheets, const CString &pagePrefix = CString());
 	void RemoveReference();
 
 	// The context menu operations

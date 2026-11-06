@@ -57,6 +57,9 @@ BOOL CConCadMultiDoc::OnNewDocument()
 
 	m_sheets.push_back(new CConCadDoc(this));
 
+	// Fields and variables ticked "Keep" in Design Details
+	m_sheets[0]->GetDetails().ApplyKeptValues();
+
 	// Start with the title block last chosen for new designs (see
 	// CConCadApp::OnFileNewDesign).  A template that is no longer installed
 	// leaves the built-in title block.

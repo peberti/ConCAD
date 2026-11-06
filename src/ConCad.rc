@@ -137,6 +137,7 @@ BEGIN
         MENUITEM "Flip\tCtrl+F",                IDM_EDITFLIP
         MENUITEM SEPARATOR
         MENUITEM "&Find...",                    ID_FIND_FIND
+        MENUITEM "R&eplace Text...\tCtrl+H",    IDM_EDIT_REPLACETEXT
         MENUITEM SEPARATOR
         MENUITEM "Zoom In\tPg Up",              IDM_VIEWZOOMIN
         MENUITEM "Zoom Out\tPg Dn",             IDM_VIEWZOOMOUT
@@ -348,6 +349,7 @@ BEGIN
     VK_BACK,        IDM_EDITUNDO,           VIRTKEY, ALT, NOINVERT
     "Z",            IDM_EDITUNDO,           VIRTKEY, CONTROL, NOINVERT
     "D",            IDM_FILEDESIGN,         VIRTKEY, CONTROL, NOINVERT
+    "H",            IDM_EDIT_REPLACETEXT,   VIRTKEY, CONTROL, NOINVERT
     "I",            IDM_FILEIMPORT,         VIRTKEY, CONTROL, NOINVERT
     "N",            IDM_SNAPTOGRID,         VIRTKEY, SHIFT, CONTROL, NOINVERT
     "G",            IDM_OBJECT_GROUP,       VIRTKEY, CONTROL, NOINVERT
@@ -396,7 +398,7 @@ BEGIN
     LTEXT           "XML Netlist Generation:  RapidXML",IDC_STATIC,61,153,189,8
 END
 
-IDD_ANNOTATE DIALOGEX 0, 0, 196, 212
+IDD_ANNOTATE DIALOGEX 0, 0, 196, 224
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Generate Symbol References"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
@@ -409,14 +411,15 @@ BEGIN
     CONTROL         "Un-numbered References",ANNOTATEBOX_UNNUM,"Button",BS_AUTORADIOBUTTON,12,68,95,10
     CONTROL         "References matching:",ANNOTATEBOX_MATCH,"Button",BS_AUTORADIOBUTTON,12,80,84,10
     EDITTEXT        ANNOTATEBOX_MATCHVAL,97,79,24,12,WS_GROUP
-    GROUPBOX        "Value",-1,8,113,124,44,WS_GROUP
+    GROUPBOX        "Value",-1,8,113,124,56,WS_GROUP
     CONTROL         "Default start value",ANNOTATEBOX_DEF,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,11,128,73,10
     CONTROL         "Start at value:",ANNOTATEBOX_START,"Button",BS_AUTORADIOBUTTON,11,140,59,10
     EDITTEXT        ANNOTATEBOX_STARTVAL,70,139,24,12,WS_GROUP
+    CONTROL         "Sheet number prefix (P1-1, P1-2 ...)",IDC_ANNOTATE_SHEETPREFIX,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,11,154,118,10
     DEFPUSHBUTTON   "OK",IDOK,137,6,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,137,23,50,14
-    GROUPBOX        "Reference painter",-1,7,161,124,44,WS_GROUP
-    PUSHBUTTON      "Use reference painter",IDC_REF_PAINTER,15,180,106,14
+    GROUPBOX        "Reference painter",-1,7,173,124,44,WS_GROUP
+    PUSHBUTTON      "Use reference painter",IDC_REF_PAINTER,15,192,106,14
     CONTROL         "All Sheets",IDC_ALL_SHEETS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,93,47,10
 END
 
@@ -473,7 +476,7 @@ BEGIN
     LTEXT           "mm",GRIDBOX_UNITS,127,70,19,8
 END
 
-IDD_OPTIONS_DRAWING DIALOGEX 6, 18, 190, 210
+IDD_OPTIONS_DRAWING DIALOGEX 6, 18, 190, 180
 STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Drawing"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
@@ -481,10 +484,8 @@ BEGIN
     GROUPBOX        "Wires and cables",IDC_STATIC,10,6,166,46
     LTEXT           "Wire width (px):",IDC_STATIC,18,21,60,8
     EDITTEXT        IDC_OPT_WIRE_WIDTH,82,19,26,12,ES_AUTOHSCROLL | ES_NUMBER
-    PUSHBUTTON      "Wire colour...",IDC_OPT_WIRE_COLOR,114,19,56,12
     LTEXT           "Cable width (px):",IDC_STATIC,18,37,60,8
     EDITTEXT        IDC_OPT_CABLE_WIDTH,82,35,26,12,ES_AUTOHSCROLL | ES_NUMBER
-    PUSHBUTTON      "Cable colour...",IDC_OPT_CABLE_COLOR,114,35,56,12
     GROUPBOX        "New note boxes",IDC_STATIC,10,58,166,44
     CONTROL         "Background fill",IDC_OPT_NOTE_FILL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,72,140,10
     CONTROL         "Rounded corners",IDC_OPT_NOTE_ROUNDED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,86,140,10
@@ -494,9 +495,6 @@ BEGIN
     PUSHBUTTON      "Font...",IDC_OPT_COMP_FONT,114,119,56,12
     GROUPBOX        "New designs",IDC_STATIC,10,146,166,28
     CONTROL         "Ask for a title block on File > New",IDC_OPT_ASK_TITLEBLOCK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,158,150,10
-    GROUPBOX        "Object colours (Object > Colour)",IDC_STATIC,10,178,166,28
-    PUSHBUTTON      "Consat colour...",IDC_OPT_CONSAT_COLOR,18,190,72,12
-    PUSHBUTTON      "Factory colour...",IDC_OPT_FACTORY_COLOR,98,190,72,12
 END
 
 IDD_SHORTCUTS DIALOGEX 0, 0, 300, 228
@@ -1016,7 +1014,7 @@ BEGIN
     IDD_ANNOTATE, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        BOTTOMMARGIN, 196
+        BOTTOMMARGIN, 217
     END
 
     IDD_ERCLIST, DIALOG
@@ -1234,8 +1232,8 @@ BEGIN
     IDM_EDIT_REVISIONHISTORY "Show or hide the revision history table on the first sheet\nRevision history"
     IDM_SPECIAL_CREATEMODULE "Store the selected objects as a module in the module library\nCreate module"
     IDM_OBJECT_GROUP        "Make the selected objects one group that is selected and moved as a block\nCreate group"
-    IDM_COLOR_CONSAT        "Give the selected objects the Consat colour (Options > Settings > Drawing)\nConsat colour"
-    IDM_COLOR_FACTORY       "Give the selected objects the Factory colour (Options > Settings > Drawing)\nFactory colour"
+    IDM_COLOR_CONSAT        "Give the selected objects the Consat colour (Options > Colours)\nConsat colour"
+    IDM_COLOR_FACTORY       "Give the selected objects the Factory colour (Options > Colours)\nFactory colour"
     IDM_COLOR_CUSTOM        "Give the selected objects a colour of your choice\nCustom colour"
     IDM_COLOR_DEFAULT       "Give the selected objects their normal colours again\nDefault colour"
     IDM_OPTIONS_SHORTCUTS   "Assign keyboard shortcuts to commands\nKeyboard shortcuts"
@@ -1583,29 +1581,66 @@ BEGIN
     CONTROL         "Rotate 90�",IDC_ROTATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,44,50,10
 END
 
-IDD_COLOURS DIALOGEX 0, 0, 331, 114
+IDD_REPLACE_TEXT DIALOGEX 0, 0, 262, 184
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Replace Text"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Fi&nd:",IDC_STATIC,7,9,44,8
+    EDITTEXT        IDC_RT_FIND,52,7,140,12,ES_AUTOHSCROLL
+    LTEXT           "Re&place with:",IDC_STATIC,7,25,44,8
+    EDITTEXT        IDC_RT_REPLACE,52,23,140,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&Find Next",IDC_RT_FINDNEXT,200,7,55,14
+    PUSHBUTTON      "&Replace",IDC_RT_REPLACEONE,200,24,55,14
+    PUSHBUTTON      "Replace &All",IDC_RT_REPLACEALL,200,41,55,14
+    PUSHBUTTON      "Close",IDCANCEL,200,58,55,14
+    GROUPBOX        "Where",IDC_STATIC,7,40,185,26
+    CONTROL         "&Current sheet",IDC_RT_SHEET,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,14,51,70,10
+    CONTROL         "All s&heets",IDC_RT_ALLSHEETS,"Button",BS_AUTORADIOBUTTON,100,51,70,10
+    GROUPBOX        "Search in",IDC_STATIC,7,70,185,62
+    CONTROL         "Free &text",IDC_RT_TEXT,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,82,80,10
+    CONTROL         "N&otes",IDC_RT_NOTES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,94,80,10
+    CONTROL         "&Labels",IDC_RT_LABELS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,106,80,10
+    CONTROL         "&Bus names",IDC_RT_BUSNAMES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,118,80,10
+    CONTROL         "Po&wer names",IDC_RT_POWER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,82,88,10
+    CONTROL         "Component r&eferences",IDC_RT_REFS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,94,88,10
+    CONTROL         "Component fiel&ds",IDC_RT_FIELDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,106,88,10
+    GROUPBOX        "Options",IDC_STATIC,7,136,185,26
+    CONTROL         "Whole wor&d",IDC_RT_WHOLEWORD,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,14,147,70,10
+    CONTROL         "&Match case",IDC_RT_MATCHCASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,147,70,10
+    LTEXT           "",IDC_RT_STATUS,7,168,248,10
+END
+
+IDD_COLOURS DIALOGEX 0, 0, 331, 164
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Define colours"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,278,94,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,4,94,50,14
+    DEFPUSHBUTTON   "OK",IDOK,278,146,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,4,146,50,14
+    LTEXT           "Cable",IDC_STATIC,11,69,20,8
+    CONTROL         "Button1",IDC_COL_CABLE,"Button",BS_OWNERDRAW | WS_TABSTOP,51,67,55,11
+    GROUPBOX        "Object colours (Object > Colour; Shift+F2 / Shift+F3 use Factory)",IDC_STATIC,4,110,323,30
+    LTEXT           "Consat",IDC_STATIC,11,124,24,8
+    CONTROL         "Button1",IDC_COL_CONSAT,"Button",BS_OWNERDRAW | WS_TABSTOP,51,122,55,11
+    LTEXT           "Factory",IDC_STATIC,119,124,26,8
+    CONTROL         "Button1",IDC_COL_FACTORY,"Button",BS_OWNERDRAW | WS_TABSTOP,141,122,55,11
     LTEXT           "Wire",IDC_STATIC,11,21,16,8
     LTEXT           "Bus",IDC_STATIC,119,36,13,8
     LTEXT           "Junction",IDC_STATIC,11,37,28,8
     LTEXT           "No connect",IDC_STATIC,11,53,38,8
     LTEXT           "Power",IDC_STATIC,119,20,21,8
     LTEXT           "Pin",IDC_STATIC,119,52,11,8
-    GROUPBOX        "Drawing colours",IDC_STATIC,4,2,323,89
+    GROUPBOX        "Drawing colours (default colours of new and uncoloured objects)",IDC_STATIC,4,2,323,104
     CONTROL         "Button1",IDC_COL_WIRE,"Button",BS_OWNERDRAW | WS_TABSTOP,51,20,55,11
     CONTROL         "Button1",IDC_COL_JUNCTION,"Button",BS_OWNERDRAW | WS_TABSTOP,51,36,55,11
     CONTROL         "Button1",IDC_COL_NOCONNECT,"Button",BS_OWNERDRAW | WS_TABSTOP,51,51,55,11
     CONTROL         "Button1",IDC_COL_PIN,"Button",BS_OWNERDRAW | WS_TABSTOP,141,50,55,11
     CONTROL         "Button1",IDC_COL_POWER,"Button",BS_OWNERDRAW | WS_TABSTOP,141,19,55,11
     CONTROL         "Button1",IDC_COL_BUS,"Button",BS_OWNERDRAW | WS_TABSTOP,141,35,55,11
-    PUSHBUTTON      "Defaults",IDC_RESET,66,94,50,14
-    LTEXT           "Drawing background",IDC_STATIC,71,78,67,8
-    CONTROL         "Button1",IDC_COL_BACKGROUND,"Button",BS_OWNERDRAW | WS_TABSTOP,141,76,55,11
+    PUSHBUTTON      "Defaults",IDC_RESET,66,146,50,14
+    LTEXT           "Drawing background",IDC_STATIC,71,90,67,8
+    CONTROL         "Button1",IDC_COL_BACKGROUND,"Button",BS_OWNERDRAW | WS_TABSTOP,141,88,55,11
     LTEXT           "NoteText Line",IDC_STATIC,213,36,50,8
     LTEXT           "NoteText Fill",IDC_STATIC,213,20,47,8
     LTEXT           "NoteText Text",IDC_STATIC,213,52,50,8
@@ -1614,41 +1649,37 @@ BEGIN
     CONTROL         "Button1",IDC_COL_NOTETEXT_LINE,"Button",BS_OWNERDRAW | WS_TABSTOP,266,35,55,11
 END
 
-IDD_DETAILS_PAGE1 DIALOGEX 0, 0, 250, 246
+IDD_DETAILS_PAGE1 DIALOGEX 0, 0, 292, 290
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Design"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     CONTROL         "Display Details",DESIGNBOX_DISPLAY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,61,10
+    LTEXT           "Keep",IDC_KEEP_HEADER,259,8,20,8
     LTEXT           "Title",IDC_STATIC,8,20,16,8,NOT WS_GROUP
-    EDITTEXT        DESIGNBOX_TITLE,73,18,102,12,ES_AUTOHSCROLL | WS_GROUP
+    EDITTEXT        DESIGNBOX_TITLE,73,18,183,12,ES_AUTOHSCROLL | WS_GROUP
+    CONTROL         "",IDC_KEEP_TITLE,"Button",BS_AUTOCHECKBOX,263,19,10,10
     LTEXT           "Author",IDC_STATIC,8,35,23,8,NOT WS_GROUP
-    EDITTEXT        DESIGNBOX_AUTHOR,73,33,102,12,ES_AUTOHSCROLL
+    EDITTEXT        DESIGNBOX_AUTHOR,73,33,183,12,ES_AUTOHSCROLL
+    CONTROL         "",IDC_KEEP_AUTHOR,"Button",BS_AUTOCHECKBOX,263,34,10,10
     LTEXT           "Organisation",IDC_STATIC,8,51,42,8,NOT WS_GROUP
-    EDITTEXT        DESIGNBOX_ORGANISATION,73,49,102,12,ES_AUTOHSCROLL
+    EDITTEXT        DESIGNBOX_ORGANISATION,73,49,183,12,ES_AUTOHSCROLL
+    CONTROL         "",IDC_KEEP_ORGANISATION,"Button",BS_AUTOCHECKBOX,263,50,10,10
     LTEXT           "Description",IDC_STATIC,8,67,42,8,NOT WS_GROUP
-    EDITTEXT        IDC_DESIGNBOX_DESCRIPTION,73,65,170,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_DESIGNBOX_DESCRIPTION,73,65,183,12,ES_AUTOHSCROLL
+    CONTROL         "",IDC_KEEP_DESCRIPTION,"Button",BS_AUTOCHECKBOX,263,66,10,10
     LTEXT           "Revision",IDC_STATIC,8,84,30,8,NOT WS_GROUP
     EDITTEXT        DESIGNBOX_REVISION,73,82,51,12,ES_AUTOHSCROLL
+    CONTROL         "",IDC_KEEP_REVISION,"Button",BS_AUTOCHECKBOX,263,83,10,10
     LTEXT           "Document",IDC_STATIC,8,100,34,8,NOT WS_GROUP
-    EDITTEXT        DESIGNBOX_DOCUMENT,73,98,51,12,ES_AUTOHSCROLL
+    EDITTEXT        DESIGNBOX_DOCUMENT,73,98,183,12,ES_AUTOHSCROLL
+    CONTROL         "",IDC_KEEP_DOCUMENT,"Button",BS_AUTOCHECKBOX,263,99,10,10
     LTEXT           "Sheets (auto)",IDC_STATIC,8,115,59,8,NOT WS_GROUP
     EDITTEXT        DESIGNBOX_SHEET,73,113,102,12,ES_AUTOHSCROLL | ES_READONLY
     LTEXT           "Date",IDC_STATIC,7,130,59,8,NOT WS_GROUP
     EDITTEXT        DESIGNBOX_DATE,73,128,83,12,ES_AUTOHSCROLL
-    LTEXT           "",IDC_TOK_NAME0,8,148,60,10,NOT WS_GROUP
-    EDITTEXT        IDC_TOK_VAL0,73,146,102,12,ES_AUTOHSCROLL
-    LTEXT           "",IDC_TOK_NAME1,8,164,60,10,NOT WS_GROUP
-    EDITTEXT        IDC_TOK_VAL1,73,162,102,12,ES_AUTOHSCROLL
-    LTEXT           "",IDC_TOK_NAME2,8,180,60,10,NOT WS_GROUP
-    EDITTEXT        IDC_TOK_VAL2,73,178,102,12,ES_AUTOHSCROLL
-    LTEXT           "",IDC_TOK_NAME3,8,196,60,10,NOT WS_GROUP
-    EDITTEXT        IDC_TOK_VAL3,73,194,102,12,ES_AUTOHSCROLL
-    LTEXT           "",IDC_TOK_NAME4,8,212,60,10,NOT WS_GROUP
-    EDITTEXT        IDC_TOK_VAL4,73,210,102,12,ES_AUTOHSCROLL
-    LTEXT           "",IDC_TOK_NAME5,8,228,60,10,NOT WS_GROUP
-    EDITTEXT        IDC_TOK_VAL5,73,226,102,12,ES_AUTOHSCROLL
-    SCROLLBAR       IDC_TOK_SCROLL,180,146,11,92,SBS_VERT
+    LTEXT           "Variables",IDC_TOK_HEADER,8,147,60,8,NOT WS_GROUP
+    SCROLLBAR       IDC_TOK_SCROLL,277,158,10,125,SBS_VERT
 END
 
 IDD_DETAILS_PAGE2 DIALOGEX 0, 0, 250, 150
@@ -1810,7 +1841,7 @@ BEGIN
     BEGIN
         LEFTMARGIN, 4
         TOPMARGIN, 2
-        BOTTOMMARGIN, 111
+        BOTTOMMARGIN, 161
     END
 
     IDD_DETAILS_PAGE1, DIALOG
@@ -2353,7 +2384,7 @@ END
 STRINGTABLE
 BEGIN
     IDM_TOOLLABEL           "Label a wire\nLabel"
-    IDM_TOOLWIRE            "Wire connections in the Consat colour\nWire"
+    IDM_TOOLWIRE            "Wire connections\nWire"
     IDM_TOOLJUNC            "Junction\nJunction"
     IDM_TOOLPOWER           "Power\nPower"
     IDM_TOOLBUSNAME         "Bus name\nBus name"
@@ -2364,6 +2395,7 @@ BEGIN
     IDM_TOOLCIRCLE          "Ellipse annotations\nEllipse"
     IDM_TOOLSQUARE          "Rectangle annotations\nRectangle"
     IDM_EDITDELITEM         "Delete items\nDelete"
+    IDM_EDIT_REPLACETEXT    "Find and replace text in texts, notes, labels, bus names, power names and component fields\nReplace Text"
     IDM_EDIT_COPYTEXT       "Copy the text of the selected texts, labels and notes (or the selected part of the text being edited)\nCopy Text"
     IDM_EDIT_CUTTEXT        "Cut the text being edited in Tool Options\nCut Text"
     IDM_EDIT_DELETETEXT     "Delete the text being edited in Tool Options\nDelete Text"
@@ -2373,7 +2405,7 @@ END
 STRINGTABLE
 BEGIN
     IDM_TOOLNOTETEXT        "Multi-Line Text annotations\nNote"
-    IDM_TOOLCABLE           "Cable connections (thick wire) in the Consat colour\nCable"
+    IDM_TOOLCABLE           "Cable connections (thick wire)\nCable"
     IDM_TOOLWIRE_FACTORY    "Wire connections in the Factory colour\nWire (Factory)"
     IDM_TOOLCABLE_FACTORY   "Cable connections (thick wire) in the Factory colour\nCable (Factory)"
 END

@@ -37,6 +37,7 @@ BOOL CDlgAnnotateBox::OnInitDialog()
 	//Some default values for this dialog are stored in the Registry
 	v.reference = (enum AnnotateSetup::WhichReferences) CConCadRegistry::GetInt("Annotate.type", (int) AnnotateSetup::UNNUMBERED);
 	v.all_sheets = CConCadRegistry::GetInt("Annotate.allsheets", (int) true) != 0;
+	v.sheet_prefix = CConCadRegistry::GetInt("Annotate.sheetprefix", 0) != 0;
 
 	SetDlgItemText(ANNOTATEBOX_MATCHVAL, v.matchval);
 	SetDlgItemInt(ANNOTATEBOX_STARTVAL, v.startval);
@@ -88,6 +89,7 @@ BOOL CDlgAnnotateBox::OnInitDialog()
 		CheckRadioButton(ANNOTATEBOX_DEF, ANNOTATEBOX_START, id);
 	}
 	static_cast<CButton*> (GetDlgItem(IDC_ALL_SHEETS))->SetCheck(v.all_sheets ? 1 : 0);
+	CheckDlgButton(IDC_ANNOTATE_SHEETPREFIX, v.sheet_prefix ? BST_CHECKED : BST_UNCHECKED);
 	return TRUE;
 }
 
@@ -135,6 +137,7 @@ void CDlgAnnotateBox::ReadData()
 			;
 	}
 	v.all_sheets = static_cast<CButton*> (GetDlgItem(IDC_ALL_SHEETS))->GetCheck() != 0;
+	v.sheet_prefix = IsDlgButtonChecked(IDC_ANNOTATE_SHEETPREFIX) == BST_CHECKED;
 	TCHAR hold[SIZESTRING];
 	GetDlgItemText(ANNOTATEBOX_MATCHVAL, hold, SIZESTRING);
 	v.matchval = hold;
@@ -147,6 +150,7 @@ void CDlgAnnotateBox::OnOK()
 
 	CConCadRegistry::Set("Annotate.type", v.reference);
 	CConCadRegistry::Set("Annotate.allsheets", v.all_sheets);
+	CConCadRegistry::Set("Annotate.sheetprefix", v.sheet_prefix);
 	EndDialog(IDOK);
 }
 

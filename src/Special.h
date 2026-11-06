@@ -17,6 +17,8 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+class CConCadDoc;
+
 class AnnotateSetup
 {
 public:
@@ -46,9 +48,19 @@ public:
 	CString matchval;
 	int startval;
 	bool all_sheets;
+	bool sheet_prefix;   // number per sheet after the sheet number: P1-1, P1-2 on sheet 1
 
 	AnnotateSetup();
 };
+
+// The current Generate Symbol References settings (also used by the
+// reference painter)
+extern AnnotateSetup theASetup;
+
+// Sheet number prefix of the references on a sheet: "1-" on the first
+// sheet (Generate Symbol References -> Sheet number prefix); empty when
+// that option is off
+CString AnnotatePagePrefix(CConCadDoc *pSheet);
 
 // The dialog for the auto annotate function
 class CDlgAnnotateBox: public CDialog

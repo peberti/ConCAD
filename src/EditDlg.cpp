@@ -159,6 +159,41 @@ CWnd* CEditDlg::GetSelectedTextField()
 	return pFocus;
 }
 
+// A key press that is a drawing shortcut rather than typing or editing in
+// the focused field: with Ctrl or Alt, or a function key - except the
+// field's own Ctrl keys (select all, undo, moving the caret, ...)
+static bool IsDrawingShortcut(const MSG* pMsg)
+{
+	const WPARAM key = pMsg->wParam;
+	const bool ctrl = ::GetKeyState(VK_CONTROL) < 0;
+	const bool alt = ::GetKeyState(VK_MENU) < 0;
+	const bool fkey = key >= VK_F1 && key <= VK_F24;
+	if (!ctrl && !alt && !fkey)
+	{
+		return false;
+	}
+	if (ctrl && !alt)
+	{
+		TCHAR cls[32] = { 0 };
+		::GetClassName(pMsg->hwnd, cls, _countof(cls));
+		CString sClass(cls);
+		sClass.MakeLower();
+		if (sClass.Find(_T("edit")) >= 0)
+		{
+			switch (key)
+			{
+				case 'A': case 'Z': case 'Y':
+				case VK_LEFT: case VK_RIGHT: case VK_UP: case VK_DOWN:
+				case VK_HOME: case VK_END: case VK_BACK: case VK_DELETE: case VK_INSERT:
+					return false;
+				default:
+					break;
+			}
+		}
+	}
+	return true;
+}
+
 BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 {
 	extern CConCadView *g_currentview;
@@ -217,6 +252,14 @@ BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 		if (id == IDM_SPECIAL_CREATEMODULE)
 		{
 			g_currentview->SendMessage(WM_COMMAND, id, 0);
+			return TRUE;
+		}
+		if (id != 0 && IsDrawingShortcut(pMsg))
+		{
+			// Any other Ctrl / Alt / function-key shortcut (e.g. one the
+			// user assigned, like Ctrl+D for Default Colour) acts on the
+			// drawing; the dialog would swallow it
+			AfxGetMainWnd()->SendMessage(WM_COMMAND, MAKEWPARAM(id, 1), 0);
 			return TRUE;
 		}
 	}

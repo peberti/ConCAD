@@ -43,6 +43,25 @@ static bool DORefComp(CDrawingObject* o1, CDrawingObject* o2)
 	return false;
 }
 
+CString AnnotatePagePrefix(CConCadDoc *pSheet)
+{
+	CString prefix;
+	CMultiSheetDoc *pMulti = pSheet != NULL ? pSheet->GetParent() : NULL;
+	if (!theASetup.sheet_prefix || pMulti == NULL)
+	{
+		return prefix;
+	}
+	for (int i = 0; i < pMulti->GetNumberOfSheets(); ++i)
+	{
+		if (pMulti->GetSheet(i) == pSheet)
+		{
+			prefix.Format(_T("%d-"), i + 1);
+			break;
+		}
+	}
+	return prefix;
+}
+
 // Auto annotate the design
 void CConCadView::OnSpecialAnnotate()
 {
@@ -82,6 +101,9 @@ void CConCadView::OnSpecialAnnotate()
 		int sheet = theASetup.all_sheets ? 0 : GetDocument()->GetActiveSheetIndex();
 		do
 		{
+			// Sheet number prefix: sheet 1 gets P1-1, P1-2 ..., sheet 2 P2-1 ...
+			const CString pagePrefix = AnnotatePagePrefix(GetDocument()->GetSheet(sheet));
+
 			// Signal change for undo
 			if (whichPass == 0)
 			{
@@ -141,8 +163,11 @@ void CConCadView::OnSpecialAnnotate()
 						if (whichPass == 0)
 						{
 							// Remove any matching references (if necessary)
+							// (with the sheet prefix, a reference without
+							// this sheet's prefix is always renumbered)
+							const int refVal = pagePrefix.IsEmpty() ? thisMethod->GetRefVal() : thisMethod->GetPagedRefVal(pagePrefix);
 							if (IsSet && (theASetup.value!=AnnotateSetup::SPECIFIED 
-								|| thisMethod->GetRefVal()>=theASetup.startval) ) 
+								|| refVal < 0 || refVal>=theASetup.startval) ) 
 							{
 								thisMethod->RemoveReference();
 							}
@@ -159,7 +184,7 @@ void CConCadView::OnSpecialAnnotate()
 								 }
 								 */
 								value = (theASetup.value == AnnotateSetup::SPECIFIED) ? theASetup.startval : 1;
-								thisMethod->AddReference(value, theASetup.all_sheets);
+								thisMethod->AddReference(value, theASetup.all_sheets, pagePrefix);
 							}
 						}
 					}
@@ -191,6 +216,7 @@ AnnotateSetup::AnnotateSetup()
 	matchval = "U?";
 	startval = 1;
 	all_sheets = false;
+	sheet_prefix = false;
 }
 
 ////// The Parts List (Bill of Materials) special function //////

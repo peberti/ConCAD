@@ -2353,11 +2353,28 @@ void CConCadDoc::SetSelectionColor(BOOL use, COLORREF c)
 		return;
 	}
 
+	// A selected wire or cable is coloured over its whole length, not just
+	// the selected segment
+	std::set<CDrawingObject*> targets;
+	for (selectIterator it = m_selected.begin(); it != m_selected.end(); ++it)
+	{
+		CDrawingObject *obj = *it;
+		if (!obj->CanColor())
+		{
+			continue;
+		}
+		targets.insert(obj);
+		if (obj->GetType() == xWire || obj->GetType() == xCable)
+		{
+			CollectLineRun(obj, targets);
+		}
+	}
+
 	BeginNewChangeSet();
 	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
 	{
 		CDrawingObject *obj = *it;
-		if (IsSelected(obj) && obj->CanColor())
+		if (targets.find(obj) != targets.end())
 		{
 			MarkChangeForUndo(obj);
 			obj->m_use_color = use;
@@ -2366,6 +2383,121 @@ void CConCadDoc::SetSelectionColor(BOOL use, COLORREF c)
 	}
 	SetModifiedFlag(TRUE);
 	Invalidate();
+}
+
+static bool SamePoint(const CDPoint &a, const CDPoint &b)
+{
+	return fabs(a.x - b.x) < 0.01 && fabs(a.y - b.y) < 0.01;
+}
+
+// p lies on the segment a-b, strictly between its ends
+static bool InsideSegment(const CDPoint &p, const CDPoint &a, const CDPoint &b)
+{
+	if (SamePoint(p, a) || SamePoint(p, b))
+	{
+		return false;
+	}
+	const double dx = b.x - a.x, dy = b.y - a.y;
+	const double len = sqrt(dx * dx + dy * dy);
+	if (len < 0.01)
+	{
+		return false;
+	}
+	const double cross = (p.x - a.x) * dy - (p.y - a.y) * dx;
+	if (fabs(cross) / len > 0.01)
+	{
+		return false;
+	}
+	const double dot = (p.x - a.x) * dx + (p.y - a.y) * dy;
+	return dot > 0 && dot < len * len;
+}
+
+static bool Collinear(CDrawingObject *s, CDrawingObject *t)
+{
+	const double sx = s->m_point_b.x - s->m_point_a.x, sy = s->m_point_b.y - s->m_point_a.y;
+	const double tx = t->m_point_b.x - t->m_point_a.x, ty = t->m_point_b.y - t->m_point_a.y;
+	const double ls = sqrt(sx * sx + sy * sy), lt = sqrt(tx * tx + ty * ty);
+	if (ls < 0.01 || lt < 0.01)
+	{
+		return false;
+	}
+	return fabs(sx * ty - sy * tx) / (ls * lt) < 0.001;
+}
+
+// The whole run of a wire/cable: the segments of the same type (and group)
+// joined end to end, followed through bends.  Where the line branches (more
+// than one other line end, a line passing through, or a junction dot) it
+// only goes straight on, so a branch is not part of the run.
+void CConCadDoc::CollectLineRun(CDrawingObject *start, std::set<CDrawingObject*> &run)
+{
+	const ObjType type = start->GetType();
+	std::vector<CDrawingObject*> lines;      // all wires and cables
+	std::vector<CDPoint> junctions;
+	for (drawingIterator it = m_drawing.begin(); it != m_drawing.end(); ++it)
+	{
+		CDrawingObject *o = *it;
+		if (o->GetType() == xWire || o->GetType() == xCable)
+		{
+			lines.push_back(o);
+		}
+		else if (o->GetType() == xJunction)
+		{
+			junctions.push_back(o->m_point_a);
+		}
+	}
+
+	run.insert(start);
+	std::vector<CDrawingObject*> pending(1, start);
+	while (!pending.empty())
+	{
+		CDrawingObject *s = pending.back();
+		pending.pop_back();
+		const CDPoint ends[2] = { s->m_point_a, s->m_point_b };
+		for (int e = 0; e < 2; ++e)
+		{
+			const CDPoint &p = ends[e];
+			bool branch = false;
+			int others = 0;
+			std::vector<CDrawingObject*> candidates;
+			for (size_t i = 0; i < lines.size(); ++i)
+			{
+				CDrawingObject *o = lines[i];
+				if (o == s)
+				{
+					continue;
+				}
+				if (SamePoint(o->m_point_a, p) || SamePoint(o->m_point_b, p))
+				{
+					++others;
+					if (o->GetType() == type && o->m_group == start->m_group)
+					{
+						candidates.push_back(o);
+					}
+				}
+				else if (InsideSegment(p, o->m_point_a, o->m_point_b))
+				{
+					branch = true;
+				}
+			}
+			for (size_t j = 0; j < junctions.size() && !branch; ++j)
+			{
+				branch = SamePoint(junctions[j], p);
+			}
+			if (others > 1)
+			{
+				branch = true;
+			}
+			for (size_t i = 0; i < candidates.size(); ++i)
+			{
+				CDrawingObject *o = candidates[i];
+				if (run.find(o) == run.end() && (!branch || Collinear(s, o)))
+				{
+					run.insert(o);
+					pending.push_back(o);
+				}
+			}
+		}
+	}
 }
 
 bool CConCadDoc::GetSelectedText(CString &text)
