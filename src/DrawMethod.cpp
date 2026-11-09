@@ -487,6 +487,21 @@ void CDrawMethod::EndEdit()
 	g_EditToolBar.m_MethodEdit.Close();
 }
 
+// A horizontal field starts at its position and lies above it; an upwards
+// one lies left of and above it (as CDrawText::CalcLayout with dir 0)
+CDRect CDrawMethod::GetFieldRect(int i)
+{
+	// Measured in the component-label font (face and size as drawn)
+	const CDSize size = m_pDesign->GetTextExtent(GetDecoratedField(i), *m_pDesign->GetOptions()->GetComponentLabelFont());
+	const double x = m_fields[i].m_position.x + m_point_a.x;
+	const double y = m_fields[i].m_position.y + m_point_a.y;
+	if (m_fields[i].m_up)
+	{
+		return CDRect(x - size.cy, y - size.cx, x, y);
+	}
+	return CDRect(x, y - size.cy, x + size.cx, y);
+}
+
 CString CDrawMethod::GetFieldName(int which)
 {
 	return m_fields[which].m_description;
@@ -808,6 +823,10 @@ void CDrawMethod::SaveXML(CXMLWriter &xml)
 		xml.addAttribute(_T("value"), f.m_value);
 		xml.addAttribute(_T("show"), f.m_show);
 		xml.addAttribute(_T("pos"), CDPoint(f.m_position));
+		if (f.m_up)
+		{
+			xml.addAttribute(_T("text_up"), (int)1);	// only when used: older readers ignore it
+		}
 		xml.closeTag();
 	}
 
@@ -863,6 +882,8 @@ void CDrawMethod::LoadXML(CXMLReader &xml)
 			xml.getAttribute(_T("value"), f.m_value);
 			xml.getAttribute(_T("show"), f.m_show);
 			xml.getAttribute(_T("pos"), f.m_position);
+			int up = 0;
+			f.m_up = xml.getAttribute(_T("text_up"), up) && up != 0;
 			f.m_type = static_cast<SymbolFieldType> (t);
 
 			++i;
@@ -1131,10 +1152,9 @@ BOOL CDrawMethod::IsInside(double left, double right, double top, double bottom)
 
 		CDPoint p1, p2;
 
-		CDSize size = m_pDesign->GetTextExtent(GetDecoratedField(lp), fPIN);
-
-		p1 = CDPoint(m_fields[lp].m_position.x + m_point_a.x, m_fields[lp].m_position.y + m_point_a.y);
-		p2 = CDPoint(m_fields[lp].m_position.x + m_point_a.x + size.cx, m_fields[lp].m_position.y + m_point_a.y - size.cy);
+		const CDRect fr = GetFieldRect(lp);
+		p1 = CDPoint(fr.left, fr.bottom);
+		p2 = CDPoint(fr.right, fr.top);
 		if ( !( (p1.x<left && p2.x<=left) || (p1.x>right && p2.x>right)
 	     	|| (p1.y<top && p2.y<=top) || (p1.y>bottom && p2.y>bottom)) )
 		return TRUE;
@@ -1283,10 +1303,6 @@ int CDrawMethod::IsInsideField(CDPoint p)
 		}
 	}
 
-	// Convert co-ords to symbol space
-	p.x = p.x - m_point_a.x;
-	p.y = p.y - m_point_a.y;
-
 	for (lp = 0; lp < m_fields.size(); lp++)
 	{
 		if (!m_fields[lp].m_show)
@@ -1294,11 +1310,11 @@ int CDrawMethod::IsInsideField(CDPoint p)
 			continue;
 		}
 
-		size = m_pDesign->GetTextExtent(GetDecoratedField(lp), fPIN);
-
-		if (p.x>=m_fields[lp].m_position.x && p.x<=m_fields[lp].m_position.x+size.cx
-	 		&& p.y<=m_fields[lp].m_position.y && p.y>=m_fields[lp].m_position.y-size.cy)
-		break;
+		const CDRect fr = GetFieldRect(lp);
+		if (p.x >= fr.left && p.x <= fr.right && p.y >= fr.top && p.y <= fr.bottom)
+		{
+			break;
+		}
 	}
 
 	if (lp < m_fields.size()) return lp + 1000;
@@ -1404,11 +1420,11 @@ void CDrawMethod::Display(BOOL erase)
 	{
 		if (m_fields[lp].m_show)
 		{
-			CDSize sz = m_pDesign->GetTextExtent(GetDecoratedField(lp), fPIN);
-			r.left = m_fields[lp].m_position.x + m_point_a.x;
-			r.top = m_fields[lp].m_position.y + m_point_a.y;
-			r.right = r.left + sz.cx;
-			r.bottom = r.top - sz.cy;
+			const CDRect fr = GetFieldRect(lp);
+			r.left = fr.left;
+			r.top = fr.bottom;
+			r.right = fr.right;
+			r.bottom = fr.top;
 			m_pDesign->InvalidateRect(r, erase, 5);
 		}
 	}
@@ -1477,7 +1493,22 @@ void CDrawMethod::Paint(CContext &dc, paint_options options)
 
 	for (unsigned int lp = 0; lp < m_fields.size(); lp++)
 	{
-		if (m_fields[lp].m_show) dc.TextOut(GetDecoratedField(lp), CDPoint(m_fields[lp].m_position.x + m_point_a.x, m_fields[lp].m_position.y + m_point_a.y), options);
+		if (!m_fields[lp].m_show)
+		{
+			continue;
+		}
+		const CDPoint at(m_fields[lp].m_position.x + m_point_a.x, m_fields[lp].m_position.y + m_point_a.y);
+		if (m_fields[lp].m_up)
+		{
+			// Upwards, as a text with direction Up (CDrawText dir 0)
+			dc.SelectFont(*m_pDesign->GetOptions()->GetComponentLabelFont(), 0);
+			dc.TextOut(GetDecoratedField(lp), at, options, 0);
+			dc.SelectFont(*m_pDesign->GetOptions()->GetComponentLabelFont(), 2);
+		}
+		else
+		{
+			dc.TextOut(GetDecoratedField(lp), at, options);
+		}
 	}
 
 }

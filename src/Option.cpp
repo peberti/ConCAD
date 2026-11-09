@@ -65,16 +65,8 @@ void COption::Init(CConCadDoc *pDesign)
 	NoteDefaultFill    = CRegistry::GetBool("NoteDefaultFill", true);
 	NoteDefaultRounded = CRegistry::GetBool("NoteDefaultRounded", true);
 
-	// Component-label font: start from the built-in pin font (correct drawing
-	// height), then apply the user's saved face / weight / italic if any.
+	// Component-label font: built on use (GetComponentLabelFont)
 	ComponentLabelFont = *GetFont(fPIN);
-	CString sCompFace = CRegistry::GetString("CompFontFace", _T(""));
-	if (!sCompFace.IsEmpty())
-	{
-		_tcsncpy_s(ComponentLabelFont.lfFaceName, LF_FACESIZE, (LPCTSTR)sCompFace, _TRUNCATE);
-		ComponentLabelFont.lfWeight = CRegistry::GetInt("CompFontWeight", ComponentLabelFont.lfWeight);
-		ComponentLabelFont.lfItalic = (BYTE)CRegistry::GetInt("CompFontItalic", ComponentLabelFont.lfItalic);
-	}
 
 	// Create the no symbol object
 	CDesignFileSymbol *NoSymbol = new CDesignFileSymbol();
@@ -158,19 +150,78 @@ void COption::SetNoteDefaultRounded(BOOL b)
 	CRegistry::Set("NoteDefaultRounded", NoteDefaultRounded);
 }
 
+// The component-label settings, shared by all designs (read once from the
+// registry, so every open design follows a change at once)
+static struct SCompLabel
+{
+	bool loaded;
+	CString face;      // empty: the pin font's face
+	LONG weight;
+	BYTE italic;
+	int size;          // percent of the pin text
+} s_compLabel = { false, CString(), FW_NORMAL, 0, 100 };
+
+static void LoadCompLabel()
+{
+	if (s_compLabel.loaded)
+	{
+		return;
+	}
+	s_compLabel.loaded = true;
+	s_compLabel.face = CRegistry::GetString("CompFontFace", _T(""));
+	s_compLabel.weight = CRegistry::GetInt("CompFontWeight", FW_NORMAL);
+	s_compLabel.italic = (BYTE)CRegistry::GetInt("CompFontItalic", 0);
+	s_compLabel.size = CRegistry::GetInt("CompFontSize", 100);
+	if (s_compLabel.size < 25 || s_compLabel.size > 400)
+	{
+		s_compLabel.size = 100;
+	}
+}
+
+// The pin font's drawing-scale height / orientation, with the user's face,
+// weight, italic and size
+LOGFONT* COption::GetComponentLabelFont()
+{
+	LoadCompLabel();
+	ComponentLabelFont = *GetFont(fPIN);
+	if (!s_compLabel.face.IsEmpty())
+	{
+		_tcsncpy_s(ComponentLabelFont.lfFaceName, LF_FACESIZE, (LPCTSTR)s_compLabel.face, _TRUNCATE);
+		ComponentLabelFont.lfWeight = s_compLabel.weight;
+		ComponentLabelFont.lfItalic = s_compLabel.italic;
+	}
+	if (s_compLabel.size != 100)
+	{
+		ComponentLabelFont.lfHeight = ::MulDiv(ComponentLabelFont.lfHeight, s_compLabel.size, 100);
+		ComponentLabelFont.lfWidth = ::MulDiv(ComponentLabelFont.lfWidth, s_compLabel.size, 100);
+	}
+	return &ComponentLabelFont;
+}
+
 void COption::SetComponentLabelFont(const LOGFONT& lf)
 {
-	// Preserve the pin font's drawing-scale height/width/orientation; take only
-	// the face, weight and italic from the user's choice.
-	LOGFONT base = *GetFont(fPIN);
-	_tcsncpy_s(base.lfFaceName, LF_FACESIZE, lf.lfFaceName, _TRUNCATE);
-	base.lfWeight = lf.lfWeight;
-	base.lfItalic = lf.lfItalic;
-	ComponentLabelFont = base;
+	// Only the face, weight and italic are taken from the user's choice
+	LoadCompLabel();
+	s_compLabel.face = lf.lfFaceName;
+	s_compLabel.weight = lf.lfWeight;
+	s_compLabel.italic = lf.lfItalic;
 
 	CRegistry::Set("CompFontFace", CString(lf.lfFaceName));
 	CRegistry::Set("CompFontWeight", (int)lf.lfWeight);
 	CRegistry::Set("CompFontItalic", (int)lf.lfItalic);
+}
+
+int COption::GetComponentLabelSize()
+{
+	LoadCompLabel();
+	return s_compLabel.size;
+}
+
+void COption::SetComponentLabelSize(int percent)
+{
+	LoadCompLabel();
+	s_compLabel.size = percent;
+	CRegistry::Set("CompFontSize", percent);
 }
 
 ////// Save the current settings along with the design //////

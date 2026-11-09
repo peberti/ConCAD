@@ -211,6 +211,7 @@ public:
 	BOOL     m_noteFill;
 	BOOL     m_noteRounded;
 	LOGFONT  m_compFont;
+	int      m_compSize;   // percent of the pin text
 	BOOL     m_askTitleBlock;
 
 	virtual BOOL OnApply();

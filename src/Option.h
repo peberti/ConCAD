@@ -100,10 +100,14 @@ public:
 	void SetNoteDefaultFill(BOOL b);
 	void SetNoteDefaultRounded(BOOL b);
 
-	//-- Component-label font.  GetComponentLabelFont() always returns a valid
-	//-- LOGFONT (pin-font height with the user's face/weight/italic applied).
-	LOGFONT* GetComponentLabelFont()   { return &ComponentLabelFont; }
+	//-- Component-label font (references and parameters of placed
+	//-- components).  Shared by all open designs (registry): this design's
+	//-- pin font with the user's face / weight / italic and size applied.
+	LOGFONT* GetComponentLabelFont();
 	void SetComponentLabelFont(const LOGFONT& lf);
+	//-- Size in percent of the pin text (100 = as before)
+	static int GetComponentLabelSize();
+	static void SetComponentLabelSize(int percent);
 
 	//=====================================================================
 	//== Mutator                                                         ==

@@ -627,6 +627,9 @@
 #define IDC_RT_REPLACEALL               40428
 #define IDC_RT_STATUS                   40429
 #define IDC_ANNOTATE_SHEETPREFIX        40430
+#define IDC_REFDIR_RIGHT                40431
+#define IDC_REFDIR_UP                   40432
+#define IDC_OPT_COMP_SIZE               40433
 #define IDD_REPLACE_TEXT                199
 #define IDM_EDIT_REPLACETEXT            32930
 #define IDM_HELP_REPORTBUG              32923
@@ -657,7 +660,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        200
 #define _APS_NEXT_COMMAND_VALUE         32931
-#define _APS_NEXT_CONTROL_VALUE         40431
+#define _APS_NEXT_CONTROL_VALUE         40434
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

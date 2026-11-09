@@ -324,6 +324,8 @@ void CDrawHierarchicalSymbol::LoadXML(CXMLReader &xml)
 			xml.getAttribute(_T("value"), f.m_value);
 			xml.getAttribute(_T("show"), f.m_show);
 			xml.getAttribute(_T("pos"), f.m_position);
+			int up = 0;
+			f.m_up = xml.getAttribute(_T("text_up"), up) && up != 0;
 			f.m_type = static_cast<SymbolFieldType> (t);
 
 			++i;
@@ -370,6 +372,10 @@ void CDrawHierarchicalSymbol::SaveXML(CXMLWriter &xml)
 
 		xml.addAttribute(_T("show"), f.m_show);
 		xml.addAttribute(_T("pos"), CDPoint(f.m_position));
+		if (f.m_up)
+		{
+			xml.addAttribute(_T("text_up"), (int)1);
+		}
 		xml.closeTag();
 	}
 

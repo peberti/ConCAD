@@ -1250,6 +1250,7 @@ protected:
 		CString m_value;
 		BOOL m_show;
 		CDPoint m_position;
+		BOOL m_up = FALSE;   // text runs upwards (rotated 90 degrees), e.g. the reference
 	};
 
 	typedef std::vector<CField> fieldCollection;
@@ -1383,6 +1384,8 @@ public:
 		return m_fields[i].m_type;
 	}
 	CString GetFieldName(int);
+	// The area of a shown field's text, in design co-ordinates
+	CDRect GetFieldRect(int i);
 	// Edit > Replace Text: the raw value of a field (the reference without
 	// its part letter)
 	CString GetFieldValue(int i) const

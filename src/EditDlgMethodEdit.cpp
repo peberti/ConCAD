@@ -76,6 +76,8 @@ BEGIN_MESSAGE_MAP( CEditDlgMethodEdit, CEditDlg )
 	ON_EN_KILLFOCUS(101, OnKillfocusEdit)
 	ON_BN_CLICKED(METHODBOX_SHOWPOWER, OnBnClickedShowpower)
 	ON_BN_CLICKED(METHODBOX_COLOR, OnPickColor)
+	ON_BN_CLICKED(IDC_REFDIR_RIGHT, OnChangeText )
+	ON_BN_CLICKED(IDC_REFDIR_UP, OnChangeText )
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -88,9 +90,10 @@ BOOL CEditDlgMethodEdit::OnInitDialog()
 	CEditDlg::OnInitDialog();
 
 	m_list.DeleteAllItems();
-	m_list.InsertColumn(0, _T("Parameter"), LVCFMT_LEFT, 90);
-	m_list.InsertColumn(1, _T("Show?"), LVCFMT_LEFT, 50);
-	m_list.InsertColumn(2, _T("Value"), LVCFMT_LEFT, 140);
+	m_list.InsertColumn(0, _T("Parameter"), LVCFMT_LEFT, 80);
+	m_list.InsertColumn(1, _T("Show?"), LVCFMT_LEFT, 40);
+	m_list.InsertColumn(2, _T("Text"), LVCFMT_LEFT, 40);
+	m_list.InsertColumn(3, _T("Value"), LVCFMT_LEFT, 130);
 
 	return TRUE; // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -140,9 +143,15 @@ void CEditDlgMethodEdit::ReadFields()
 		item.pszText = pMethod->m_fields[i].m_show ? _T("Yes") : _T("No");
 		m_list.SetItem(&item);
 
-		//set the controls for the "Current Value" column for the current parameter and make it effective
+		//the "Text" column: direction of the field's text
 		item.mask = LVIF_TEXT;
 		item.iSubItem = 2;
+		item.pszText = pMethod->m_fields[i].m_up ? _T("Up") : _T("Right");
+		m_list.SetItem(&item);
+
+		//set the controls for the "Current Value" column for the current parameter and make it effective
+		item.mask = LVIF_TEXT;
+		item.iSubItem = 3;
 		item.pszText = pMethod->m_fields[i].m_value.GetBuffer(256);
 		m_list.SetItem(&item);
 		pMethod->m_fields[i].m_value.ReleaseBuffer();
@@ -175,6 +184,7 @@ void CEditDlgMethodEdit::Open(CConCadDoc *pDesign, CDrawingObject *pObject)
 	CheckRadioButton(METHODBOX_UP, METHODBOX_RIGHT, ( (pMethod->rotate) & 3) + METHODBOX_UP);
 	CheckDlgButton(METHODBOX_MIRROR, ( (pMethod->rotate) & 4) != 0 ? 1 : 0);
 	CheckDlgButton(METHODBOX_REFON, pMethod->m_fields[CDrawMethod::Ref].m_show);
+	CheckRadioButton(IDC_REFDIR_RIGHT, IDC_REFDIR_UP, pMethod->m_fields[CDrawMethod::Ref].m_up ? IDC_REFDIR_UP : IDC_REFDIR_RIGHT);
 	CheckDlgButton(METHODBOX_RESIZE, pMethod->can_scale);
 	CheckDlgButton(METHODBOX_SHOWPOWER, pMethod->show_power);
 
@@ -245,6 +255,7 @@ void CEditDlgMethodEdit::OnChangeText()
 
 	// Get the bools
 	pMethod->m_fields[CDrawMethod::Ref].m_show = IsDlgButtonChecked(METHODBOX_REFON) != 0;
+	pMethod->m_fields[CDrawMethod::Ref].m_up = IsDlgButtonChecked(IDC_REFDIR_UP) != 0;
 	pMethod->can_scale = IsDlgButtonChecked(METHODBOX_RESIZE) != 0;
 
 	// re-display it
@@ -331,7 +342,7 @@ void CEditDlgMethodEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 	int x = rect.right;
 	r.left = x;
 	int column;
-	for (column = 2; column >= 0; column--)
+	for (column = 3; column >= 0; column--)
 	{
 		int w = m_list.GetColumnWidth(column);
 		x -= w;
@@ -368,7 +379,10 @@ void CEditDlgMethodEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 				BeginEdit(index, r);
 			}
 			break;
-		case 2: //Parameter value - allow edits to all parameters, extra or not
+		case 2: //Text direction Right / Up
+			ToggleTextUp(index);
+			break;
+		case 3: //Parameter value - allow edits to all parameters, extra or not
 			BeginEdit(index, r);
 			break;
 	}
@@ -404,6 +418,23 @@ void CEditDlgMethodEdit::HideShow(int index)
 	item.iSubItem = 1;
 	item.mask = LVIF_TEXT;
 	item.pszText = f.m_show ? _T("Yes") : _T("No");
+	m_list.SetItem(&item);
+
+	pMethod->Display();
+}
+
+void CEditDlgMethodEdit::ToggleTextUp(int index)
+{
+	CDrawMethod *pMethod = static_cast<CDrawMethod*> (getObject());
+	CDrawMethod::CField &f = GetField(index);
+
+	pMethod->Display();
+	f.m_up = !f.m_up;
+	LVITEM item;
+	item.iItem = index;
+	item.iSubItem = 2;
+	item.mask = LVIF_TEXT;
+	item.pszText = f.m_up ? _T("Up") : _T("Right");
 	m_list.SetItem(&item);
 
 	pMethod->Display();
@@ -537,7 +568,7 @@ void CEditDlgMethodEdit::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruc
 	buffer[0] = '\0';
 	int left = 0;
 	int right = lpDrawItemStruct->rcItem.right;
-	for (int column = 2; column >= 0; column--)
+	for (int column = 3; column >= 0; column--)
 	{
 		// Create the rectangle to draw into
 		left = right - m_list.GetColumnWidth(column);

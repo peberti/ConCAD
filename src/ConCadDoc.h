@@ -404,6 +404,7 @@ public:
 
 	// No obvious answer to this one, but it is a function that should go in here...
 	CDSize GetTextExtent(const TCHAR *str, int style);
+	CDSize GetTextExtent(const TCHAR *str, const LOGFONT &font);
 
 	// Get the current options for this document
 	// Now deprecated, use reference semantic from GetOption() instead

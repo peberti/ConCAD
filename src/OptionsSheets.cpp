@@ -360,6 +360,7 @@ COptionsDrawing::COptionsDrawing() :
 	m_noteFill    = TRUE;
 	m_noteRounded = TRUE;
 	ZeroMemory(&m_compFont, sizeof(m_compFont));
+	m_compSize = 100;
 	m_askTitleBlock = TRUE;
 }
 
@@ -379,6 +380,8 @@ void COptionsDrawing::DoDataExchange(CDataExchange* pDX)
 	DDV_MinMaxInt(pDX, m_wireWidth, 1, 20);
 	DDX_Text(pDX, IDC_OPT_CABLE_WIDTH, m_cableWidth);
 	DDV_MinMaxInt(pDX, m_cableWidth, 1, 20);
+	DDX_Text(pDX, IDC_OPT_COMP_SIZE, m_compSize);
+	DDV_MinMaxInt(pDX, m_compSize, 25, 400);
 	DDX_Check(pDX, IDC_OPT_NOTE_FILL, m_noteFill);
 	DDX_Check(pDX, IDC_OPT_NOTE_ROUNDED, m_noteRounded);
 	DDX_Check(pDX, IDC_OPT_ASK_TITLEBLOCK, m_askTitleBlock);
@@ -396,6 +399,7 @@ BOOL COptionsDrawing::OnInitDialog()
 	m_noteFill    = pOpt->GetNoteDefaultFill();
 	m_noteRounded = pOpt->GetNoteDefaultRounded();
 	m_compFont    = *pOpt->GetComponentLabelFont();
+	m_compSize    = COption::GetComponentLabelSize();
 	m_askTitleBlock = CConCadRegistry::GetAskNewTitleBlock();
 
 	CPropertyPage::OnInitDialog();   // pushes the members into the controls
@@ -444,12 +448,15 @@ BOOL COptionsDrawing::OnApply()
 	pOpt->SetNoteDefaultRounded(m_noteRounded);
 
 	pOpt->SetComponentLabelFont(m_compFont);
+	COption::SetComponentLabelSize(m_compSize);
 
 	CConCadRegistry::SetAskNewTitleBlock(m_askTitleBlock == TRUE);
 
 	// Widths / label font are applied live, so refresh the drawing.
 	// (Wire, cable, Consat and Factory colours: Options > Colours.)
 	GetDocument()->Invalidate();
+	// The component label font and size apply to every open design
+	AfxGetMainWnd()->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
 
 	return CPropertyPage::OnApply();
 }

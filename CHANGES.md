@@ -1776,6 +1776,72 @@ Files: `src/DrawMethod.cpp` / `src/Object.h` (`AddReference` with
 
 ---
 
+## 43. Component field texts Right or Up
+
+The component's Tool Options has **Ref text: Right / Up** next to the
+Ref box. *Up* draws the reference rotated 90°, reading from bottom to
+top, like a text with direction Up. *Right* is the normal horizontal
+text. Per placed component; the default is Right.
+
+The other fields (name, value and any added parameter) have the same
+choice in the field list of the Tool Options: a new **Text** column
+between *Show?* and *Value* shows *Right* or *Up*. Click it to switch,
+like *Show?*.
+
+- The text keeps its anchor point. Up text lies to the left of and above
+  it, so you may want to drag it into place (dragging, selecting and
+  redrawing use the rotated area).
+- Rotating or mirroring the component does not change it.
+- Saved as `text_up="1"` on that `<FIELD>` of the component, only when
+  Up (older versions ignore it and show the text horizontally).
+- Hierarchical symbols too.
+
+Files: `src/Object.h` (`CField::m_up`, `GetFieldRect`), `src/DrawMethod.cpp`
+(paint, hit-test, redraw area, XML), `src/DrawHierarchicalSymbol.cpp`,
+`src/EditDlgMethodEdit.cpp`, `src/ConCad.rc`, `src/resource.h`.
+
+---
+
+## 44. Size of component reference and parameter texts
+
+Options → Settings → Drawing → *Components (reference and parameter
+texts)* has a new **Size (% of pin text)** box next to *Label font…*.
+100 % is the size used so far. The allowed range is 25–400 %, so 150 %
+draws them half again as high. It applies to the references, names,
+values and other parameters of all placed components (Right and Up
+alike, §43). Pin names and numbers and free texts are unchanged.
+
+- Like the label font, it is a setting of this PC (registry
+  `CompFontSize`), not of the design.
+- The label font and size now apply to **every open design and sheet**
+  as soon as you press OK. Before, only the current sheet changed until
+  the design was reopened.
+- Clicking, dragging, selecting and redrawing a component text now use
+  the label font and size. Before, they used the pin font, so a larger
+  or wider label font had a smaller clickable area than its text.
+- The texts grow from their anchor point (up and to the right, or up and
+  to the left for Up texts), so larger texts may need moving where they
+  get close to the symbol.
+
+Files: `src/Option.{h,cpp}` (`GetComponentLabelFont` built on use,
+`Get/SetComponentLabelSize`), `src/ConCadDoc.{h,cpp}` (`GetTextExtent`
+with a LOGFONT), `src/DrawMethod.cpp` (`GetFieldRect`),
+`src/OptionsSheets.{h,cpp}`, `src/ConCad.rc`, `src/resource.h`.
+
+## 45. Fix: crash in Create Module when clicking in the parameter list
+
+In the Create Module dialog, a parameter's value is edited in a text box.
+Clicking somewhere else in the list during that edit made the click
+handler look for the symbol editor's *Display method* drop-down instead
+of the text box. That control does not exist in module mode. Debug
+builds stopped on an MFC assertion (`afxwin2.inl` line 84,
+`GetWindowRect`) and aborted. The handler now picks the same control
+that was opened for the edit and checks that it exists.
+
+Files: `src/DlgUpdateBox.cpp` (`OnClickUpdateList`).
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -2195,3 +2261,23 @@ XML-saved files.
     painter (box ticked) on sheet 2: clicked symbols get P2-…. Ctrl+Z
     restores the references of each sheet. Untick the box: numbering is
     as before (P1, P2 … across the design), the painter too.
+55. **Field text Up** — click a component → Tool Options → Ref text: Up.
+    The reference is drawn vertically, reading upwards. Click on the
+    rotated reference and drag it: it moves. A box selection over it
+    selects the component. Back to Right: horizontal again, no leftovers
+    on screen. Save, reopen: Up is kept. Rotate the component: the
+    reference stays Up. Copy/paste the component: the copy has Up too.
+    Print / PDF: the reference is vertical. In the field list, click
+    the Text column of the value (Right → Up): the value turns upright.
+    Click it again: Right. Clicking Show? and Value still works as before.
+56. **Component text size** — Options → Settings → Drawing → Size 150 →
+    OK: references and parameters of all components get larger, on all
+    sheets and in other open designs. Pin names stay the same. Click and
+    drag a large reference: the whole text is clickable. Size 60: smaller.
+    Up texts (§43) scale too. Restart ConCAD: the size is kept. Print /
+    PDF: the texts have the new size. Entering 10 or 500 is refused
+    (25–400).
+57. **Create Module, click while editing** — select some objects →
+    Ctrl+M. Click a parameter's value cell, type something, then click
+    another row's value cell, then a name cell, then empty list space.
+    No crash. Each typed value is kept.

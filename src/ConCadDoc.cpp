@@ -1375,6 +1375,15 @@ CDSize CConCadDoc::GetTextExtent(const TCHAR *str, int style)
 	return dc.GetTextExtent(str);
 }
 
+CDSize CConCadDoc::GetTextExtent(const TCHAR *str, const LOGFONT &font)
+{
+	Transform dummy;
+	CContext dc(AfxGetMainWnd(), dummy);
+	LOGFONT lf = font;	// SelectFont takes a non-const reference
+	dc.SelectFont(lf, 0);
+	return dc.GetTextExtent(str);
+}
+
 // Select/add a new symbol for editing
 void CConCadDoc::SelectSymbol(CLibraryStoreSymbol *theSymbol)
 {

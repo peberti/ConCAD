@@ -594,8 +594,11 @@ void CDlgUpdateBox::OnClickUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 	// capture item...
 	if (m_capture)
 	{
+		// The same control BeginEdit opened: the Display Method list only
+		// for column 1 of a symbol (a module's column 1 is its value: an
+		// edit box)
 		CWnd *pwnd;
-		if (m_column == 1)
+		if (m_column == 1 && !m_bModule)
 		{
 			pwnd = &m_list_control;
 		}
@@ -604,8 +607,11 @@ void CDlgUpdateBox::OnClickUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 			pwnd = &m_edit_control;
 		}
 		CRect q;
-		pwnd->GetWindowRect(q);
-		if (q.PtInRect(clk))
+		if (::IsWindow(pwnd->GetSafeHwnd()))
+		{
+			pwnd->GetWindowRect(q);
+		}
+		if (::IsWindow(pwnd->GetSafeHwnd()) && q.PtInRect(clk))
 		{
 			pwnd->PostMessage(WM_LBUTTONDOWN, 0, MAKELPARAM(clk.x,clk.y));
 			pwnd->PostMessage(WM_LBUTTONUP, 0, MAKELPARAM(clk.x,clk.y));

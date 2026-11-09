@@ -71,6 +71,7 @@ public:
 	void EndEdit();
 	void BeginEdit(int index, CRect r);
 	void HideShow(int index);
+	void ToggleTextUp(int index);   // "Text" column: Right <-> Up
 	CDrawMethod::CField &GetField(int index);
 
 	void Open(CConCadDoc *pDesign, CDrawingObject *pObject);
