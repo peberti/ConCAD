@@ -30,6 +30,7 @@
 #include "ConCadHierarchicalDoc.h"
 #include "ConCadRegistry.h"
 #include "SvgTitleBlock.h"
+#include "ExportBom.h"
 #include <shlobj.h>
 
 static CString FileNamePart(const CString& path);
@@ -1060,6 +1061,19 @@ void CConCadMultiDoc::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU)
 	{
 		SetTitle(GetTitle() + _T(" [Write protected]"));
 	}
+}
+
+//-------------------------------------------------------------------------
+// A new design is first saved under Options > Settings > File Names >
+// Drawing, e.g. "{Project_prefix}_{Document_Type}-{Project_number}" with
+// the Design Details variables filled in; the window title when they are
+// all empty
+CString CConCadMultiDoc::GetDefaultFileName()
+{
+	CDlgExportBom::TokenList tokens;
+	CDlgExportBom::GetDesignTokens(this, tokens);
+	CString name = CDlgExportBom::ResolvePattern(CDlgExportBom::GetDrawingFileNamePattern(), tokens);
+	return name.IsEmpty() ? CMultiSheetDoc::GetDefaultFileName() : name;
 }
 
 //-------------------------------------------------------------------------

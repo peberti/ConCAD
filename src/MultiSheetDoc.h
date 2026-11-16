@@ -67,6 +67,13 @@ public:
 
 	virtual BOOL IsModified() OVERRIDE;
 
+	// The name Save suggests for a design that has never been saved
+	// (without folder or extension)
+	virtual CString GetDefaultFileName()
+	{
+		return m_strTitle;
+	}
+
 	// Is this a write-protected version (File -> Create version)?
 	virtual bool IsWriteProtected()
 	{

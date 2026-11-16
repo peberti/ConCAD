@@ -28,6 +28,22 @@ public:
 	};
 	typedef std::vector<std::pair<CString, CString> > TokenList;
 
+	// The design variables (Design Details, user variables, {Today},
+	// {FileName}) with their values
+	static void GetDesignTokens(CConCadMultiDoc* pDesign, TokenList& tokens);
+
+	// The pattern with the variables filled in (unknown / empty ones give
+	// nothing) and characters Windows does not allow in a file name
+	// replaced; empty when nothing is left
+	static CString ResolvePattern(const CString& pattern, const TokenList& tokens);
+
+	// Default file names, Options > Settings > File Names
+	static const TCHAR* const DefaultBomFileName;
+	static const TCHAR* const DefaultDrawingFileName;
+	static CString GetBomFileNamePattern();
+	static CString GetDrawingFileNamePattern();
+	static void SetFileNamePatterns(const CString& bom, const CString& drawing);
+
 private:
 	CDlgExportBom(CConCadMultiDoc* pDesign, const TokenList& tokens, const CString& summary);
 
@@ -36,6 +52,8 @@ private:
 	afx_msg void OnTemplateBrowse();
 	afx_msg void OnFolderBrowse();
 	afx_msg void OnFileNameChange();
+	afx_msg void OnVariableDblClk(NMHDR* pNMHDR, LRESULT* pResult);
+	void FillVariables();
 	DECLARE_MESSAGE_MAP()
 
 	struct Template

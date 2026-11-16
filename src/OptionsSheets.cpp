@@ -27,6 +27,7 @@
 #include "LibraryCollection.h"
 #include "AutoSave.h"
 #include "UserColor.h"
+#include "ExportBom.h"
 #include <afxdlgs.h>
 
 IMPLEMENT_DYNCREATE( COptionsGrid, CPropertyPage )
@@ -565,3 +566,51 @@ BOOL COptionsDrawing::OnApply()
 }
 //-------------------------------------------------------------------------
 //=========================================================================
+
+//-------------------------------------------------------------------------
+// Options -> Settings -> File Names
+
+BEGIN_MESSAGE_MAP(COptionsFileNames, CPropertyPage)
+	ON_BN_CLICKED(IDC_FN_DEFAULTS, OnDefaults)
+END_MESSAGE_MAP()
+
+COptionsFileNames::COptionsFileNames() :
+	CPropertyPage(COptionsFileNames::IDD)
+{
+	m_drawing = CDlgExportBom::GetDrawingFileNamePattern();
+	m_bom = CDlgExportBom::GetBomFileNamePattern();
+}
+
+void COptionsFileNames::DoDataExchange(CDataExchange* pDX)
+{
+	CPropertyPage::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_FN_DRAWING, m_drawing);
+	DDX_Text(pDX, IDC_FN_BOM, m_bom);
+}
+
+BOOL COptionsFileNames::OnInitDialog()
+{
+	CPropertyPage::OnInitDialog();
+	return TRUE;
+}
+
+void COptionsFileNames::OnDefaults()
+{
+	SetDlgItemText(IDC_FN_DRAWING, CDlgExportBom::DefaultDrawingFileName);
+	SetDlgItemText(IDC_FN_BOM, CDlgExportBom::DefaultBomFileName);
+	SetModified(TRUE);
+}
+
+BOOL COptionsFileNames::OnApply()
+{
+	if (!UpdateData(TRUE))
+	{
+		return FALSE;
+	}
+	m_drawing.Trim();
+	m_bom.Trim();
+	CDlgExportBom::SetFileNamePatterns(
+		m_bom.IsEmpty() ? CString(CDlgExportBom::DefaultBomFileName) : m_bom,
+		m_drawing.IsEmpty() ? CString(CDlgExportBom::DefaultDrawingFileName) : m_drawing);
+	return CPropertyPage::OnApply();
+}

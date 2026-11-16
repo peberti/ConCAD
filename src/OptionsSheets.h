@@ -232,4 +232,28 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
+// Options -> Settings -> File Names: default names of a new design and of
+// the exported BoM (CHANGES.md §53)
+class COptionsFileNames: public CPropertyPage
+{
+public:
+	COptionsFileNames();
+
+	enum
+	{
+		IDD = IDD_OPTIONS_FILENAMES
+	};
+
+	CString m_drawing;
+	CString m_bom;
+
+	virtual BOOL OnApply();
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual BOOL OnInitDialog();
+	afx_msg void OnDefaults();
+	DECLARE_MESSAGE_MAP()
+};
+
 #endif // __OPTIONSSHEETS_H__

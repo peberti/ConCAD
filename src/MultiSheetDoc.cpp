@@ -217,7 +217,7 @@ BOOL CMultiSheetDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 		theFileName = m_strPathName;
 		if (bReplace && theFileName.IsEmpty())
 		{
-			theFileName = m_strTitle;
+			theFileName = GetDefaultFileName();
 			// check for dubious filename
 			int iBad = theFileName.FindOneOf(_T(":/\\"));
 			if (iBad != -1)

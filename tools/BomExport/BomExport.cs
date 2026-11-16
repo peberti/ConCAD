@@ -15,7 +15,8 @@
 // Template rules:
 // - {Name} in any cell (or in the page header/footer) is replaced with the
 //   design variable; unknown or empty variables give an empty text. A cell
-//   holding only one {Name} whose value is a number becomes a number.
+//   holding only one {Name} whose value is a whole number becomes a number
+//   (decimals such as Revision 0.1 and leading zeros stay text as written).
 // - The first row with a {BOM_...} token is the item row. It is repeated
 //   once per part: {BOM_Pos}, {BOM_Partnumber}, {BOM_Type}, {BOM_Name},
 //   {BOM_Qty}. Formulas in it follow their row. Rows below move down;
@@ -421,10 +422,26 @@ namespace ConCadBomExport
 			}
 		}
 
+		// Only whole numbers such as {QTY}: "0.1" (a revision) would show as
+		// "0,1" with a comma decimal separator, "1.10" as "1,1", and "007"
+		// would lose its zeros, so those stay text
 		static bool TryNumber(string s, out double d)
 		{
-			return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out d)
-				|| double.TryParse(s, NumberStyles.Float, CultureInfo.CurrentCulture, out d);
+			d = 0;
+			string digits = s.StartsWith("-") ? s.Substring(1) : s;
+			if (digits.Length == 0 || digits.Length > 15 || (digits.Length > 1 && digits[0] == '0'))
+			{
+				return false;
+			}
+			foreach (char ch in digits)
+			{
+				if (ch < '0' || ch > '9')
+				{
+					return false;
+				}
+			}
+			d = double.Parse(s, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+			return true;
 		}
 
 		static void SetText(XElement t, string value)

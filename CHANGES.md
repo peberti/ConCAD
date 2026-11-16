@@ -1544,7 +1544,9 @@ made from an Excel template.
     `{RevisedBy}`, every user variable such as `{Customer}`, `{QTY}`,
     `{Vehicle_Model}`; plus `{Today}` and `{FileName}`). Unknown or empty
     variables give an empty text; a cell that holds just one variable whose
-    value is a number becomes a number (so formulas can use `{QTY}`).
+    value is a whole number becomes a number (so formulas can use `{QTY}`);
+    decimals and leading zeros stay text as written, so Revision `0.1` is
+    not shown as `0,1` (§53).
   - The first row with a `{BOM_…}` token is the **item row**, repeated
     once per part number: `{BOM_Pos}`, `{BOM_Partnumber}`, `{BOM_Type}`,
     `{BOM_Name}`, `{BOM_Qty}`. Its formulas follow their row
@@ -2002,6 +2004,36 @@ Files: `src/ConCadView.cpp` (`IsAllowedWhenWriteProtected`, `OnLButtonDown`),
 `src/EditDlg.cpp` / `src/Diag.h` / `src/editbar.cpp` (`CEditDlg::IsReadOnly`,
 `ApplyReadOnly`, `BlockReadOnlyInput`), `src/EditToolBar.cpp` (title),
 `src/EditDlg{Method,Hierarchical,Module}Edit.cpp` (read-only cell editors).
+
+---
+
+## 53. Export BoM: variable list; default file names in Settings
+
+- The File → Export BoM to Excel dialog is titled **Export BoM** and lists
+  every design variable with its value (Design Details fields, the user
+  variables, `{Today}`, `{FileName}`). Double-click one to insert it into
+  the file name at the caret.
+- New page **Options → Settings → File Names** with the default file names
+  (Restore Defaults puts these back; an empty field means the default):
+  - **Drawing**: `{Project_prefix}_{Document_Type}-{Project_number}` — the
+    name Save suggests when a new design is saved for the first time. When
+    all of its variables are empty the window title (e.g. `Design1`) is
+    suggested as before.
+  - **BoM**: `{Project_prefix}_BoM-{Project_number}_{Revision}` — the file
+    name the Export BoM dialog starts with. Changing it in the dialog is
+    for that export only (it is no longer remembered there).
+- Stored in the registry under `FileNames` (`Drawing`, `BoM`).
+- Excel fix: only whole numbers become numbers in the BoM; Revision `0.1`
+  used to arrive as the number 0.1 and showed as `0,1` with a Swedish
+  decimal comma (`1.10` as `1,1`). Decimals and leading zeros stay text.
+
+Files: `src/ExportBom.{h,cpp}` (`GetDesignTokens`, `ResolvePattern`,
+`Get/SetFileNamePatterns`, `FillVariables`), `src/OptionsSheets.{h,cpp}`
+(`COptionsFileNames`), `src/OptionsPropertySheet.{h,cpp}`,
+`src/MultiSheetDoc.{h,cpp}` / `src/ConCadMultiDoc.{h,cpp}`
+(`GetDefaultFileName`), `src/ConCad.rc`, `src/resource.h`
+(`IDD_OPTIONS_FILENAMES`, `IDC_BOM_VARIABLES`, `IDC_FN_*`),
+`tools/BomExport/BomExport.cs` (`TryNumber`).
 
 ---
 
@@ -2503,3 +2535,12 @@ XML-saved files.
     Drag a box around several texts, Ctrl+Shift+C, paste into Notepad:
     their texts. The file stays unmodified (no * in the title). Then open
     an editable design: Tool Options is editable again.
+67. **File names** — Options → Settings → File Names shows the two default
+    patterns; Restore Defaults resets them. File → New, Design Details:
+    fill Project_prefix, Document_Type, Project_number; Save suggests
+    e.g. `ABC_EL-1234.con`. With them empty Save suggests `Design1.con`.
+    File → Export BoM to Excel: the title is "Export BoM", the file name
+    starts as `ABC_BoM-1234_0.1`, the list shows every variable with its
+    value; double-clicking one inserts it at the caret. Change the pattern
+    in Settings: the next export starts with the new one. In Excel the
+    Revision reads `0.1` (not `0,1`) and quantities are still numbers.

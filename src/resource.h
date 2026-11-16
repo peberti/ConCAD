@@ -515,6 +515,7 @@
 #define IDB_SPLASH                      190
 #define IDD_BUG_REPORT                  191
 #define IDD_EXPORT_BOMXL                192
+#define IDD_OPTIONS_FILENAMES           200
 #define IDC_OPT_CONSAT_COLOR            40060
 #define IDC_OPT_FACTORY_COLOR           40061
 #define IDC_SC_LIST                     40062
@@ -585,6 +586,10 @@
 #define IDC_BOM_FOLDER                  40085
 #define IDC_BOM_FOLDER_BROWSE           40086
 #define IDC_BOM_OPEN                    40087
+#define IDC_BOM_VARIABLES               40437
+#define IDC_FN_DRAWING                  40438
+#define IDC_FN_BOM                      40439
+#define IDC_FN_DEFAULTS                 40440
 #define IDD_DETAILS_PAGE5               193
 #define IDD_EDIT_REVISION               198
 #define IDC_REV_LIST                    40088
@@ -662,9 +667,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        200
+#define _APS_NEXT_RESOURCE_VALUE        201
 #define _APS_NEXT_COMMAND_VALUE         32932
-#define _APS_NEXT_CONTROL_VALUE         40437
+#define _APS_NEXT_CONTROL_VALUE         40441
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

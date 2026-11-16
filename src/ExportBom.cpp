@@ -18,7 +18,25 @@
 #include "Log.h"
 
 static const TCHAR* const RegSection = _T("BoM");
-static const TCHAR* const DefaultFileName = _T("BOM_{Title}_{Revision}");
+static const TCHAR* const FileNameSection = _T("FileNames");
+const TCHAR* const CDlgExportBom::DefaultBomFileName = _T("{Project_prefix}_BoM-{Project_number}_{Revision}");
+const TCHAR* const CDlgExportBom::DefaultDrawingFileName = _T("{Project_prefix}_{Document_Type}-{Project_number}");
+
+CString CDlgExportBom::GetBomFileNamePattern()
+{
+	return AfxGetApp()->GetProfileString(FileNameSection, _T("BoM"), DefaultBomFileName);
+}
+
+CString CDlgExportBom::GetDrawingFileNamePattern()
+{
+	return AfxGetApp()->GetProfileString(FileNameSection, _T("Drawing"), DefaultDrawingFileName);
+}
+
+void CDlgExportBom::SetFileNamePatterns(const CString& bom, const CString& drawing)
+{
+	AfxGetApp()->WriteProfileString(FileNameSection, _T("BoM"), bom);
+	AfxGetApp()->WriteProfileString(FileNameSection, _T("Drawing"), drawing);
+}
 static const TCHAR* const DefaultTemplate = _T("ConCAD-BOM");
 
 //-------------------------------------------------------------------------
@@ -137,9 +155,12 @@ static CString Lookup(const CDlgExportBom::TokenList& tokens, const CString& nam
 	return value;
 }
 
-// File name from the pattern: variables filled in (unknown/empty ones give
-// nothing), characters Windows does not allow replaced
-static CString ResolveFileName(const CString& pattern, const CDlgExportBom::TokenList& tokens)
+void CDlgExportBom::GetDesignTokens(CConCadMultiDoc* pDesign, TokenList& tokens)
+{
+	CollectTokens(pDesign, tokens);
+}
+
+CString CDlgExportBom::ResolvePattern(const CString& pattern, const TokenList& tokens)
 {
 	CString out;
 	for (int i = 0; i < pattern.GetLength(); i++)
@@ -169,6 +190,13 @@ static CString ResolveFileName(const CString& pattern, const CDlgExportBom::Toke
 	{
 	}
 	out.Trim(_T(" ._-"));
+	return out;
+}
+
+// The BoM's file name from the pattern (CDlgExportBom::ResolvePattern)
+static CString ResolveFileName(const CString& pattern, const CDlgExportBom::TokenList& tokens)
+{
+	CString out = CDlgExportBom::ResolvePattern(pattern, tokens);
 	if (out.IsEmpty())
 	{
 		out = _T("BOM");
@@ -377,6 +405,7 @@ BEGIN_MESSAGE_MAP(CDlgExportBom, CDialog)
 	ON_BN_CLICKED(IDC_BOM_TEMPLATE_BROWSE, OnTemplateBrowse)
 	ON_BN_CLICKED(IDC_BOM_FOLDER_BROWSE, OnFolderBrowse)
 	ON_EN_CHANGE(IDC_BOM_FILENAME, OnFileNameChange)
+	ON_NOTIFY(NM_DBLCLK, IDC_BOM_VARIABLES, OnVariableDblClk)
 END_MESSAGE_MAP()
 
 CDlgExportBom::CDlgExportBom(CConCadMultiDoc* pDesign, const TokenList& tokens, const CString& summary) :
@@ -469,7 +498,8 @@ BOOL CDlgExportBom::OnInitDialog()
 		}
 	}
 
-	SetDlgItemText(IDC_BOM_FILENAME, app->GetProfileString(RegSection, _T("FileName"), DefaultFileName));
+	SetDlgItemText(IDC_BOM_FILENAME, GetBomFileNamePattern());
+	FillVariables();
 
 	// Default folder: the design's
 	CString folder = m_pDesign->GetPathName();
@@ -486,6 +516,38 @@ BOOL CDlgExportBom::OnInitDialog()
 	CheckDlgButton(IDC_BOM_OPEN, app->GetProfileInt(RegSection, _T("Open"), 1) ? BST_CHECKED : BST_UNCHECKED);
 	OnFileNameChange();
 	return TRUE;
+}
+
+// Every design variable with its value
+void CDlgExportBom::FillVariables()
+{
+	CListCtrl* list = static_cast<CListCtrl*> (GetDlgItem(IDC_BOM_VARIABLES));
+	list->SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	CRect r;
+	list->GetClientRect(&r);
+	const int nameWidth = r.Width() * 2 / 5;
+	list->InsertColumn(0, _T("Variable"), LVCFMT_LEFT, nameWidth);
+	list->InsertColumn(1, _T("Value"), LVCFMT_LEFT, r.Width() - nameWidth - GetSystemMetrics(SM_CXVSCROLL));
+	for (size_t i = 0; i < m_tokens.size(); i++)
+	{
+		const int row = list->InsertItem((int) i, _T("{") + m_tokens[i].first + _T("}"));
+		list->SetItemText(row, 1, m_tokens[i].second);
+	}
+}
+
+// Double-click a variable: add it to the file name at the caret
+void CDlgExportBom::OnVariableDblClk(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	*pResult = 0;
+	const NMITEMACTIVATE* pItem = reinterpret_cast<NMITEMACTIVATE*>(pNMHDR);
+	if (pItem->iItem < 0)
+	{
+		return;
+	}
+	CListCtrl* list = static_cast<CListCtrl*> (GetDlgItem(IDC_BOM_VARIABLES));
+	CEdit* edit = static_cast<CEdit*> (GetDlgItem(IDC_BOM_FILENAME));
+	edit->SetFocus();
+	edit->ReplaceSel(list->GetItemText(pItem->iItem, 0), TRUE);
 }
 
 CString CDlgExportBom::OutputName() const
@@ -569,11 +631,10 @@ void CDlgExportBom::OnOK()
 	}
 	m_open = IsDlgButtonChecked(IDC_BOM_OPEN) == BST_CHECKED;
 
-	CString pattern;
-	GetDlgItemText(IDC_BOM_FILENAME, pattern);
+	// The file name typed here is for this export only; the default is
+	// set in Options > Settings > File Names
 	CWinApp* app = AfxGetApp();
 	app->WriteProfileString(RegSection, _T("Template"), m_template);
-	app->WriteProfileString(RegSection, _T("FileName"), pattern);
 	app->WriteProfileInt(RegSection, _T("Open"), m_open ? 1 : 0);
 	CDialog::OnOK();
 }

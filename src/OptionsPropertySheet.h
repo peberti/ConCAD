@@ -49,6 +49,7 @@ public:
 	COptionsAutosnap m_Page2;
 	COptionsAutoSave m_Page3;
 	COptionsDrawing m_Page4;
+	COptionsFileNames m_Page5;
 
 	// Operations
 public:

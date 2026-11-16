@@ -483,6 +483,19 @@ BEGIN
     LTEXT           "mm",GRIDBOX_UNITS,127,70,19,8
 END
 
+IDD_OPTIONS_FILENAMES DIALOGEX 6, 18, 190, 196
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "File Names"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Default file names. They may use the design variables of Design Details, e.g. {Title}, {Revision}, {Project_prefix}, {Project_number}, {Document_Type}, and {Today}.",IDC_STATIC,10,6,170,34
+    LTEXT           "Drawing (when a new design is first saved):",IDC_STATIC,10,44,170,8
+    EDITTEXT        IDC_FN_DRAWING,10,55,170,13,ES_AUTOHSCROLL
+    LTEXT           "BoM (File > Export BoM):",IDC_STATIC,10,76,170,8
+    EDITTEXT        IDC_FN_BOM,10,87,170,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Restore Defaults",IDC_FN_DEFAULTS,10,110,70,14
+END
+
 IDD_OPTIONS_DRAWING DIALOGEX 6, 18, 190, 196
 STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Drawing"
@@ -847,9 +860,9 @@ BEGIN
     PUSHBUTTON      "Upgrade",LIBRARYBOX_UPGRADE,535,164,50,14
 END
 
-IDD_EXPORT_BOMXL DIALOGEX 0, 0, 320, 150
+IDD_EXPORT_BOMXL DIALOGEX 0, 0, 320, 262
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Export BoM to Excel"
+CAPTION "Export BoM"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "",IDC_BOM_SUMMARY,7,7,306,18
@@ -863,9 +876,10 @@ BEGIN
     EDITTEXT        IDC_BOM_FOLDER,60,79,196,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Browse...",IDC_BOM_FOLDER_BROWSE,262,78,51,14
     CONTROL         "Open the file in Excel when it is ready",IDC_BOM_OPEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,97,200,10
-    LTEXT           "The file name may use the design variables, e.g. {Title}, {Revision}, {Customer}, {Today}.",IDC_STATIC,7,113,306,8
-    DEFPUSHBUTTON   "Export",IDOK,209,129,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,263,129,50,14
+    LTEXT           "Design variables - double-click one to add it to the file name. The default file name is set in Options > Settings > File Names.",IDC_STATIC,7,113,306,16
+    CONTROL         "",IDC_BOM_VARIABLES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,131,306,104
+    DEFPUSHBUTTON   "Export",IDOK,209,241,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,263,241,50,14
 END
 
 IDD_AUTOSAVE DIALOG 0, 0, 204, 86
