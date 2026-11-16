@@ -63,7 +63,12 @@ void COption::Init(CConCadDoc *pDesign)
 	WireWidth          = CRegistry::GetInt("WireWidth", 1);
 	CableWidth         = CRegistry::GetInt("CableWidth", 3);
 	NoteDefaultFill    = CRegistry::GetBool("NoteDefaultFill", true);
-	NoteDefaultRounded = CRegistry::GetBool("NoteDefaultRounded", true);
+	// Border of new notes; before it was only "rounded corners" yes/no
+	NoteDefaultBorder  = CRegistry::GetInt("NoteDefaultBorder", CRegistry::GetBool("NoteDefaultRounded", true) ? 1 : 0);
+	if (NoteDefaultBorder < 0 || NoteDefaultBorder > 2)
+	{
+		NoteDefaultBorder = 1;
+	}
 
 	// Component-label font: built on use (GetComponentLabelFont)
 	ComponentLabelFont = *GetFont(fPIN);
@@ -144,10 +149,11 @@ void COption::SetNoteDefaultFill(BOOL b)
 	CRegistry::Set("NoteDefaultFill", NoteDefaultFill);
 }
 
-void COption::SetNoteDefaultRounded(BOOL b)
+void COption::SetNoteDefaultBorder(int style)
 {
-	NoteDefaultRounded = b;
-	CRegistry::Set("NoteDefaultRounded", NoteDefaultRounded);
+	NoteDefaultBorder = style;
+	CRegistry::Set("NoteDefaultBorder", NoteDefaultBorder);
+	CRegistry::Set("NoteDefaultRounded", NoteDefaultBorder == 1); // for older builds
 }
 
 // The component-label settings, shared by all designs (read once from the

@@ -605,8 +605,9 @@ CString CDrawMethod::GetDecoratedField(int which)
 					r = _T("");
 				}
 				else
-				{ //field has a value and thus is not empty
-					r = m_fields[which].m_description + _T("=") + GetField(which);
+				{ //field has a value and thus is not empty: the value only (it
+				  //used to show Name=Value, the same as the method above)
+					r = GetField(which);
 				}
 				break;
 		}

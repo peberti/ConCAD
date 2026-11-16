@@ -139,13 +139,32 @@ BEGIN
         MENUITEM "&Find...",                    ID_FIND_FIND
         MENUITEM "R&eplace Text...\tCtrl+H",    IDM_EDIT_REPLACETEXT
         MENUITEM SEPARATOR
-        MENUITEM "Zoom In\tPg Up",              IDM_VIEWZOOMIN
-        MENUITEM "Zoom Out\tPg Dn",             IDM_VIEWZOOMOUT
-        MENUITEM SEPARATOR
         MENUITEM "Insert picture...",           ID_EDIT_INSERTPICTURE
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "Zoom &In\tPg Up",             IDM_VIEWZOOMIN
+        MENUITEM "Zoom &Out\tPg Dn",            IDM_VIEWZOOMOUT
+        MENUITEM SEPARATOR
+        MENUITEM "Show &Grid",                  IDM_VIEW_SHOWGRID
+        MENUITEM "&Snap to Grid\tCtrl+Shift+N", IDM_SNAPTOGRID
+        MENUITEM "Next Grid Si&ze",             IDM_TOGGLE_GRIDSIZE
+        MENUITEM "Grid Se&ttings...",           IDM_VIEWGRID
         MENUITEM SEPARATOR
         MENUITEM "&Design Details...\tCtrl+D",  IDM_FILEDESIGN
         MENUITEM "&Revision History",           IDM_EDIT_REVISIONHISTORY
+        MENUITEM SEPARATOR
+        POPUP "&Toolbars"
+        BEGIN
+            MENUITEM "File",                        ID_VIEW_FILETOOLBAR
+            MENUITEM SEPARATOR
+            MENUITEM "Annotation",                  ID_VIEW_ANNOTATIONTOOLBAR
+            MENUITEM "Block",                       ID_VIEW_GROUPTOOLBAR
+            MENUITEM "Drawing",                     ID_VIEW_EDITTOOLBAR
+            MENUITEM "Position",                    IDM_VIEWSHOWPOS
+        END
+        MENUITEM "&Find Symbol Panel",          ID_OPTIONS_TOOLBARS_SYMBOL
+        MENUITEM "Status &Bar",                 ID_VIEW_STATUS_BAR
     END
     POPUP "&Object"
     BEGIN
@@ -188,8 +207,6 @@ BEGIN
         MENUITEM "&Keyboard Shortcuts...",      IDM_OPTIONS_SHORTCUTS
         MENUITEM "Colours",                     ID_OPTIONS_COLOURS
         MENUITEM SEPARATOR
-        MENUITEM "Show &Position",              IDM_VIEWSHOWPOS
-        MENUITEM "Snap to grid\tCtrl+Shft+N",   IDM_SNAPTOGRID
         POPUP "Repeat Directions"
         BEGIN
             MENUITEM "Name Increment",              IDM_REPEATNAMEUP, CHECKED
@@ -197,16 +214,6 @@ BEGIN
             MENUITEM SEPARATOR
             MENUITEM "Pin Increment",               IDM_REPEATPINUP, CHECKED
             MENUITEM "Pin Decrement",               IDM_REPEATPINDOWN
-        END
-        MENUITEM SEPARATOR
-        POPUP "Toolbars"
-        BEGIN
-            MENUITEM "File",                        ID_VIEW_FILETOOLBAR
-            MENUITEM SEPARATOR
-            MENUITEM "Annotation",                  ID_VIEW_ANNOTATIONTOOLBAR
-            MENUITEM "Block",                       ID_VIEW_GROUPTOOLBAR
-            MENUITEM "Drawing",                     ID_VIEW_EDITTOOLBAR
-            MENUITEM "Symbol",                      ID_OPTIONS_TOOLBARS_SYMBOL
         END
     END
     POPUP "&Window"
@@ -487,8 +494,11 @@ BEGIN
     LTEXT           "Cable width (px):",IDC_STATIC,18,37,60,8
     EDITTEXT        IDC_OPT_CABLE_WIDTH,82,35,26,12,ES_AUTOHSCROLL | ES_NUMBER
     GROUPBOX        "New note boxes",IDC_STATIC,10,58,166,44
-    CONTROL         "Background fill",IDC_OPT_NOTE_FILL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,72,140,10
-    CONTROL         "Rounded corners",IDC_OPT_NOTE_ROUNDED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,86,140,10
+    LTEXT           "Border style:",IDC_STATIC,18,72,46,8
+    COMBOBOX        IDC_OPT_NOTE_BORDER,66,70,72,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_OPT_NOTE_LINE_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,142,70,28,12
+    CONTROL         "Background fill",IDC_OPT_NOTE_FILL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,87,62,10
+    CONTROL         "",IDC_OPT_NOTE_FILL_COLOUR,"Button",BS_OWNERDRAW | WS_TABSTOP,142,86,28,12
     GROUPBOX        "Components (reference and parameter texts)",IDC_STATIC,10,106,166,52
     LTEXT           "Label font:",IDC_STATIC,18,121,40,8
     LTEXT           "(default)",IDC_OPT_COMP_FONT_NAME,58,121,54,8
@@ -715,11 +725,9 @@ CAPTION "Store Module"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     LTEXT           "",IDC_MODULE_LIBNAME,7,4,356,8,SS_NOPREFIX | SS_ENDELLIPSIS
-    LTEXT           "Name",IDC_STATIC1,29,22,40,8
-    EDITTEXT        UPDATE_DESCRIPTION,81,20,247,12,ES_AUTOHSCROLL
-    CONTROL         "List1",IDC_UPDATE_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,26,45,300,84,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Add",IDC_ADD,23,147,50,11
-    PUSHBUTTON      "Delete",IDC_DELETE,78,147,50,11
+    CONTROL         "List1",IDC_UPDATE_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,16,356,124,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Add",IDC_ADD,7,144,50,11
+    PUSHBUTTON      "Delete",IDC_DELETE,62,144,50,11
     LTEXT           "Library:",IDC_LIBFILE_LABEL,8,160,28,8
     COMBOBOX        IDC_MODULE_LIBRARY,38,158,190,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Cancel",IDCANCEL,237,157,50,14
@@ -2384,6 +2392,7 @@ STRINGTABLE
 BEGIN
     IDM_VIEWGRID            "Change the grid and ruler settings"
     IDM_VIEWSHOWPOS         "Show the current position on the screen"
+    IDM_VIEW_SHOWGRID       "Show or hide the grid\nShow Grid"
 END
 
 STRINGTABLE
@@ -2417,7 +2426,7 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_OPTIONS_TOOLBARS_SYMBOL "Symbol picker\nSymbol picker"
+    ID_OPTIONS_TOOLBARS_SYMBOL "Show or hide the Find Symbol panel\nFind Symbol panel"
 END
 
 STRINGTABLE

@@ -20,9 +20,11 @@ public:
 	{
 		CString name;
 		CString value;
+		CString choices; // the values offered in a drop-down, "a; b; c" (may be empty)
 	};
 
 	std::vector<Field> m_fields; // [0] Name, then Partnumber, Type and the module's own fields
+	bool m_excludeFromBom; // left out of File -> Export BoM (Module Tool Options)
 	enum
 	{
 		FixedFields = 1
@@ -32,6 +34,18 @@ public:
 	static bool IsStandardField(const CString& name);
 	// Add Partnumber and Type (empty) after Name if missing
 	void EnsureStandardFields();
+
+	// A parameter's choice list ("a; b; c"): the values its drop-down
+	// offers; any other value can still be typed.  In the module library
+	// it is a hidden attribute "$$CHOICES:<parameter>" next to the
+	// parameter (older builds hide "$$" attributes).
+	static void SplitChoices(const CString& choices, std::vector<CString>& list);
+	static CString NormalizeChoices(const CString& choices); // trimmed, no empty or duplicate entries
+	static CString ChoicesAttributeName(const CString& field);
+	// True for a "$$CHOICES:" attribute; field = the parameter it belongs to
+	static bool IsChoicesAttribute(const CString& name, CString* field = NULL);
+	// The field's choices, if it has a field of that name (case-insensitive)
+	void SetChoices(const CString& field, const CString& choices);
 
 	CDrawModuleInfo(CConCadDoc *pDesign);
 

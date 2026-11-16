@@ -66,7 +66,7 @@ private:
 	int  WireWidth;
 	int  CableWidth;
 	BOOL NoteDefaultFill;
-	BOOL NoteDefaultRounded;
+	int  NoteDefaultBorder; // CDrawNoteText::BorderStyle: 0 rectangle, 1 rounded, 2 none
 
 	// Font used for component (symbol-instance) reference/value labels.  Its
 	// height is kept at the built-in pin-font height (drawing scale); only the
@@ -94,11 +94,11 @@ public:
 	int  GetWireWidth() const          { return WireWidth; }
 	int  GetCableWidth() const         { return CableWidth; }
 	BOOL GetNoteDefaultFill() const    { return NoteDefaultFill; }
-	BOOL GetNoteDefaultRounded() const { return NoteDefaultRounded; }
+	int  GetNoteDefaultBorder() const  { return NoteDefaultBorder; }
 	void SetWireWidth(int w);
 	void SetCableWidth(int w);
 	void SetNoteDefaultFill(BOOL b);
-	void SetNoteDefaultRounded(BOOL b);
+	void SetNoteDefaultBorder(int style);
 
 	//-- Component-label font (references and parameters of placed
 	//-- components).  Shared by all open designs (registry): this design's

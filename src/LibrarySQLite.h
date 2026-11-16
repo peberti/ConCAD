@@ -57,6 +57,7 @@ public:
 	// Write a symbol to this library
 	virtual void Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc &document) OVERRIDE;
 	virtual bool StoreModule(CLibraryStoreNameSet *nwSymbol, CStreamMemory &data) OVERRIDE;
+	virtual void GetAttributeValues(std::vector<std::pair<CString, CString> >& values) OVERRIDE;
 
 	// Delete a symbol from this library
 	virtual void DeleteSymbol(CLibraryStoreNameSet &symbol) OVERRIDE;

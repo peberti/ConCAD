@@ -121,7 +121,8 @@ bool CEditDlg::IsWholeNameFieldSelected()
 }
 
 // The focus is in a text field of a Tool Options dialog (also an edit box
-// inside a combo box or list) and the user has selected text in it: Copy /
+// inside a combo box or list) and the user has selected text in it, or it
+// is a cell editor (IsCellEditor, any selection or just a caret): Copy /
 // Cut / Paste act on that text (keys, Edit menu and toolbar alike).  The
 // whole text of a text / label / pin / power name field selected does not
 // count: that is the state right after the object was clicked, where Copy /
@@ -149,6 +150,10 @@ CWnd* CEditDlg::GetSelectedTextField()
 	if (pDlg == NULL)
 	{
 		return NULL;
+	}
+	if (pDlg->IsCellEditor(pFocus->m_hWnd))
+	{
+		return pFocus;
 	}
 	DWORD start = 0, end = 0;
 	pFocus->SendMessage(EM_GETSEL, reinterpret_cast<WPARAM>(&start), reinterpret_cast<LPARAM>(&end));

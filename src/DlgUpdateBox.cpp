@@ -27,6 +27,8 @@
 #include "ConCad.h"
 #include "ConCadRegistry.h"
 #include "LibraryCollection.h"
+#include "DrawModuleInfo.h"
+#include <algorithm>
 
 #include "Net.h"
 
@@ -41,20 +43,23 @@ CDlgUpdateBox::CDlgUpdateBox(CWnd* pParentWnd) :
 	m_current_record = 0;
 	m_bModule = false;
 	m_bChooseLibrary = false;
+	m_pInplace = NULL;
 }
+
+#define IDC_UPDATE_INPLACE_COMBO 103
 
 void CDlgUpdateBox::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CDlgUpdateBox)
-	DDX_Control(pDX, IDC_STATIC1, m_Static1);
-	DDX_Control(pDX, UPDATE_DESCRIPTION, m_Description);
 	DDX_Control(pDX, IDC_ADD, m_Add);
 	DDX_Control(pDX, IDC_DELETE, m_Delete);
 	DDX_Control(pDX, IDC_UPDATE_LIST, m_list);
 	//}}AFX_DATA_MAP
 	if (!m_bModule) // not in the IDD_STORE_MODULE layout
 	{
+		DDX_Control(pDX, IDC_STATIC1, m_Static1);
+		DDX_Control(pDX, UPDATE_DESCRIPTION, m_Description);
 		DDX_Control(pDX, IDC_DELETE_NAME, m_Delete_Name);
 		DDX_Control(pDX, IDC_LIST_NAMES, m_List_Names);
 		DDX_Control(pDX, IDC_ORIENTATION, m_Orientation);
@@ -81,6 +86,7 @@ BEGIN_MESSAGE_MAP( CDlgUpdateBox, CDialog )
 	ON_LBN_SELCHANGE(IDC_LIST_NAMES, OnSelchangeListNames)
 	ON_EN_KILLFOCUS(101, OnKillfocusEdit)
 	ON_CBN_KILLFOCUS(102, OnKillfocusList)
+	ON_CBN_KILLFOCUS(IDC_UPDATE_INPLACE_COMBO, OnKillfocusCombo)
 	ON_EN_CHANGE(UPDATE_DESCRIPTION, OnChangeName)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -95,6 +101,16 @@ BOOL CDlgUpdateBox::OnInitDialog()
 	if (m_bModule)
 	{
 		FillModuleLibraries();
+
+		// The parameters and values already used in the module libraries
+		CLibraryStore* pLib;
+		for (int i = 0; (pLib = CLibraryCollection::GetLibraryByIndex(i)) != NULL; ++i)
+		{
+			if (pLib->m_modules)
+			{
+				pLib->GetAttributeValues(m_suggestions);
+			}
+		}
 	}
 	else
 	{
@@ -123,9 +139,11 @@ BOOL CDlgUpdateBox::OnInitDialog()
 	{
 		CRect client;
 		m_list.GetClientRect(client);
-		const int name = 130;
+		const int name = 110;
+		const int value = 180;
 		m_list.InsertColumn(0, _T("Parameter"), LVCFMT_LEFT, name);
-		m_list.InsertColumn(1, _T("Value"), LVCFMT_LEFT, max(100, client.Width() - name - GetSystemMetrics(SM_CXVSCROLL)));
+		m_list.InsertColumn(1, _T("Value"), LVCFMT_LEFT, value);
+		m_list.InsertColumn(2, _T("Choices (a; b; c)"), LVCFMT_LEFT, max(100, client.Width() - name - value - GetSystemMetrics(SM_CXVSCROLL)));
 	}
 	else
 	{
@@ -152,6 +170,12 @@ BOOL CDlgUpdateBox::OnInitDialog()
 
 	InitFromRecord();
 
+	if (m_bModule)
+	{
+		// Start with the Name
+		BeginEdit(ModuleNameRow, ValueColumn());
+		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -278,7 +302,7 @@ void CDlgUpdateBox::SetModuleRecordName(CSymbolRecord& r, const CString& type, c
 
 bool CDlgUpdateBox::IsObsoleteModuleField(const CSymbolField& f)
 {
-	return f.field_name.Left(2) == _T("$$")
+	return (f.field_name.Left(2) == _T("$$") && !CDrawModuleInfo::IsChoicesAttribute(f.field_name))
 		|| (f.field_name.CompareNoCase(_T("Package")) == 0 && f.field_default == _T("package name for PCB layout"));
 }
 
@@ -305,15 +329,37 @@ void CDlgUpdateBox::UpdateModuleLibraryName()
 	{
 		return;
 	}
-	CString name;
-	GetDlgItemText(UPDATE_DESCRIPTION, name);
-	const CString type = m_list.GetItemCount() > 1 ? m_list.GetItemText(1, ValueColumn()) : CString();
-	SetDlgItemText(IDC_MODULE_LIBNAME, ModuleLibraryName(type, name));
+	SetDlgItemText(IDC_MODULE_LIBNAME, ModuleLibraryName(GetModuleRowValue(ModuleTypeRow), GetModuleRowValue(ModuleNameRow)));
+}
+
+CString CDlgUpdateBox::GetModuleRowValue(int row) const
+{
+	CString v;
+	if (m_list.GetSafeHwnd() != NULL && row < m_list.GetItemCount())
+	{
+		v = m_list.GetItemText(row, ValueColumn());
+		v.Trim();
+	}
+	return v;
 }
 
 void CDlgUpdateBox::OnChangeName()
 {
 	UpdateModuleLibraryName();
+}
+
+// A module record's choice list for a parameter ("$$CHOICES:<field>")
+static CString GetModuleChoices(const CSymbolRecord& r, const CString& field)
+{
+	const CString attr = CDrawModuleInfo::ChoicesAttributeName(field);
+	for (size_t i = 0; i < r.fields.size(); i++)
+	{
+		if (r.fields[i].field_name.CompareNoCase(attr) == 0)
+		{
+			return CDrawModuleInfo::NormalizeChoices(r.fields[i].field_default);
+		}
+	}
+	return CString();
 }
 
 void CDlgUpdateBox::InitFromRecord()
@@ -322,16 +368,16 @@ void CDlgUpdateBox::InitFromRecord()
 
 	if (m_bModule)
 	{
-		// Name field, then the fixed rows Partnumber, Type and the module's
-		// own fields (modules have no Reference)
+		// The fixed rows Name, Partnumber, Type, then the module's own
+		// fields (modules have no Reference)
 		m_list.DeleteAllItems();
 		CSymbolField f;
-		const TCHAR* const standard[] = { _T("Partnumber"), _T("Type") };
-		for (int s = 0; s < 2; s++)
+		const TCHAR* const standard[] = { _T("Name"), _T("Partnumber"), _T("Type") };
+		for (int s = 0; s < 3; s++)
 		{
 			f.field_name = standard[s];
 			f.field_type = always_hidden;
-			f.field_default = s == 1 ? GetModuleType(r) : CString();
+			f.field_default = s == ModuleNameRow ? GetModuleName(r) : s == ModuleTypeRow ? GetModuleType(r) : CString();
 			for (size_t i = 0; i < r.fields.size(); i++)
 			{
 				if (r.fields[i].field_name.CompareNoCase(standard[s]) == 0)
@@ -340,20 +386,19 @@ void CDlgUpdateBox::InitFromRecord()
 					f.field_name = standard[s];
 				}
 			}
-			AddSymbolField(f);
+			AddSymbolField(f, GetModuleChoices(r, standard[s]));
 		}
 
 		for (size_t i = 0; i < r.fields.size(); i++)
 		{
 			const CString& field = r.fields[i].field_name;
 			if (field.CompareNoCase(_T("Name")) != 0 && field.CompareNoCase(_T("Partnumber")) != 0 && field.CompareNoCase(_T("Type")) != 0
-				&& !IsObsoleteModuleField(r.fields[i]))
+				&& !IsObsoleteModuleField(r.fields[i]) && !CDrawModuleInfo::IsChoicesAttribute(field))
 			{
-				AddSymbolField(r.fields[i]);
+				AddSymbolField(r.fields[i], GetModuleChoices(r, field));
 			}
 		}
 
-		SetDlgItemText(UPDATE_DESCRIPTION, GetModuleName(r));
 		UpdateModuleLibraryName();
 		return;
 	}
@@ -399,24 +444,23 @@ void CDlgUpdateBox::UpdateToRecord()
 
 	if (m_bModule)
 	{
-		CString name;
-		GetDlgItemText(UPDATE_DESCRIPTION, name);
-		name.Trim();
-
 		r.reference = _T("");
 
 		r.fields.clear();
-		CSymbolField n;
-		n.field_name = _T("Name");
-		n.field_default = name;
-		n.field_type = always_hidden;
-		r.fields.push_back(n);
 		for (int i = 0; i < m_list.GetItemCount(); i++)
 		{
-			r.fields.push_back(GetSymbolField(i));
+			CSymbolField f = GetSymbolField(i);
+			r.fields.push_back(f);
+			const CString choices = CDrawModuleInfo::NormalizeChoices(m_list.GetItemText(i, ChoicesColumn()));
+			if (!choices.IsEmpty())
+			{
+				f.field_name = CDrawModuleInfo::ChoicesAttributeName(f.field_name);
+				f.field_default = choices;
+				r.fields.push_back(f);
+			}
 		}
 
-		SetModuleRecordName(r, GetSymbolField(1).field_default, name);
+		SetModuleRecordName(r, GetModuleRowValue(ModuleTypeRow), GetModuleRowValue(ModuleNameRow));
 		return;
 	}
 
@@ -468,13 +512,10 @@ void CDlgUpdateBox::OnOK()
 
 	if (m_bModule)
 	{
-		CString name;
-		GetDlgItemText(UPDATE_DESCRIPTION, name);
-		name.Trim();
-		if (name.IsEmpty())
+		if (GetModuleRowValue(ModuleNameRow).IsEmpty())
 		{
 			AfxMessageBox(_T("Enter a name for the module."), MB_ICONEXCLAMATION);
-			m_Description.SetFocus();
+			BeginEdit(ModuleNameRow, ValueColumn());
 			return;
 		}
 		if (m_bChooseLibrary)
@@ -523,7 +564,7 @@ static const TCHAR *field_types[] = { //Note:  These values MUST be kept in sync
                 _T("Show Value when present") //SymbolFieldType = 6
         };
 
-void CDlgUpdateBox::AddSymbolField(CSymbolField &f)
+void CDlgUpdateBox::AddSymbolField(CSymbolField &f, const CString& choices)
 {
 	int index = m_list.GetItemCount();
 	LVITEM item;
@@ -552,6 +593,11 @@ void CDlgUpdateBox::AddSymbolField(CSymbolField &f)
 	item.pszText = f.field_default.GetBuffer(256);
 	m_list.SetItem(&item);
 	f.field_default.ReleaseBuffer();
+
+	if (m_bModule)
+	{
+		m_list.SetItemText(index, ChoicesColumn(), choices);
+	}
 }
 
 void CDlgUpdateBox::OnAdd()
@@ -594,18 +640,8 @@ void CDlgUpdateBox::OnClickUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
 	// capture item...
 	if (m_capture)
 	{
-		// The same control BeginEdit opened: the Display Method list only
-		// for column 1 of a symbol (a module's column 1 is its value: an
-		// edit box)
-		CWnd *pwnd;
-		if (m_column == 1 && !m_bModule)
-		{
-			pwnd = &m_list_control;
-		}
-		else
-		{
-			pwnd = &m_edit_control;
-		}
+		// The control BeginEdit opened
+		CWnd *pwnd = m_pInplace != NULL ? m_pInplace : &m_edit_control;
 		CRect q;
 		if (::IsWindow(pwnd->GetSafeHwnd()))
 		{
@@ -713,11 +749,32 @@ void CDlgUpdateBox::BeginEdit(int index, int column)
 			}
 		}
 		m_list_control.SetCurSel(sel);
+		m_pInplace = &m_list_control;
 		m_list_control.SetFocus();
 		return;
 	}
 
-	// parameter name or value: the edit control
+	if (m_bModule && column != ChoicesColumn())
+	{
+		// A module's parameter name or value: typed, or picked from the
+		// row's choices and what the module libraries already use
+		const int row = r.Height();
+		r.bottom = r.top + 200;
+		m_capture = TRUE;
+		m_combo_control.Create(WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWN | CBS_AUTOHSCROLL, r, this,
+			IDC_UPDATE_INPLACE_COMBO);
+		m_combo_control.SetFont(GetFont());
+		m_combo_control.SetItemHeight(-1, max(row - 6, 8)); // about the row's height
+		FillSuggestions(index, column);
+		m_combo_control.LimitText(255);
+		m_combo_control.SetWindowText(v);
+		m_combo_control.SetEditSel(0, -1);
+		m_pInplace = &m_combo_control;
+		m_combo_control.SetFocus();
+		return;
+	}
+
+	// parameter name, value or choices: the edit control
 	DWORD style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL;
 
 	m_capture = TRUE;
@@ -726,7 +783,95 @@ void CDlgUpdateBox::BeginEdit(int index, int column)
 	m_edit_control.SetFont(GetFont());
 	m_edit_control.SetWindowText(v);
 	m_edit_control.SetSel(0, v.GetLength());
+	m_pInplace = &m_edit_control;
 	m_edit_control.SetFocus();
+}
+
+static bool ContainsString(const std::vector<CString>& list, const CString& s)
+{
+	for (size_t i = 0; i < list.size(); i++)
+	{
+		if (list[i] == s)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool LessNoCase(const CString& a, const CString& b)
+{
+	return a.CompareNoCase(b) < 0;
+}
+
+// The drop-down of a module's Parameter (column 0) or Value (column 1)
+// cell.  Parameter: the names the module libraries use that this module
+// does not have yet.  Value: the row's own choices first, then the values
+// the module libraries hold for a parameter of that name.
+void CDlgUpdateBox::FillSuggestions(int index, int column)
+{
+	std::vector<CString> first;
+	std::vector<CString> rest;
+	if (column == 0)
+	{
+		for (size_t i = 0; i < m_suggestions.size(); i++)
+		{
+			const CString& name = m_suggestions[i].first;
+			if (name.IsEmpty() || name.Left(2) == _T("$$") || CDrawModuleInfo::IsStandardField(name) || ContainsString(rest, name))
+			{
+				continue;
+			}
+			bool used = false;
+			for (int row = 0; row < m_list.GetItemCount() && !used; row++)
+			{
+				used = row != index && m_list.GetItemText(row, 0).CompareNoCase(name) == 0;
+			}
+			if (!used)
+			{
+				rest.push_back(name);
+			}
+		}
+	}
+	else
+	{
+		const CString field = m_list.GetItemText(index, 0);
+		CDrawModuleInfo::SplitChoices(m_list.GetItemText(index, ChoicesColumn()), first);
+
+		CString owner;
+		for (size_t i = 0; i < m_suggestions.size(); i++)
+		{
+			const CString& name = m_suggestions[i].first;
+			std::vector<CString> values;
+			if (name.CompareNoCase(field) == 0)
+			{
+				CString v = m_suggestions[i].second;
+				v.Trim();
+				values.push_back(v);
+			}
+			else if (CDrawModuleInfo::IsChoicesAttribute(name, &owner) && owner.CompareNoCase(field) == 0)
+			{
+				CDrawModuleInfo::SplitChoices(m_suggestions[i].second, values);
+			}
+			for (size_t v = 0; v < values.size(); v++)
+			{
+				if (!values[v].IsEmpty() && !ContainsString(first, values[v]) && !ContainsString(rest, values[v]))
+				{
+					rest.push_back(values[v]);
+				}
+			}
+		}
+	}
+	std::sort(rest.begin(), rest.end(), LessNoCase);
+
+	m_combo_control.ResetContent();
+	for (size_t i = 0; i < first.size(); i++)
+	{
+		m_combo_control.AddString(first[i]);
+	}
+	for (size_t i = 0; i < rest.size(); i++)
+	{
+		m_combo_control.AddString(rest[i]);
+	}
 }
 
 // Closes the edit box without keeping what was typed
@@ -735,13 +880,10 @@ void CDlgUpdateBox::CancelEdit()
 	if (m_capture)
 	{
 		m_capture = FALSE;
-		if (m_column == 1 && !m_bModule)
+		if (m_pInplace != NULL)
 		{
-			m_list_control.DestroyWindow();
-		}
-		else
-		{
-			m_edit_control.DestroyWindow();
+			m_pInplace->DestroyWindow();
+			m_pInplace = NULL;
 		}
 	}
 }
@@ -776,7 +918,9 @@ void CDlgUpdateBox::MoveToCell(int index, int column, bool back)
 
 BOOL CDlgUpdateBox::PreTranslateMessage(MSG* pMsg)
 {
-	if (m_bModule && m_capture && pMsg->message == WM_KEYDOWN && pMsg->hwnd == m_edit_control.GetSafeHwnd())
+	const HWND inplace = m_pInplace != NULL ? m_pInplace->GetSafeHwnd() : NULL;
+	if (m_bModule && m_capture && pMsg->message == WM_KEYDOWN && inplace != NULL
+		&& (pMsg->hwnd == inplace || ::IsChild(inplace, pMsg->hwnd)))
 	{
 		if (pMsg->wParam == VK_TAB)
 		{
@@ -784,6 +928,12 @@ BOOL CDlgUpdateBox::PreTranslateMessage(MSG* pMsg)
 			const int column = m_column;
 			EndEdit();
 			MoveToCell(index, column, GetKeyState(VK_SHIFT) < 0);
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_ESCAPE && m_pInplace == &m_combo_control && m_combo_control.GetDroppedState())
+		{
+			// Esc first closes an open drop-down
+			m_combo_control.ShowDropDown(FALSE);
 			return TRUE;
 		}
 		if (pMsg->wParam == VK_ESCAPE)
@@ -805,6 +955,11 @@ void CDlgUpdateBox::OnKillfocusEdit()
 void CDlgUpdateBox::OnKillfocusList()
 {
 	// EndEdit();
+}
+
+void CDlgUpdateBox::OnKillfocusCombo()
+{
+	EndEdit();
 }
 
 void CDlgUpdateBox::OnSetfocusUpdateList(NMHDR* pNMHDR, LRESULT* pResult)
@@ -907,16 +1062,26 @@ void CDlgUpdateBox::EndEdit()
 		CString v;
 		m_capture = FALSE;
 
-		if (m_column == 1 && !m_bModule)
+		if (m_pInplace != NULL)
 		{
-			m_list_control.GetWindowText(v);
-			m_list_control.DestroyWindow();
+			m_pInplace->GetWindowText(v);
+			m_pInplace->DestroyWindow();
+			m_pInplace = NULL;
 		}
-		else
+		if (m_column == ChoicesColumn())
 		{
-
-			m_edit_control.GetWindowText(v);
-			m_edit_control.DestroyWindow();
+			v = CDrawModuleInfo::NormalizeChoices(v);
+		}
+		else if (m_bModule && m_column == ValueColumn() && v.Find(_T(';')) >= 0)
+		{
+			// Several values "a; b; c": they are added to the row's
+			// choices, and the first is the value (for Name and Type also
+			// the name in the library)
+			std::vector<CString> values;
+			CDrawModuleInfo::SplitChoices(v, values);
+			m_list.SetItemText(m_index, ChoicesColumn(),
+				CDrawModuleInfo::NormalizeChoices(v + _T(";") + m_list.GetItemText(m_index, ChoicesColumn())));
+			v = values.empty() ? CString() : values[0];
 		}
 		// .. and re-display...
 		LVITEM item;
@@ -933,8 +1098,8 @@ void CDlgUpdateBox::EndEdit()
 			m_List_Names.DeleteString(m_current_record);
 			m_List_Names.InsertString(m_current_record, v);
 		}
-		// .. or the module's library name (from Type)
-		if (m_bModule && m_index == 1 && m_column == ValueColumn())
+		// .. or the module's library name (from Name and Type)
+		if (m_bModule && (m_index == ModuleNameRow || m_index == ModuleTypeRow) && m_column == ValueColumn())
 		{
 			UpdateModuleLibraryName();
 		}

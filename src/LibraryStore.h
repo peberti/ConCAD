@@ -89,6 +89,13 @@ public:
 		return false;
 	}
 
+	// Every parameter name and value stored in this library (distinct
+	// pairs): the suggestions of the Store Module dialog.  Only module
+	// libraries (SQLite) have them.
+	virtual void GetAttributeValues(std::vector<std::pair<CString, CString> >& values)
+	{
+	}
+
 	// Do any idle time tasks...
 	virtual void OnIdle() = 0;
 

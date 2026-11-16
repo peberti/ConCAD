@@ -196,6 +196,31 @@ BOOL CDrawRevisionHistory::IsInside(double left, double right, double top, doubl
 	return !(r < left || l > right || b < top || t > bottom);
 }
 
+CDrawRevisionHistory* CDrawRevisionHistory::Find(CConCadDoc *pSheet)
+{
+	for (drawingIterator it = pSheet->GetDrawingBegin(); it != pSheet->GetDrawingEnd(); ++it)
+	{
+		if ((*it)->GetType() == xRevisionHistory)
+		{
+			return static_cast<CDrawRevisionHistory*>(*it);
+		}
+	}
+	return NULL;
+}
+
+CDrawRevisionHistory* CDrawRevisionHistory::Place(CConCadDoc *pSheet)
+{
+	CDrawRevisionHistory table(pSheet);
+	const CPoint page = pSheet->GetDetails().GetPageBoundsAsPoint();
+	table.m_point_a = CDPoint(10, page.y - 10);
+	table.UpdateExtent();
+	if (table.m_point_a == table.m_point_b)
+	{
+		return NULL;
+	}
+	return static_cast<CDrawRevisionHistory*>(table.Store());
+}
+
 CDrawingObject* CDrawRevisionHistory::Store()
 {
 	CDrawRevisionHistory *NewObject = new CDrawRevisionHistory(m_pDesign);

@@ -57,6 +57,9 @@ BOOL CConCadMultiDoc::OnNewDocument()
 
 	m_sheets.push_back(new CConCadDoc(this));
 
+	// A new design starts at version 0.1 (a kept Revision still wins)
+	m_sheets[0]->GetDetails().SetRevision(_T("0.1"));
+
 	// Fields and variables ticked "Keep" in Design Details
 	m_sheets[0]->GetDetails().ApplyKeptValues();
 
@@ -1126,9 +1129,38 @@ void CConCadMultiDoc::OnFileCreateVersion()
 	newHistory.push_back(entry);
 
 	SetVersionFields(dlg.m_sVersion, sToday, true, newHistory);
+
+	// The version shows its revision history: the table on the first
+	// sheet is shown, or placed if the design has none yet
+	CConCadDoc* pFirst = GetSheet(0);
+	CDrawRevisionHistory* pTable = CDrawRevisionHistory::Find(pFirst);
+	const bool bTableHidden = pTable != NULL && !pTable->IsVisible();
+	bool bTablePlaced = false;
+	if (pTable == NULL)
+	{
+		pTable = CDrawRevisionHistory::Place(pFirst);
+		bTablePlaced = pTable != NULL;
+		if (pTable == NULL)
+		{
+			CLog::Write(_T("Create Version: revision history template not found, no table placed"));
+		}
+	}
+	else
+	{
+		pTable->SetVisible(true);
+	}
+
 	if (!DoSave(dlg.GetTargetPath(), TRUE))
 	{
 		SetVersionFields(sOldRevision, sOldDate, false, oldHistory);
+		if (bTablePlaced)
+		{
+			pFirst->Delete(pTable);
+		}
+		else if (bTableHidden)
+		{
+			pTable->SetVisible(false);
+		}
 		UpdateAllViews(NULL);
 		return;
 	}
@@ -1169,13 +1201,61 @@ void CConCadMultiDoc::OnFileEditFile()
 		}
 	}
 
+	// The working copy is the next version: 0.1 -> 0.2, 1.9 -> 1.10, B -> C
+	const CString sOldRevision = GetSheet(0)->GetDetails().GetRevision();
+	SetRevisionAllSheets(NextRevision(sOldRevision));
+
 	m_bWriteProtected = false;
 	if (!DoSave(sTarget, TRUE))
 	{
 		m_bWriteProtected = true;
+		SetRevisionAllSheets(sOldRevision);
+		UpdateAllViews(NULL);
 		return;
 	}
 	UpdateAllViews(NULL);
+}
+
+void CConCadMultiDoc::SetRevisionAllSheets(const CString& sRevision)
+{
+	for (sheetCollection::iterator i = m_sheets.begin(); i != m_sheets.end(); ++i)
+	{
+		(*i)->GetDetails().SetRevision(sRevision);
+	}
+}
+
+// One step up: the last number in the text is increased by one ("0.1" ->
+// "0.2", "1.09" -> "1.10", "R3" -> "R4"); without a number a final letter
+// is (A -> B); anything else is returned unchanged.
+CString CConCadMultiDoc::NextRevision(const CString& sRevision)
+{
+	int end = sRevision.GetLength();
+	while (end > 0 && !_istdigit(sRevision[end - 1]))
+	{
+		end--;
+	}
+	if (end > 0)
+	{
+		int start = end;
+		while (start > 0 && _istdigit(sRevision[start - 1]))
+		{
+			start--;
+		}
+		const CString digits = sRevision.Mid(start, end - start);
+		CString next;
+		next.Format(_T("%0*I64u"), digits.GetLength(), _ttoi64(digits) + 1);
+		return sRevision.Left(start) + next + sRevision.Mid(end);
+	}
+	const int n = sRevision.GetLength();
+	if (n > 0)
+	{
+		const TCHAR c = sRevision[n - 1];
+		if ((c >= 'A' && c < 'Z') || (c >= 'a' && c < 'z'))
+		{
+			return sRevision.Left(n - 1) + (TCHAR)(c + 1);
+		}
+	}
+	return sRevision;
 }
 
 void CConCadMultiDoc::OnUpdateFileEditFile(CCmdUI *pCmdUI)

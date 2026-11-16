@@ -35,10 +35,24 @@ protected:
 	CListCtrl m_list;
 	CButton m_Delete;
 	CEdit m_edit_control;
+	CComboBox m_combo_control; // a value with choices: picked or typed
+	CWnd *m_pInplace; // the control open over the cell being edited
 	BOOL m_capture;
 	int m_index;
 	int m_column;
 	int m_group;
+	bool m_reading; // ReadFields is filling the list
+
+	// The list has a row per field (item data = field index) and, after
+	// Partnumber, the "Exclude from BoM" row with a tick box (item data -1)
+	enum
+	{
+		BomRow = -1
+	};
+	int FieldToRow(int field);
+	void SetCheck(int row, int state); // 0 no tick box, 1 unticked, 2 ticked
+
+	virtual bool IsCellEditor(HWND hFocus) const;
 
 	CDrawModuleInfo *GetInfo();
 	void ReadFields();
@@ -52,5 +66,8 @@ protected:
 	afx_msg void OnAdd();
 	afx_msg void OnDelete();
 	afx_msg void OnKillfocusEdit();
+	afx_msg void OnKillfocusCombo();
+	afx_msg void OnItemChanging(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	DECLARE_MESSAGE_MAP()
 };

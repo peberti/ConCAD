@@ -370,6 +370,12 @@ public:
 	virtual ObjType GetType();
 	virtual CString GetName() const;
 
+	// The table on a sheet, or NULL
+	static CDrawRevisionHistory* Find(CConCadDoc *pSheet);
+	// A new, visible table at the bottom-left of the page; NULL (nothing
+	// added) when the template is missing
+	static CDrawRevisionHistory* Place(CConCadDoc *pSheet);
+
 	CDrawRevisionHistory(CConCadDoc *pDesign);
 	virtual ~CDrawRevisionHistory()
 	{

@@ -135,6 +135,14 @@ protected:
 	BOOL PreTranslateMessage(MSG* pMsg) override;
 	bool IsWholeNameFieldSelected();
 
+	// The focus is in a cell editor the dialog opened over a list (the
+	// module parameters): Copy / Cut / Paste always act on its text, also
+	// with only a caret in it
+	virtual bool IsCellEditor(HWND hFocus) const
+	{
+		return false;
+	}
+
 private:
 	CDrawingObject *m_pObject;
 

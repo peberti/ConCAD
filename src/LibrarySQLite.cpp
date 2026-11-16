@@ -210,6 +210,22 @@ void CLibrarySQLite::Store(CLibraryStoreNameSet *nwSymbol, CConCadMultiSymbolDoc
 	}
 }
 
+void CLibrarySQLite::GetAttributeValues(std::vector<std::pair<CString, CString> >& values)
+{
+	try
+	{
+		CppSQLite3Query q = m_database.execQuery(_T("SELECT DISTINCT [AttName], [AttValue] FROM [Attribute]"));
+		while (!q.eof())
+		{
+			values.push_back(std::make_pair(CString(q.getStringField(_T("AttName"))), CString(q.getStringField(_T("AttValue")))));
+			q.nextRow();
+		}
+	} catch (CppSQLite3Exception&)
+	{
+		// no suggestions from this library
+	}
+}
+
 bool CLibrarySQLite::StoreModule(CLibraryStoreNameSet *nwSymbol, CStreamMemory &data)
 {
 	// Only module libraries hold modules; the callers report a refusal

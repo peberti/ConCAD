@@ -358,7 +358,9 @@ COptionsDrawing::COptionsDrawing() :
 	m_wireWidth   = 1;
 	m_cableWidth  = 3;
 	m_noteFill    = TRUE;
-	m_noteRounded = TRUE;
+	m_noteBorder  = 1;
+	m_noteFillColour = RGB(255, 255, 175);
+	m_noteLineColour = RGB(0, 0, 255);
 	ZeroMemory(&m_compFont, sizeof(m_compFont));
 	m_compSize = 100;
 	m_askTitleBlock = TRUE;
@@ -383,12 +385,20 @@ void COptionsDrawing::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_OPT_COMP_SIZE, m_compSize);
 	DDV_MinMaxInt(pDX, m_compSize, 25, 400);
 	DDX_Check(pDX, IDC_OPT_NOTE_FILL, m_noteFill);
-	DDX_Check(pDX, IDC_OPT_NOTE_ROUNDED, m_noteRounded);
+	if (pDX->m_bSaveAndValidate) // the list is filled after the first exchange (OnInitDialog)
+	{
+		DDX_CBIndex(pDX, IDC_OPT_NOTE_BORDER, m_noteBorder);
+	}
 	DDX_Check(pDX, IDC_OPT_ASK_TITLEBLOCK, m_askTitleBlock);
 }
 
 BEGIN_MESSAGE_MAP(COptionsDrawing, CPropertyPage)
 	ON_BN_CLICKED(IDC_OPT_COMP_FONT, OnCompFont)
+	ON_BN_CLICKED(IDC_OPT_NOTE_FILL, OnNoteFill)
+	ON_BN_CLICKED(IDC_OPT_NOTE_FILL_COLOUR, OnNoteFillColour)
+	ON_BN_CLICKED(IDC_OPT_NOTE_LINE_COLOUR, OnNoteLineColour)
+	ON_CBN_SELCHANGE(IDC_OPT_NOTE_BORDER, OnNoteBorder)
+	ON_WM_DRAWITEM()
 END_MESSAGE_MAP()
 
 BOOL COptionsDrawing::OnInitDialog()
@@ -397,12 +407,22 @@ BOOL COptionsDrawing::OnInitDialog()
 	m_wireWidth   = pOpt->GetWireWidth();
 	m_cableWidth  = pOpt->GetCableWidth();
 	m_noteFill    = pOpt->GetNoteDefaultFill();
-	m_noteRounded = pOpt->GetNoteDefaultRounded();
+	m_noteBorder  = pOpt->GetNoteDefaultBorder();
+	m_noteFillColour = pOpt->GetUserColor().Get(CUserColor::NOTETEXT_FILL);
+	m_noteLineColour = pOpt->GetUserColor().Get(CUserColor::NOTETEXT_LINE);
 	m_compFont    = *pOpt->GetComponentLabelFont();
 	m_compSize    = COption::GetComponentLabelSize();
 	m_askTitleBlock = CConCadRegistry::GetAskNewTitleBlock();
 
 	CPropertyPage::OnInitDialog();   // pushes the members into the controls
+
+	CComboBox* pBorder = static_cast<CComboBox*>(GetDlgItem(IDC_OPT_NOTE_BORDER));
+	pBorder->AddString(_T("Rectangle"));          // the order of CDrawNoteText::BorderStyle
+	pBorder->AddString(_T("Rounded rectangle"));
+	pBorder->AddString(_T("No border"));
+	pBorder->SetCurSel(m_noteBorder);
+	GetDlgItem(IDC_OPT_NOTE_FILL_COLOUR)->EnableWindow(m_noteFill);
+	GetDlgItem(IDC_OPT_NOTE_LINE_COLOUR)->EnableWindow(m_noteBorder != 2);
 
 	UpdateFontLabel();
 
@@ -422,6 +442,81 @@ void COptionsDrawing::UpdateFontLabel()
 		if (m_compFont.lfItalic)            s += _T(" Italic");
 	}
 	SetDlgItemText(IDC_OPT_COMP_FONT_NAME, s);
+}
+
+void COptionsDrawing::OnNoteFill()
+{
+	GetDlgItem(IDC_OPT_NOTE_FILL_COLOUR)->EnableWindow(IsDlgButtonChecked(IDC_OPT_NOTE_FILL) == BST_CHECKED);
+}
+
+// The border colour only matters with a border
+void COptionsDrawing::OnNoteBorder()
+{
+	CComboBox* pBorder = static_cast<CComboBox*>(GetDlgItem(IDC_OPT_NOTE_BORDER));
+	GetDlgItem(IDC_OPT_NOTE_LINE_COLOUR)->EnableWindow(pBorder->GetCurSel() != 2);
+}
+
+bool COptionsDrawing::PickColour(COLORREF& c)
+{
+	static COLORREF custom[16] = { 0 };
+	CHOOSECOLOR cc;
+	memset(&cc, 0, sizeof(cc));
+	cc.lStructSize = sizeof(cc);
+	cc.hwndOwner = m_hWnd;
+	cc.rgbResult = c;
+	cc.Flags = CC_ANYCOLOR | CC_RGBINIT | CC_FULLOPEN;
+	cc.lpCustColors = custom;
+	if (!ChooseColor(&cc))
+	{
+		return false;
+	}
+	c = cc.rgbResult;
+	SetModified();
+	return true;
+}
+
+void COptionsDrawing::OnNoteFillColour()
+{
+	if (PickColour(m_noteFillColour))
+	{
+		GetDlgItem(IDC_OPT_NOTE_FILL_COLOUR)->Invalidate();
+	}
+}
+
+void COptionsDrawing::OnNoteLineColour()
+{
+	if (PickColour(m_noteLineColour))
+	{
+		GetDlgItem(IDC_OPT_NOTE_LINE_COLOUR)->Invalidate();
+	}
+}
+
+// The colour buttons show their colour (greyed while not used)
+void COptionsDrawing::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	if (nIDCtl != IDC_OPT_NOTE_FILL_COLOUR && nIDCtl != IDC_OPT_NOTE_LINE_COLOUR)
+	{
+		CPropertyPage::OnDrawItem(nIDCtl, lpDrawItemStruct);
+		return;
+	}
+	const COLORREF colour = nIDCtl == IDC_OPT_NOTE_FILL_COLOUR ? m_noteFillColour : m_noteLineColour;
+	const bool enabled = (lpDrawItemStruct->itemState & ODS_DISABLED) == 0;
+	CDC dc;
+	dc.Attach(lpDrawItemStruct->hDC);
+	CBrush brush(enabled ? colour : ::GetSysColor(COLOR_BTNFACE));
+	CPen pen(PS_SOLID, 1, enabled ? RGB(0, 0, 0) : ::GetSysColor(COLOR_GRAYTEXT));
+	CBrush* oldBrush = dc.SelectObject(&brush);
+	CPen* oldPen = dc.SelectObject(&pen);
+	dc.Rectangle(&lpDrawItemStruct->rcItem);
+	if ((lpDrawItemStruct->itemState & ODS_FOCUS) != 0)
+	{
+		CRect r = lpDrawItemStruct->rcItem;
+		r.DeflateRect(3, 3);
+		dc.DrawFocusRect(&r);
+	}
+	dc.SelectObject(oldPen);
+	dc.SelectObject(oldBrush);
+	dc.Detach();
 }
 
 void COptionsDrawing::OnCompFont()
@@ -445,7 +540,15 @@ BOOL COptionsDrawing::OnApply()
 	pOpt->SetWireWidth(m_wireWidth);
 	pOpt->SetCableWidth(m_cableWidth);
 	pOpt->SetNoteDefaultFill(m_noteFill);
-	pOpt->SetNoteDefaultRounded(m_noteRounded);
+	pOpt->SetNoteDefaultBorder(m_noteBorder);
+	if (pOpt->GetUserColor().Get(CUserColor::NOTETEXT_FILL) != m_noteFillColour
+		|| pOpt->GetUserColor().Get(CUserColor::NOTETEXT_LINE) != m_noteLineColour)
+	{
+		// The same colours as Options -> Colours -> Note fill / Note line
+		pOpt->GetUserColor().Set(CUserColor::NOTETEXT_FILL, m_noteFillColour);
+		pOpt->GetUserColor().Set(CUserColor::NOTETEXT_LINE, m_noteLineColour);
+		pOpt->GetUserColor().WriteRegistry();
+	}
 
 	pOpt->SetComponentLabelFont(m_compFont);
 	COption::SetComponentLabelSize(m_compSize);

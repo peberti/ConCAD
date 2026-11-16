@@ -28,10 +28,12 @@ class CDlgUpdateBox: public CDialog
 	CLibraryStoreNameSet* m_NewSymbol;
 	bool m_bModule;
 
-	void AddSymbolField(CSymbolField &f);
+	void AddSymbolField(CSymbolField &f, const CString& choices = CString());
 
 	CEdit m_edit_control;
 	CComboBox m_list_control;
+	CComboBox m_combo_control; // module mode: Parameter and Value, typed or picked
+	CWnd* m_pInplace; // the control open over the cell being edited
 	BOOL m_capture;
 	int m_index;
 	int m_column;
@@ -46,18 +48,34 @@ class CDlgUpdateBox: public CDialog
 	CComboBox m_moduleLibrary;
 	void FillModuleLibraries();
 
+	// Module mode: every parameter name / value stored in the attached
+	// module libraries, offered in the Parameter and Value drop-downs
+	std::vector<std::pair<CString, CString> > m_suggestions;
+	void FillSuggestions(int index, int column);
+
 	CLibraryStoreSymbol& getCurrentRecord();
 
 	// Rows of the parameter list that cannot be renamed or deleted:
-	// Reference, Name for a symbol; Partnumber, Type for a module
+	// Reference, Name for a symbol; Name, Partnumber, Type for a module
 	int FixedRows() const
 	{
-		return 2;
+		return m_bModule ? 3 : 2;
 	}
-	// A module's list has no Display Method column: Parameter, Value
+	// Module mode: the rows of Name and Type (the library name)
+	enum
+	{
+		ModuleNameRow = 0, ModuleTypeRow = 2
+	};
+	CString GetModuleRowValue(int row) const;
+	// A module's list has no Display Method column: Parameter, Value,
+	// Choices (the values the placed module's drop-down offers)
 	int ColumnCount() const
 	{
-		return m_bModule ? 2 : 3;
+		return 3;
+	}
+	int ChoicesColumn() const
+	{
+		return m_bModule ? 2 : -1;
 	}
 	int ValueColumn() const
 	{
@@ -167,6 +185,7 @@ protected:
 	afx_msg void OnSelchangeListNames();
 	afx_msg void OnKillfocusEdit();
 	afx_msg void OnKillfocusList();
+	afx_msg void OnKillfocusCombo();
 	afx_msg void OnChangeName();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()

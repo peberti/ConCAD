@@ -44,11 +44,12 @@ static bool ItemLess(const CDlgExportBom::Item& a, const CDlgExportBom::Item& b)
 }
 
 // One row per Partnumber of the placed modules on all sheets
-static void CollectItems(CConCadMultiDoc* pDesign, std::vector<CDlgExportBom::Item>& items, int& modules, int& missing)
+static void CollectItems(CConCadMultiDoc* pDesign, std::vector<CDlgExportBom::Item>& items, int& modules, int& missing, int& excluded)
 {
 	std::map<CString, size_t> index;
 	modules = 0;
 	missing = 0;
+	excluded = 0;
 	for (int s = 0; s < pDesign->GetNumberOfSheets(); s++)
 	{
 		CConCadDoc* sheet = pDesign->GetSheet(s);
@@ -60,6 +61,11 @@ static void CollectItems(CConCadMultiDoc* pDesign, std::vector<CDlgExportBom::It
 			}
 			CDrawModuleInfo* info = static_cast<CDrawModuleInfo*> (*it);
 			modules++;
+			if (info->m_excludeFromBom) // ticked in Module Tool Options
+			{
+				excluded++;
+				continue;
+			}
 			const CString pn = ModuleField(info, _T("Partnumber"));
 			if (pn.IsEmpty())
 			{
@@ -305,13 +311,15 @@ static CString RunHelper(const CString& templ, const CString& output,
 void CDlgExportBom::Export(CConCadMultiDoc* pDesign)
 {
 	std::vector<Item> items;
-	int modules = 0, missing = 0;
-	CollectItems(pDesign, items, modules, missing);
+	int modules = 0, missing = 0, excluded = 0;
+	CollectItems(pDesign, items, modules, missing, excluded);
 	if (items.empty())
 	{
 		AfxMessageBox(modules == 0
 			? _T("There is no placed module in this design: the BoM lists the Partnumber of the placed modules.")
-			: _T("None of the placed modules has a Partnumber (Module Tool Options)."), MB_ICONINFORMATION);
+			: excluded == modules
+			? _T("All placed modules are excluded from the BoM (Module Tool Options).")
+			: _T("None of the placed modules in the BoM has a Partnumber (Module Tool Options)."), MB_ICONINFORMATION);
 		return;
 	}
 
@@ -326,6 +334,12 @@ void CDlgExportBom::Export(CConCadMultiDoc* pDesign)
 	{
 		CString s;
 		s.Format(_T(" %d module(s) without a Partnumber are left out."), missing);
+		summary += s;
+	}
+	if (excluded > 0)
+	{
+		CString s;
+		s.Format(_T(" %d module(s) excluded from the BoM are left out."), excluded);
 		summary += s;
 	}
 

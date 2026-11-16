@@ -284,7 +284,7 @@ CDrawNoteText::CDrawNoteText(CConCadDoc *pDesign, ObjType type) :
 
 	m_tab_width_in_avg_char_widths = 4;		//This sets the default tab width in average character width units.
 	//Default border style follows the user's drawing preference (Options -> Drawing).
-	m_border_style = m_pDesign->GetOptions()->GetNoteDefaultRounded() ? BS_RoundedRectangle : BS_Rectangle;
+	m_border_style = static_cast<BorderStyle>(m_pDesign->GetOptions()->GetNoteDefaultBorder());
 
 	//Follow the user's "background fill" drawing preference.  "No fill" is
 	//represented by the fsNONE fill handle (matching the note editor and

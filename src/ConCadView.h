@@ -252,6 +252,9 @@ protected:
 	afx_msg void OnUpdateRulerHoriz(CCmdUI* pCmdUI);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnViewOptions();
+	afx_msg void OnViewShowGrid();
+	afx_msg void OnUpdateViewShowGrid(CCmdUI* pCmdUI);
+	afx_msg void OnViewGridSettings();
 	afx_msg void OnContextArcin();
 	afx_msg void OnContextArcout();
 	afx_msg void OnContextCurve();

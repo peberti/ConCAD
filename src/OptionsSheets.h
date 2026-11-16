@@ -209,7 +209,9 @@ public:
 	int      m_wireWidth;
 	int      m_cableWidth;
 	BOOL     m_noteFill;
-	BOOL     m_noteRounded;
+	int      m_noteBorder;     // CDrawNoteText::BorderStyle
+	COLORREF m_noteFillColour; // Options -> Colours: Note fill
+	COLORREF m_noteLineColour; // Options -> Colours: Note line
 	LOGFONT  m_compFont;
 	int      m_compSize;   // percent of the pin text
 	BOOL     m_askTitleBlock;
@@ -221,6 +223,12 @@ protected:
 	virtual BOOL OnInitDialog();
 	void UpdateFontLabel();
 	afx_msg void OnCompFont();
+	afx_msg void OnNoteFill();
+	afx_msg void OnNoteFillColour();
+	afx_msg void OnNoteLineColour();
+	afx_msg void OnNoteBorder();
+	bool PickColour(COLORREF& c);
+	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
 	DECLARE_MESSAGE_MAP()
 };
 

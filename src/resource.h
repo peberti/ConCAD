@@ -481,6 +481,7 @@
 #define ID_LIBRARY_HETEROGENEOUS        32877
 #define ID_OPTIONS_TOGGLE_UNITS         32884
 #define IDM_TOGGLE_GRIDSIZE             32888
+#define IDM_VIEW_SHOWGRID               32931
 #define ID_HELP_OPENCONCADUSERMANUAL   32894
 #define IDM_EDITSELECTALL               32895
 #define IDM_TOOLORIGIN                  32896
@@ -630,6 +631,9 @@
 #define IDC_REFDIR_RIGHT                40431
 #define IDC_REFDIR_UP                   40432
 #define IDC_OPT_COMP_SIZE               40433
+#define IDC_OPT_NOTE_BORDER             40434
+#define IDC_OPT_NOTE_FILL_COLOUR        40435
+#define IDC_OPT_NOTE_LINE_COLOUR        40436
 #define IDD_REPLACE_TEXT                199
 #define IDM_EDIT_REPLACETEXT            32930
 #define IDM_HELP_REPORTBUG              32923
@@ -659,8 +663,8 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        200
-#define _APS_NEXT_COMMAND_VALUE         32931
-#define _APS_NEXT_CONTROL_VALUE         40434
+#define _APS_NEXT_COMMAND_VALUE         32932
+#define _APS_NEXT_CONTROL_VALUE         40437
 #define _APS_NEXT_SYMED_VALUE           114
 #endif
 #endif

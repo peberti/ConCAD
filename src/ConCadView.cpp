@@ -105,6 +105,9 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 	ON_UPDATE_COMMAND_UI(ID_RULER_HORIZ, OnUpdateRulerHoriz)
 	ON_WM_LBUTTONDBLCLK()
 	ON_COMMAND(IDM_VIEW_OPTIONS, OnViewOptions)
+	ON_COMMAND(IDM_VIEW_SHOWGRID, OnViewShowGrid)
+	ON_UPDATE_COMMAND_UI(IDM_VIEW_SHOWGRID, OnUpdateViewShowGrid)
+	ON_COMMAND(IDM_VIEWGRID, OnViewGridSettings)
 	ON_COMMAND(ID_CONTEXT_ARCIN, OnContextArcin)
 	ON_COMMAND(ID_CONTEXT_ARCOUT, OnContextArcout)
 	ON_COMMAND(ID_CONTEXT_CURVE, OnContextCurve)
@@ -1617,6 +1620,34 @@ void CConCadView::OnViewOptions()
 	Invalidate();
 }
 
+// View -> Show Grid: the same setting as Options -> Settings -> Grid
+void CConCadView::OnViewShowGrid()
+{
+	COption* pOpt = GetCurrentDocument()->GetOptions();
+	pOpt->SetGridShow(!pOpt->ShowGrid());
+	CRegistry::Set("ShowGrid", pOpt->ShowGrid());
+	Invalidate();
+}
+
+void CConCadView::OnUpdateViewShowGrid(CCmdUI* pCmdUI)
+{
+	pCmdUI->SetCheck(GetCurrentDocument()->GetOptions()->ShowGrid() ? 1 : 0);
+}
+
+// View -> Grid Settings: Options -> Settings on its Grid page
+void CConCadView::OnViewGridSettings()
+{
+	COptionsPropertySheet propSheet;
+	propSheet.m_pDocument = GetCurrentDocument();
+	propSheet.m_psh.nStartPage = 0; // m_Page1, Grid
+	propSheet.DoModal();
+
+	if (hRuler != NULL) hRuler->RedrawWindow();
+	if (vRuler != NULL) vRuler->RedrawWindow();
+
+	Invalidate();
+}
+
 void CConCadView::OnEditDelete()
 {
 	GetCurrentDocument()->GetEdit()->ContextMenu(MousePosition, IDM_EDITDELITEM);
@@ -2159,14 +2190,7 @@ BOOL CConCadView::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 // The revision-history table on a sheet, or NULL.
 static CDrawRevisionHistory* FindRevisionTable(CConCadDoc* pSheet)
 {
-	for (drawingIterator it = pSheet->GetDrawingBegin(); it != pSheet->GetDrawingEnd(); ++it)
-	{
-		if ((*it)->GetType() == xRevisionHistory)
-		{
-			return static_cast<CDrawRevisionHistory*>(*it);
-		}
-	}
-	return NULL;
+	return CDrawRevisionHistory::Find(pSheet);
 }
 
 // Show or hide the revision-history table.  It always lives on the first
@@ -2189,16 +2213,12 @@ void CConCadView::OnEditRevisionHistory()
 	CDrawRevisionHistory* pTable = FindRevisionTable(pFirst);
 	if (pTable == NULL)
 	{
-		CDrawRevisionHistory table(pFirst);
-		const CPoint page = pFirst->GetDetails().GetPageBoundsAsPoint();
-		table.m_point_a = CDPoint(10, page.y - 10);
-		table.UpdateExtent();
-		if (table.m_point_a == table.m_point_b)
+		pTable = CDrawRevisionHistory::Place(pFirst);
+		if (pTable == NULL)
 		{
 			AfxMessageBox(_T("The revision history template (templates\\revision.svg) was not found."), MB_ICONEXCLAMATION);
 			return;
 		}
-		pTable = static_cast<CDrawRevisionHistory*>(table.Store());
 	}
 	else
 	{
@@ -2257,13 +2277,19 @@ void CConCadView::OnSpecialCreateModule()
 	{
 		CSymbolRecord &r = module.GetRecord(0);
 		r.name = pInfo->m_fields[0].value;
-		for (size_t i = CDrawModuleInfo::FixedFields; i < pInfo->m_fields.size(); i++)
+		for (size_t i = 0; i < pInfo->m_fields.size(); i++) // Name too: its choices
 		{
 			CSymbolField f;
 			f.field_name = pInfo->m_fields[i].name;
 			f.field_default = pInfo->m_fields[i].value;
 			f.field_type = always_hidden;
 			r.fields.push_back(f);
+			if (!pInfo->m_fields[i].choices.IsEmpty())
+			{
+				f.field_name = CDrawModuleInfo::ChoicesAttributeName(pInfo->m_fields[i].name);
+				f.field_default = pInfo->m_fields[i].choices;
+				r.fields.push_back(f);
+			}
 		}
 	}
 
@@ -2309,7 +2335,8 @@ void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)
 		pInfo->m_fields[0].value = CDlgUpdateBox::GetModuleName(*theModule);
 		for (size_t i = 0; i < theModule->fields.size(); i++)
 		{
-			if (theModule->fields[i].field_name.CompareNoCase(_T("Name")) == 0 || CDlgUpdateBox::IsObsoleteModuleField(theModule->fields[i]))
+			if (theModule->fields[i].field_name.CompareNoCase(_T("Name")) == 0 || CDlgUpdateBox::IsObsoleteModuleField(theModule->fields[i])
+				|| CDrawModuleInfo::IsChoicesAttribute(theModule->fields[i].field_name))
 			{
 				continue;
 			}
@@ -2319,6 +2346,15 @@ void CConCadView::PlaceModule(CLibraryStoreSymbol* theModule)
 			pInfo->m_fields.push_back(f);
 		}
 		pInfo->EnsureStandardFields();
+		// ... and the parameters' choice lists (drop-downs in Tool Options)
+		for (size_t i = 0; i < theModule->fields.size(); i++)
+		{
+			CString field;
+			if (CDrawModuleInfo::IsChoicesAttribute(theModule->fields[i].field_name, &field))
+			{
+				pInfo->SetChoices(field, theModule->fields[i].field_default);
+			}
+		}
 		for (size_t i = 0; i < pInfo->m_fields.size(); i++)
 		{
 			if (pInfo->m_fields[i].name.CompareNoCase(_T("Type")) == 0 && pInfo->m_fields[i].value.IsEmpty())

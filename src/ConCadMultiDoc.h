@@ -173,6 +173,8 @@ public:
 	afx_msg void OnUpdateContextAddhierarchicalsymbol(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateContextRenamesheet(CCmdUI *pCmdUI);
 	afx_msg void OnFileCreateVersion();
+	void SetRevisionAllSheets(const CString& sRevision);
+	static CString NextRevision(const CString& sRevision);
 	afx_msg void OnUpdateFileCreateVersion(CCmdUI *pCmdUI);
 	afx_msg void OnFileEditFile();
 	afx_msg void OnUpdateFileEditFile(CCmdUI *pCmdUI);

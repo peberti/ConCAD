@@ -1840,6 +1840,143 @@ that was opened for the edit and checks that it exists.
 
 Files: `src/DlgUpdateBox.cpp` (`OnClickUpdateList`).
 
+## 46. Create Version shows the revision history table
+
+File → Create Version now makes the revision history table on the first
+sheet visible in the saved version. A hidden table is shown. A design
+without one gets it at the bottom-left of the page, like Edit → Revision
+History does the first time. If the template `templates\revision.svg`
+is missing, the version is still created without a table (noted in the
+log). If saving the version fails, the table goes back to how it was.
+
+Files: `src/ConCadMultiDoc.cpp` (`OnFileCreateVersion`), `src/Object.h`,
+`src/DrawRevisionHistory.cpp` (`CDrawRevisionHistory::Find` / `Place`),
+`src/ConCadView.cpp`.
+
+## 47. New designs start at version 0.1; Edit File steps the version
+
+- A new design gets Revision **0.1** (it was 1.0). If Revision is ticked
+  *Keep* in Design Details, the kept value is used instead.
+- File → Edit File (the working copy of a write-protected version) raises
+  the Revision one step, so the working copy and the next Create Version
+  default to the next number. The last number in the text goes up by one
+  (`0.1` → `0.2`, `0.9` → `0.10`, `1.09` → `1.10`, `R3` → `R4`). Without
+  a number, a last letter goes up (`A` → `B`). Opening an existing
+  working copy (Yes in the question) does not step it again.
+
+Files: `src/ConCadMultiDoc.{h,cpp}` (`OnNewDocument`, `OnFileEditFile`,
+`NextRevision`, `SetRevisionAllSheets`).
+
+## 48. Module parameters: drop-downs, choice lists, Exclude from BoM
+
+- **Store Module** (Object → Create Module, or File → Save of a module
+  being edited): the separate Name box is gone. **Name** is now the first
+  fixed row of the parameter table, followed by Partnumber and Type, so
+  Name gets a drop-down and choices like any other parameter. The dialog
+  opens with the Name value being edited, and the line at the top shows
+  the library name `<Type> - <Name>` as you type.
+- The Parameter and Value cells are editable drop-downs.
+  You can type any text, or pick from the list. The Value list shows the
+  row's own choices first, then (sorted) every value the attached module
+  libraries already hold for a parameter of that name. The Parameter list
+  shows the parameter names those libraries use that this module does not
+  have yet.
+- A new **Choices** column gives a parameter a choice list, written
+  `a; b; c`. Entries are trimmed, and empty or duplicate entries are
+  dropped. In the library the list is stored as a hidden attribute
+  `$$CHOICES:<parameter>`, so the library schema is unchanged. Older
+  builds already hide `$$` attributes, but they drop them if they store
+  the module again.
+- **Several values in a Value cell**: typing `a; b; c` keeps **`a`** as
+  the value (the default) and adds `a`, `b`, `c` to the row's choices,
+  merged in front of any choices it already had. For Name and Type the
+  first value is also what the module is called in the library.
+- **Placed module** (Tool Options → Module): clicking a value that has a
+  choice list opens an editable drop-down with the choices, already open.
+  Any other value can still be typed. The list goes with the placed
+  module as an optional `choices` attribute on `<MODULEINFO>`'s
+  `<FIELD>`, written only when the list is not empty. Storing a placed
+  module again (Create Module on it) keeps its choice lists.
+- **Exclude from BoM** (Tool Options → Module): directly after Partnumber
+  there is a row *Exclude from BoM* with a tick box. Clicking the tick
+  box, or anywhere on that row, toggles it. A ticked module is left out of
+  File → Export BoM, and the summary counts the modules it left out. This
+  is per placed module, saved as `bom="exclude"` on `<MODULEINFO>`, and
+  only written when ticked.
+
+- **Copy / Paste in a parameter cell** (Tool Options → Module): while a
+  parameter name or value is being edited, Ctrl+C / Ctrl+X / Ctrl+V (and
+  Edit → Copy / Cut / Paste, toolbar) always act on the cell's text. Before,
+  Ctrl+V with just a caret in the cell (no text selected) pasted into the
+  drawing instead of into the cell
+  (`CEditDlg::IsCellEditor`, `src/Diag.h`, `src/EditDlg.cpp`).
+
+Files: `src/DlgUpdateBox.{h,cpp}` (Choices column, `FillSuggestions`,
+in-place combo), `src/DrawModuleInfo.{h,cpp}` (`Field::choices`,
+`SplitChoices`, `NormalizeChoices`, `IsChoicesAttribute`, `SetChoices`),
+`src/EditDlgModuleEdit.{h,cpp}` (value combo, BoM row),
+`src/ExportBom.cpp`, `src/ConCad.rc` (`IDD_STORE_MODULE`), `src/ConCadView.cpp`
+(`OnSpecialCreateModule`, `PlaceModule`), `src/LibraryStore.h` /
+`src/LibrarySQLite.{h,cpp}` (`GetAttributeValues`).
+
+## 49. Default border style, border colour and fill colour of new notes
+
+Options → Settings → Drawing → *New note boxes*:
+
+- **Border style** list: Rectangle, Rounded rectangle or No border. It
+  replaces the *Rounded corners* tick box. The setting is kept in the
+  registry as `NoteDefaultBorder`. Without it, the old `NoteDefaultRounded`
+  setting decides, so existing preferences carry over. Saving also writes
+  `NoteDefaultRounded`, so older builds keep a rounded or square default.
+  A colour button after the list sets the **border colour** (greyed with
+  *No border*). It is the same colour as Options → Colours → Note line.
+- **Background fill** tick box with a colour button next to it (greyed
+  while fill is off). It is the same colour as Options → Colours → Note
+  fill: changing it in either place changes both.
+
+Only notes placed afterwards use the new defaults; existing notes keep
+their own border and fill.
+
+Files: `src/Option.{h,cpp}` (`NoteDefaultBorder`), `src/OptionsSheets.{h,cpp}`
+(`COptionsDrawing`), `src/DrawNoteText.cpp`, `src/ConCad.rc`
+(`IDD_OPTIONS_DRAWING`), `src/resource.h` (`IDC_OPT_NOTE_BORDER`,
+`IDC_OPT_NOTE_FILL_COLOUR`, `IDC_OPT_NOTE_LINE_COLOUR`).
+
+## 50. "Show Value when present" shows only the value
+
+The symbol parameter Display Method *Show Value when present* showed
+`Name=Value` when the value was not empty, the same as *Show Name=Value
+when present*. It now shows the value only (`10k`); an empty value still
+shows nothing. Placed symbols that use it change on screen at once,
+because the text is built at paint time. Nothing in the file format
+changes.
+
+Files: `src/DrawMethod.cpp` (field text, `default_show_value_only_if_value_not_empty`).
+
+## 51. View menu
+
+A new **View** menu between Edit and Object collects the display commands:
+
+- Zoom In (Pg Up), Zoom Out (Pg Dn): moved from Edit.
+- **Show Grid** (new, ticked while shown): the same setting as Options →
+  Settings → Grid → *Show the grid*, remembered for the next start.
+- Snap to Grid (Ctrl+Shift+N): moved from Options.
+- Next Grid Size: steps Normal → Fine → ½ → ¼ → 1/10 fine → Normal, like
+  the toolbar button.
+- **Grid Settings…** (new): Options → Settings, opened on the Grid page.
+- Design Details… (Ctrl+D) and Revision History: moved from Edit.
+- Toolbars ▸ File, Annotation, Block, Drawing, Position: moved from
+  Options. *Position* is the old Options → Show Position.
+- Find Symbol Panel (was Options → Toolbars → Symbol) and **Status Bar**
+  (new).
+
+Options keeps Settings, Keyboard Shortcuts, Colours and Repeat Directions.
+Keyboard shortcuts are unchanged.
+
+Files: `src/ConCad.rc` (`IDR_TCADTYPE`), `src/resource.h`
+(`IDM_VIEW_SHOWGRID`; the unused `IDM_VIEWGRID` now opens Grid Settings),
+`src/ConCadView.{h,cpp}` (`OnViewShowGrid`, `OnViewGridSettings`).
+
 ---
 
 ## File-format compatibility
@@ -2281,3 +2418,52 @@ XML-saved files.
     Ctrl+M. Click a parameter's value cell, type something, then click
     another row's value cell, then a name cell, then empty list space.
     No crash. Each typed value is kept.
+58. **Create Version shows the table** — hide the table with Edit →
+    Revision History (unchecked), then File → Create Version: the saved
+    version shows the table with the new row. In a design that never had a
+    table, Create Version places one at the bottom-left of sheet 1.
+59. **Version numbers** — File → New: Design Details shows Revision 0.1.
+    Create Version (0.1) → File → Edit File: the working copy shows
+    Revision 0.2 in the title block, and the next Create Version suggests
+    0.2.
+60. **Module drop-downs** — select some objects → Ctrl+M (Create
+    Module). The table starts with Name, Partnumber, Type, and Name's value
+    is being edited. Type `Relay A; Relay B`: Name shows `Relay A`, its
+    Choices `Relay A; Relay B`, and the top line `Relay A`. Click Type's Value: a drop-down lists the Types already in
+    the module libraries. Pick one, or type a new one. In the Choices
+    column of an added parameter `Colour`, type `red; blue;; red`. It
+    becomes `red; blue`. Store, then place the module: in Tool Options,
+    click Colour's value. A drop-down opens with red and blue. Type
+    `green`: it is kept. Save the design, reopen it: Colour is still
+    green, and the drop-down still offers red and blue. Create Module on
+    the placed module: the Choices column still shows `red; blue`.
+61. **Exclude from BoM** — place two modules with different Partnumbers.
+    Click one → Tool Options: below Partnumber is *Exclude from BoM* with
+    a tick box. Tick it. File → Export BoM: only the other Partnumber is
+    listed, and the summary says 1 module was excluded. Save, reopen: the
+    tick is still there. Space on another row adds no tick box.
+62. **Copy/paste in module cells** — click a placed module → Tool Options.
+    Click Type's value, select part of it, Ctrl+C. Click Partnumber's value,
+    press End (caret only), Ctrl+V: the text is inserted in the cell and
+    nothing is pasted in the drawing. Also try a value with choices (the
+    drop-down cell) and Edit → Paste from the menu.
+63. **Note defaults** — Options → Settings → Drawing: set Border style to
+    *No border* (the border colour button greys out), tick Background
+    fill and pick light green, OK. Place a
+    note: no border, light green fill. Options → Colours: Note fill shows
+    the same green. Untick Background fill (the colour button greys out),
+    choose Rectangle and a red border colour, OK: the next note is a
+    square red box without fill, and Options → Colours shows a red Note line. The
+    earlier note is unchanged. Restart ConCAD: the settings are kept.
+64. **Show Value when present** — edit a library symbol, add a parameter
+    `Tol` = `5%` with Display Method *Show Value when present*, store it.
+    Place the symbol: it shows `5%` (not `Tol=5%`). Clear the value in
+    Tool Options: the text disappears.
+65. **View menu** — open a design: the menu bar reads File, Edit, View,
+    Object, … View → Show Grid toggles the grid (tick follows), and it
+    stays that way after a restart. View → Grid Settings… opens Options on
+    the Grid page. Revision History shows and hides the table, Design
+    Details opens the dialog. Toolbars ▸ Position hides and shows the
+    position bar. Find Symbol Panel and Status Bar hide and show, and their
+    ticks follow. Edit no longer lists Zoom, Design Details or Revision
+    History; Options no longer lists Show Position, Snap or Toolbars.
