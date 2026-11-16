@@ -153,7 +153,7 @@ void CEditDlgModuleEdit::OnItemChanging(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 	if (!m_reading && (pNM->uChanged & LVIF_STATE) != 0
 		&& ((pNM->uNewState ^ pNM->uOldState) & LVIS_STATEIMAGEMASK) != 0
-		&& (int)m_list.GetItemData(pNM->iItem) != BomRow)
+		&& ((int)m_list.GetItemData(pNM->iItem) != BomRow || IsReadOnly()))
 	{
 		*pResult = TRUE;
 	}
@@ -206,7 +206,7 @@ void CEditDlgModuleEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 	{
 		// The BoM row: a click beside the tick box also toggles it
 		m_Delete.EnableWindow(FALSE);
-		if ((hit.flags & LVHT_ONITEMSTATEICON) == 0)
+		if ((hit.flags & LVHT_ONITEMSTATEICON) == 0 && !IsReadOnly())
 		{
 			const bool ticked = m_list.GetItemState(hit.iItem, LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2);
 			SetCheck(hit.iItem, ticked ? 1 : 2);
@@ -218,7 +218,7 @@ void CEditDlgModuleEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 	CDrawModuleInfo *pInfo = GetInfo();
 	const bool own = pInfo != NULL && m_index >= CDrawModuleInfo::FixedFields && m_index < (int)pInfo->m_fields.size()
 		&& !CDrawModuleInfo::IsStandardField(pInfo->m_fields[m_index].name); // Name, Partnumber, Type are fixed
-	m_Delete.EnableWindow(own);
+	m_Delete.EnableWindow(own && !IsReadOnly());
 
 	// Values can always be changed, names only of the module's own fields
 	if (hit.iSubItem == 1 || own)
@@ -257,7 +257,7 @@ void CEditDlgModuleEdit::BeginEdit(int index, int column)
 	// A value with a choice list (set when the module was stored): a
 	// drop-down with the choices that still takes any typed value
 	std::vector<CString> choices;
-	if (column == 1)
+	if (column == 1 && !IsReadOnly())
 	{
 		CDrawModuleInfo::SplitChoices(pInfo->m_fields[index].choices, choices);
 	}
@@ -287,6 +287,7 @@ void CEditDlgModuleEdit::BeginEdit(int index, int column)
 	m_edit_control.SetFont(GetFont());
 	m_edit_control.SetWindowText(v);
 	m_edit_control.SetSel(0, v.GetLength());
+	m_edit_control.SetReadOnly(IsReadOnly());
 	m_edit_control.SetFocus();
 }
 
@@ -297,6 +298,15 @@ void CEditDlgModuleEdit::EndEdit()
 		return;
 	}
 	m_capture = FALSE;
+	if (IsReadOnly())
+	{
+		if (m_pInplace != NULL)
+		{
+			m_pInplace->DestroyWindow();
+			m_pInplace = NULL;
+		}
+		return;
+	}
 
 	CString v;
 	if (m_pInplace != NULL)

@@ -161,6 +161,17 @@ public:
 	// The Tool Options text field holding text the user has selected, or NULL
 	static CWnd* GetSelectedTextField();
 
+	// The object is on a write-protected version (File > Create Version):
+	// its texts can be selected and copied but nothing can be changed
+	bool IsReadOnly() const;
+
+private:
+	// Text fields made read-only by ApplyReadOnly (to make them editable
+	// again when the dialog shows an object of an editable design)
+	std::vector<HWND> m_readOnlyEdits;
+	void ApplyReadOnly();
+	bool BlockReadOnlyInput(const MSG* pMsg);
+
 protected:
 	//{{AFX_MSG(CEditDlg)
 	// No message handlers

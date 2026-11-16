@@ -121,7 +121,8 @@ void CEditToolbar::setDlg(CEditDlg *pWnd)
 	{
 		if (pWnd->getObject())
 		{
-			pWnd->GetParent()->SetWindowText(pWnd->getObject()->GetName() + " Tool Options");
+			pWnd->GetParent()->SetWindowText(pWnd->getObject()->GetName()
+				+ (pWnd->IsReadOnly() ? _T(" Tool Options (read-only)") : _T(" Tool Options")));
 		}
 		else
 		{

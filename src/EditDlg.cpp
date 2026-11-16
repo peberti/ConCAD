@@ -199,9 +199,142 @@ static bool IsDrawingShortcut(const MSG* pMsg)
 	return true;
 }
 
+//-------------------------------------------------------------------------
+// Read-only Tool Options (write-protected versions, CHANGES.md §52)
+
+bool CEditDlg::IsReadOnly() const
+{
+	return m_pDesign != NULL && m_pDesign->GetParent() != NULL && m_pDesign->GetParent()->IsWriteProtected();
+}
+
+static bool IsWindowClass(HWND h, LPCTSTR name)
+{
+	TCHAR cls[32] = { 0 };
+	::GetClassName(h, cls, _countof(cls));
+	return _tcsicmp(cls, name) == 0;
+}
+
+struct ReadOnlyPass
+{
+	bool read_only;
+	std::vector<HWND>* changed;
+};
+
+static BOOL CALLBACK SetEditReadOnly(HWND h, LPARAM lParam)
+{
+	ReadOnlyPass* pass = reinterpret_cast<ReadOnlyPass*>(lParam);
+	if (pass->read_only && IsWindowClass(h, _T("Edit")) && (::GetWindowLong(h, GWL_STYLE) & ES_READONLY) == 0)
+	{
+		::SendMessage(h, EM_SETREADONLY, TRUE, 0);
+		pass->changed->push_back(h);
+	}
+	return TRUE;
+}
+
+// Make every text field read-only (selectable and copyable) while the
+// dialog shows an object of a write-protected version, editable otherwise
+void CEditDlg::ApplyReadOnly()
+{
+	if (GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+	if (IsReadOnly())
+	{
+		ReadOnlyPass pass = { true, &m_readOnlyEdits };
+		::EnumChildWindows(m_hWnd, SetEditReadOnly, reinterpret_cast<LPARAM>(&pass));
+	}
+	else
+	{
+		for (size_t i = 0; i < m_readOnlyEdits.size(); i++)
+		{
+			if (::IsWindow(m_readOnlyEdits[i]))
+			{
+				::SendMessage(m_readOnlyEdits[i], EM_SETREADONLY, FALSE, 0);
+			}
+		}
+		m_readOnlyEdits.clear();
+	}
+}
+
+// The mnemonic (Alt+letter) of a control of the dialog
+static BOOL CALLBACK FindMnemonic(HWND h, LPARAM lParam)
+{
+	std::pair<TCHAR, bool>* p = reinterpret_cast<std::pair<TCHAR, bool>*>(lParam);
+	TCHAR text[128] = { 0 };
+	::GetWindowText(h, text, _countof(text));
+	for (const TCHAR* s = text; *s != 0; s++)
+	{
+		if (*s == _T('&') && s[1] != 0 && s[1] != _T('&')
+			&& _totupper(s[1]) == _totupper(p->first))
+		{
+			p->second = true;
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+// On a read-only dialog: text fields can be clicked, selected and copied
+// from and lists scrolled, but buttons, tick boxes, drop-downs, spin
+// boxes and the keys that change them do nothing
+bool CEditDlg::BlockReadOnlyInput(const MSG* pMsg)
+{
+	const UINT msg = pMsg->message;
+	const bool mouse = msg == WM_LBUTTONDOWN || msg == WM_LBUTTONDBLCLK || msg == WM_RBUTTONDOWN
+		|| msg == WM_RBUTTONDBLCLK || msg == WM_MBUTTONDOWN || msg == WM_MOUSEWHEEL;
+	const bool key = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN || msg == WM_CHAR || msg == WM_SYSCHAR;
+	if ((!mouse && !key) || pMsg->hwnd == NULL || !::IsChild(m_hWnd, pMsg->hwnd))
+	{
+		return false;
+	}
+	const HWND h = pMsg->hwnd;
+
+	// Alt+letter would click a button or tick box
+	if (msg == WM_SYSCHAR)
+	{
+		std::pair<TCHAR, bool> p((TCHAR)pMsg->wParam, false);
+		::EnumChildWindows(m_hWnd, FindMnemonic, reinterpret_cast<LPARAM>(&p));
+		return p.second;
+	}
+
+	const WPARAM k = pMsg->wParam;
+	const bool changing_key = (msg == WM_KEYDOWN && (k == VK_SPACE || k == VK_UP || k == VK_DOWN || k == VK_PRIOR
+		|| k == VK_NEXT || k == VK_F4 || ((k == VK_HOME || k == VK_END) && ::GetKeyState(VK_CONTROL) >= 0)))
+		|| (msg == WM_SYSKEYDOWN && (k == VK_UP || k == VK_DOWN))
+		|| (msg == WM_CHAR && k != VK_TAB && k != VK_ESCAPE && k != VK_RETURN && k >= 0x20);
+
+	if (IsWindowClass(h, _T("Edit")))
+	{
+		// Also cell editors opened over a list
+		if ((::GetWindowLong(h, GWL_STYLE) & ES_READONLY) == 0)
+		{
+			::SendMessage(h, EM_SETREADONLY, TRUE, 0);
+			m_readOnlyEdits.push_back(h);
+		}
+		// Up / Down / F4 in a drop-down's text pick another entry
+		const bool in_combo = IsWindowClass(::GetParent(h), _T("ComboBox"));
+		return in_combo && key && msg != WM_CHAR && changing_key
+			&& k != VK_SPACE && k != VK_HOME && k != VK_END;
+	}
+	if (IsWindowClass(h, _T("SysListView32")) || IsWindowClass(h, _T("SysHeader32")) || IsWindowClass(h, _T("ScrollBar")))
+	{
+		// Clicking a cell shows its text read-only; tick boxes are guarded
+		// by the dialog itself
+		return false;
+	}
+	// Enter or Space would click a focused button
+	return mouse || changing_key || (msg == WM_KEYDOWN && k == VK_RETURN && IsWindowClass(h, _T("Button")));
+}
+
 BOOL CEditDlg::PreTranslateMessage(MSG* pMsg)
 {
 	extern CConCadView *g_currentview;
+
+	if (IsReadOnly() && BlockReadOnlyInput(pMsg))
+	{
+		return TRUE;
+	}
 
 	if ((pMsg->message == WM_KEYDOWN || pMsg->message == WM_SYSKEYDOWN) && g_currentview)
 	{

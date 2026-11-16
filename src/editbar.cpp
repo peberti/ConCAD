@@ -31,6 +31,7 @@ void CEditDlg::Show(CConCadDoc *pDesign, CDrawingObject *pObject)
 	m_pDesign = pDesign;
 	m_pObject = pObject;
 
+	ApplyReadOnly();
 	g_EditToolBar.setDlg(this);
 }
 

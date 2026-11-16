@@ -742,8 +742,9 @@ void CConCadView::OnLButtonDown(UINT nFlags, CPoint p)
 		SetFocus();
 	}
 
-	// No selecting, placing or dragging on a write-protected version.
-	if (IsWriteProtected())
+	// On a write-protected version objects can only be selected (to copy
+	// them or their text): no placing, moving or editing - see CDrawEditItem
+	if (IsWriteProtected() && GetCurrentDocument()->GetEdit()->GetType() != xEditItem)
 	{
 		return;
 	}
@@ -2143,6 +2144,7 @@ static bool IsAllowedWhenWriteProtected(UINT nID)
 		case IDM_EDITEDIT:
 		case IDM_EDITSELECTALL:
 		case IDM_EDITCOPY:
+		case IDM_EDIT_COPYTEXT:
 		case ID_CONTEXT_OPENDESIGN:
 		case ID_FILE_PRINT:
 		case ID_FILE_PRINT_DIRECT:
@@ -2151,6 +2153,7 @@ static bool IsAllowedWhenWriteProtected(UINT nID)
 		case ID_FILE_EXPORTPDF:
 		case IDM_SPECIALNET:
 		case IDM_SPECIALBOM:
+		case IDM_FILE_EXPORTBOM:
 		case ID_FILE_CLOSE:
 		case ID_FILE_SAVE_AS:
 		case IDM_FILE_CREATEVERSION:

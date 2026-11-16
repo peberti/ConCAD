@@ -31,6 +31,14 @@
 
 ////// The item edit object //////
 
+// A write-protected version (File > Create Version): objects can be
+// selected - to copy them or their text - but not moved or edited; Tool
+// Options opens read-only for them (CEditDlg::IsReadOnly)
+static bool IsReadOnlyDesign(CConCadDoc *pDesign)
+{
+	return pDesign != NULL && pDesign->GetParent() != NULL && pDesign->GetParent()->IsWriteProtected();
+}
+
 
 CDrawEditItem::CDrawEditItem(CConCadDoc *pDesign) :
 	CDrawingObject(pDesign), m_drag_utils(pDesign)
@@ -268,8 +276,10 @@ void CDrawEditItem::ClickSelection(CDPoint p, CDPoint no_snap_p)
 		return;
 	}
 
+	const bool read_only = IsReadOnlyDesign(m_pDesign);
+
 	// Has the user clicked in a field to be moved/edited?
-	if (m_pDesign->IsSingleItemSelected())
+	if (!read_only && m_pDesign->IsSingleItemSelected())
 	{
 		AspectRatio = m_pDesign->GetSingleSelectedItem()->AspectRatio();
 		// Has the user clicked on one of the method fields?
@@ -334,6 +344,10 @@ void CDrawEditItem::ClickSelection(CDPoint p, CDPoint no_snap_p)
 			{
 				m_pDesign->SelectGroup(closest_object);
 			}
+		}
+		else if (read_only)
+		{
+			m_pDesign->SelectGroup(closest_object);
 		}
 		else
 		{
@@ -417,7 +431,8 @@ void CDrawEditItem::LButtonDown(CDPoint p, CDPoint no_snap_p)
 		&& abs(pos.y - m_last_click_pos.y) <= GetSystemMetrics(SM_CYDOUBLECLK) / 2;
 	m_last_click_time = double_click ? 0 : now;
 	m_last_click_pos = pos;
-	if (double_click && GroupDoubleClick(p, no_snap_p))
+	const bool read_only = IsReadOnlyDesign(m_pDesign);
+	if (double_click && !read_only && GroupDoubleClick(p, no_snap_p))
 	{
 		m_pDesign->ForceSetCursor();
 		return;
@@ -447,7 +462,7 @@ void CDrawEditItem::LButtonDown(CDPoint p, CDPoint no_snap_p)
 
 		Display();
 	}
-	else
+	else if (!read_only)
 	{
 		//Don't select closest object when ALT is down.
 		if (GetAsyncKeyState(VK_MENU) >= 0)

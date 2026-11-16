@@ -1979,6 +1979,32 @@ Files: `src/ConCad.rc` (`IDR_TCADTYPE`), `src/resource.h`
 
 ---
 
+## 52. Write-protected versions: BoM export, read-only Tool Options, copying text
+
+On a version made with File → Create Version (write-protected):
+
+- **File → Export BoM to Excel** is available.
+- Objects can be **selected** — click, Ctrl+click or drag a box — but not
+  moved or resized. Double-click still highlights a net.
+- **Tool Options opens read-only** (title "… Tool Options (read-only)"):
+  every text field can be clicked, selected and copied (Ctrl+C) but not
+  changed; buttons, tick boxes, radio buttons and drop-downs do nothing.
+  In the field lists of components, hierarchical symbols and modules a
+  click on a name or value opens it read-only to select and copy from;
+  Show / Up columns, the Exclude-from-BoM tick box, Add and Delete do
+  nothing. The same dialogs are editable again for an editable design.
+- **Edit → Copy Text** (Ctrl+Shift+C) copies the text of the selected
+  texts, labels and notes as plain text, for pasting into other programs.
+  Ctrl+C copies the objects, as before.
+
+Files: `src/ConCadView.cpp` (`IsAllowedWhenWriteProtected`, `OnLButtonDown`),
+`src/Item.cpp` (`IsReadOnlyDesign`: `CDrawEditItem` selects only),
+`src/EditDlg.cpp` / `src/Diag.h` / `src/editbar.cpp` (`CEditDlg::IsReadOnly`,
+`ApplyReadOnly`, `BlockReadOnlyInput`), `src/EditToolBar.cpp` (title),
+`src/EditDlg{Method,Hierarchical,Module}Edit.cpp` (read-only cell editors).
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -2467,3 +2493,13 @@ XML-saved files.
     position bar. Find Symbol Panel and Status Bar hide and show, and their
     ticks follow. Edit no longer lists Zoom, Design Details or Revision
     History; Options no longer lists Show Position, Snap or Toolbars.
+66. **Write-protected version** — File → Create Version, then: File →
+    Export BoM to Excel works. Click a text: it is selected but does not
+    move when dragged; Tool Options says "(read-only)", part of the text
+    can be selected and copied with Ctrl+C but typing, Delete and Ctrl+V do
+    nothing, nor do the direction / style buttons. Click a component: click
+    a value in its field list, select part of it, Ctrl+C; Show / Up do not
+    toggle. Click a module: values copy, Exclude from BoM does not tick.
+    Drag a box around several texts, Ctrl+Shift+C, paste into Notepad:
+    their texts. The file stays unmodified (no * in the title). Then open
+    an editable design: Tool Options is editable again.

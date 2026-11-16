@@ -266,7 +266,7 @@ void CEditDlgHierarchicalEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 	// look up index to enable/disable delete button
 	m_index = index;
 	CDrawHierarchicalSymbol::CField &f = GetField(index);
-	m_Delete.EnableWindow(f.m_type == extra_parameter);
+	m_Delete.EnableWindow(f.m_type == extra_parameter && !IsReadOnly());
 
 	if (m_capture)
 	{
@@ -274,6 +274,13 @@ void CEditDlgHierarchicalEdit::OnClickList(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 
 	m_column = column;
+
+	// Read-only: only show the name / value text (to select and copy)
+	if (IsReadOnly() && (column == 1 || (column == 2 && index == 0)))
+	{
+		*pResult = 0;
+		return;
+	}
 
 	// Now perform the appropriate action
 	switch (column)
@@ -369,11 +376,19 @@ void CEditDlgHierarchicalEdit::BeginEdit(int index, CRect r)
 	m_edit_control.SetFont(GetFont());
 	m_edit_control.SetWindowText(v);
 	m_edit_control.SetSel(0, v.GetLength());
+	m_edit_control.SetReadOnly(IsReadOnly());
 	m_edit_control.SetFocus();
 }
 
 void CEditDlgHierarchicalEdit::EndEdit()
 {
+	if (m_capture && IsReadOnly())
+	{
+		m_capture = FALSE;
+		m_edit_control.DestroyWindow();
+		return;
+	}
+
 	// Now end the editing...
 	if (m_capture)
 	{
