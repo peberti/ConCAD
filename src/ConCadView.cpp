@@ -246,6 +246,7 @@ BEGIN_MESSAGE_MAP(CConCadView, CFolderView)
 
 	// The Special Menu
 	ON_COMMAND( IDM_SPECIALANNOTATE, OnSpecialAnnotate )
+	ON_COMMAND( IDM_SPECIAL_CHECKREFS, OnSpecialCheckRefs )
 	ON_COMMAND( IDM_SPECIALBOM, OnSpecialBom )
 	ON_COMMAND( IDM_SPECIALNET, OnSpecialNet )
 
@@ -2153,6 +2154,7 @@ static bool IsAllowedWhenWriteProtected(UINT nID)
 		case ID_FILE_EXPORTPDF:
 		case IDM_SPECIALNET:
 		case IDM_SPECIALBOM:
+		case IDM_SPECIAL_CHECKREFS:
 		case IDM_FILE_EXPORTBOM:
 		case ID_FILE_CLOSE:
 		case ID_FILE_SAVE_AS:

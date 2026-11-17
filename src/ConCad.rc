@@ -196,6 +196,7 @@ BEGIN
     POPUP "&Special"
     BEGIN
         MENUITEM "&Generate Symbol References...", IDM_SPECIALANNOTATE
+        MENUITEM "&Check Symbol References",    IDM_SPECIAL_CHECKREFS
         MENUITEM "Create &Netlist...",          IDM_SPECIALNET
         MENUITEM "Create &Parts List...",       IDM_SPECIALBOM
         MENUITEM SEPARATOR
@@ -2398,6 +2399,7 @@ STRINGTABLE
 BEGIN
     IDM_SPECIALBOM          "Create a bill of materials"
     IDM_SPECIALANNOTATE     "Automatically create or remove the symbol references"
+    IDM_SPECIAL_CHECKREFS   "Check that every symbol has a reference and that no reference is used twice"
     IDM_SPECIALNET          "Create a net-list of the current design\nCreate netlist"
     IDM_HELP_REPORTBUG      "Send a bug report with the logs to the developer\nReport a bug"
 END

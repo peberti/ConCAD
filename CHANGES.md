@@ -2037,6 +2037,24 @@ Files: `src/ExportBom.{h,cpp}` (`GetDesignTokens`, `ResolvePattern`,
 
 ---
 
+## 54. Special -> Check Symbol References
+
+- New command under Special, after Generate Symbol References. It goes
+  through every sheet of the design and lists, in a message box:
+  - symbols without a reference (still `U?`, or empty), with symbol name
+    and sheet;
+  - references used by more than one symbol, with the sheets they are on.
+    Comparison ignores case; for multi-part packages the part letter
+    counts, so `U1A` + `U1B` is fine and two `U1A` are a duplicate.
+- Up to 25 lines per list are shown, then "... and N more". When all is
+  well it says so and gives the symbol count. Nothing in the design is
+  changed; the command also works on write-protected versions.
+
+Files: `src/Special.cpp` (`OnSpecialCheckRefs`), `src/ConCadView.{h,cpp}`,
+`src/ConCad.rc`, `src/resource.h` (`IDM_SPECIAL_CHECKREFS` = 32932).
+
+---
+
 ## File-format compatibility
 
 All changes are **additive** to the XML `.dsn` format. Files saved by
@@ -2544,3 +2562,9 @@ XML-saved files.
     value; double-clicking one inserts it at the caret. Change the pattern
     in Settings: the next export starts with the new one. In Excel the
     Revision reads `0.1` (not `0,1`) and quantities are still numbers.
+68. **Check references** - Special -> Check Symbol References on an
+    annotated design: "Symbol references OK" with the symbol count. Place a
+    new symbol (`U?`) and copy an existing one so a reference is doubled
+    (e.g. on another sheet): both are listed with their sheets. Generate
+    Symbol References, check again: OK. A two-part package (U1A, U1B) is not
+    a duplicate.

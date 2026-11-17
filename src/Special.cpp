@@ -207,6 +207,151 @@ void CConCadView::OnSpecialAnnotate()
 	Invalidate();
 }
 
+// Special -> Check Symbol References: report symbols that have no reference
+// (still "U?" or empty) and references used by more than one symbol, over
+// every sheet of the design. Read only - nothing is changed.
+namespace
+{
+	struct RefUse
+	{
+		CString ref; // as shown, including any part letter (U1A)
+		std::vector<CString> where; // sheet name of each use
+	};
+
+	void AddLimited(CString &list, int &shown, const CString &line)
+	{
+		const int maxLines = 25;
+		if (shown < maxLines)
+		{
+			list += line + _T("\n");
+		}
+		++shown;
+	}
+}
+
+void CConCadView::OnSpecialCheckRefs()
+{
+	CMultiSheetDoc *pDesign = GetDocument();
+	if (pDesign == NULL)
+	{
+		return;
+	}
+
+	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
+
+	CString unassigned;
+	int unassignedCount = 0;
+	int symbolCount = 0;
+	std::map<CString, RefUse> uses; // key: upper-case reference
+
+	for (int sheet = 0; sheet < pDesign->GetNumberOfSheets(); ++sheet)
+	{
+		CConCadDoc *pSheet = pDesign->GetSheet(sheet);
+		const CString sheetName = pDesign->GetSheetName(sheet);
+
+		for (drawingIterator it = pSheet->GetDrawingBegin(); it != pSheet->GetDrawingEnd(); ++it)
+		{
+			ObjType type = (*it)->GetType();
+			if (type != xMethodEx3 && type != xHierarchicalSymbol)
+			{
+				continue;
+			}
+			CDrawMethod *pMethod = static_cast<CDrawMethod *>(*it);
+			++symbolCount;
+
+			CString ref = pMethod->GetRef();
+			ref.Trim();
+			if (ref.IsEmpty() || !pMethod->HasRef())
+			{
+				CString line;
+				line.Format(_T("  %s  (%s, sheet \"%s\")"), ref.IsEmpty() ? _T("<empty>") : (LPCTSTR)ref,
+					(LPCTSTR)pMethod->GetName(), (LPCTSTR)sheetName);
+				AddLimited(unassigned, unassignedCount, line);
+				continue;
+			}
+
+			// Parts of one package share the reference: U1A and U1B are
+			// different, two U1A are a duplicate.
+			CDesignFileSymbol *pSymbol = pMethod->GetSymbolData();
+			if (pSymbol != NULL && pSymbol->ppp > 1)
+			{
+				ref += (TCHAR) ('A' + pMethod->GetSubPart());
+			}
+
+			CString key = ref;
+			key.MakeUpper();
+			RefUse &use = uses[key];
+			if (use.where.empty())
+			{
+				use.ref = ref;
+			}
+			use.where.push_back(sheetName);
+		}
+	}
+
+	CString duplicates;
+	int duplicateCount = 0;
+	for (std::map<CString, RefUse>::const_iterator it = uses.begin(); it != uses.end(); ++it)
+	{
+		const RefUse &use = it->second;
+		if (use.where.size() < 2)
+		{
+			continue;
+		}
+		CString line;
+		line.Format(_T("  %s  used %d times (sheet "), (LPCTSTR)use.ref, (int)use.where.size());
+		for (size_t i = 0; i < use.where.size(); ++i)
+		{
+			if (i > 0)
+			{
+				line += _T(", ");
+			}
+			line += _T("\"") + use.where[i] + _T("\"");
+		}
+		line += _T(")");
+		AddLimited(duplicates, duplicateCount, line);
+	}
+
+	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
+
+	CString msg;
+	if (unassignedCount == 0 && duplicateCount == 0)
+	{
+		msg.Format(_T("Symbol references OK.\n\nAll %d symbols have a reference and no reference is used twice."), symbolCount);
+		AfxMessageBox(msg, MB_ICONINFORMATION);
+		return;
+	}
+
+	if (unassignedCount > 0)
+	{
+		CString head;
+		head.Format(_T("%d symbol(s) without a reference:\n"), unassignedCount);
+		msg += head + unassigned;
+		if (unassignedCount > 25)
+		{
+			head.Format(_T("  ... and %d more\n"), unassignedCount - 25);
+			msg += head;
+		}
+	}
+	if (duplicateCount > 0)
+	{
+		if (!msg.IsEmpty())
+		{
+			msg += _T("\n");
+		}
+		CString head;
+		head.Format(_T("%d duplicate reference(s):\n"), duplicateCount);
+		msg += head + duplicates;
+		if (duplicateCount > 25)
+		{
+			head.Format(_T("  ... and %d more\n"), duplicateCount - 25);
+			msg += head;
+		}
+	}
+	msg += _T("\nUse Special -> Generate Symbol References to fix them.");
+	AfxMessageBox(msg, MB_ICONEXCLAMATION);
+}
+
 // The Annotate Setup values class
 AnnotateSetup::AnnotateSetup()
 {

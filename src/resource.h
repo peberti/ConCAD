@@ -500,6 +500,7 @@
 #define IDM_FILE_EDITFILE               32911
 #define IDM_EDIT_REVISIONHISTORY        32912
 #define IDM_SPECIAL_CREATEMODULE        32913
+#define IDM_SPECIAL_CHECKREFS           32932
 #define IDM_MODULE_EDIT                 32914
 #define IDM_MODULE_UNGROUP              32915
 #define IDM_MODULE_FINISHEDIT           32916
@@ -668,7 +669,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        201
-#define _APS_NEXT_COMMAND_VALUE         32932
+#define _APS_NEXT_COMMAND_VALUE         32933
 #define _APS_NEXT_CONTROL_VALUE         40441
 #define _APS_NEXT_SYMED_VALUE           114
 #endif

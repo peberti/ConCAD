@@ -357,6 +357,7 @@ protected:
 	// The Special Menu
 public:
 	afx_msg void OnSpecialAnnotate();
+	afx_msg void OnSpecialCheckRefs();
 	afx_msg void OnSpecialNet();
 protected:
 	afx_msg void OnSpecialBom();
