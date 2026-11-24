@@ -586,14 +586,16 @@ Released versions of a design are frozen as separate, write-protected files.
   every sheet's `<DETAILS>`. It can be corrected afterwards on the
   **Revisions** tab (see below).
 - **File → Edit File** (only on a write-protected version) saves a copy as
-  `Name_<version>_working.con`, clears the protection, and continues with
-  that copy. If the working copy already exists you can open it or replace
-  it with a fresh copy.
-- Creating the next version from `Name_1.0_working.con` saves
-  `Name_1.1.con` (the `_<version>_working` suffix is dropped from the base
-  name, whatever Revision says). From a file not named `…_working`, the
-  whole file name is the base. A version cannot contain `_`, so the
-  suffix is unambiguous.
+  `Name-working.con` — the `_<version>` suffix is dropped, e.g.
+  `Board_P2.con` → `Board-working.con` (only when the suffix matches the
+  design's Revision; otherwise the whole name is kept) — clears the
+  protection, and continues with that copy. If the working copy already
+  exists you can open it or replace it with a fresh copy.
+- Creating the next version from `Name-working.con` saves `Name_1.1.con`
+  (the `-working` suffix is dropped from the base name). Working copies
+  from older builds, `Name_1.0_working.con`, likewise give `Name_1.1.con`.
+  From a file not named `…-working` / `…_working`, the whole file name is
+  the base.
 
 On a write-protected version only viewing and output work: zoom/pan, Find,
 Select All + Copy, print, export (image/PDF), netlist/BOM/SPICE/VHDL, Save
@@ -2118,7 +2120,7 @@ XML-saved files.
    shows Revised by, Current revision R7 and today's date. Tools, Delete,
    Undo, Save and Design Details are greyed; zoom, print and Export as PDF
    work. Close and reopen — still protected, history intact. File → Edit
-   File → `Board_R7_working.con`, editable. Create Version `R8` from it →
+   File → `Board-working.con`, editable. Create Version `R8` from it →
    `Board_R8.con`. Creating `R8` again is refused.
 10. **Revision history table** — Edit → Revision History: the table
     appears bottom-left on sheet 1 (menu item checked) with one empty row.

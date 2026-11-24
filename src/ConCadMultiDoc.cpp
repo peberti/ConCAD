@@ -906,17 +906,23 @@ static CString StripExtension(const CString& path)
 }
 
 // The path a version is saved next to, without the version suffix.  A working
-// copy "Name_<ver>_working" (made by File -> Edit file) maps back to "Name",
-// so versions do not pile up suffixes ("Name_1.0_working" -> "Name_1.1", not
-// "Name_1.0_working_1.1").  Versions cannot contain '_', so "_<ver>" is
-// everything after the last '_'.
+// copy "Name-working" (made by File -> Edit file from "Name_<ver>") maps back
+// to "Name", so versions do not pile up suffixes ("Name-working" -> "Name_1.1",
+// not "Name-working_1.1").  Older builds named working copies
+// "Name_<ver>_working"; those map back to "Name" too (versions cannot contain
+// '_', so "_<ver>" is everything after the last '_').
 static CString VersionBasePath(const CString& path)
 {
 	CString base = StripExtension(path);
-	const CString working = _T("_working");
+	const CString working = _T("-working");
+	const CString oldWorking = _T("_working");
 	if (EndsWithNoCase(base, working))
 	{
 		base = base.Left(base.GetLength() - working.GetLength());
+	}
+	else if (EndsWithNoCase(base, oldWorking))
+	{
+		base = base.Left(base.GetLength() - oldWorking.GetLength());
 		int us = base.ReverseFind(_T('_'));
 		int sep = max(base.ReverseFind(_T('\\')), base.ReverseFind(_T('/')));
 		if (us > sep + 1)
@@ -925,6 +931,23 @@ static CString VersionBasePath(const CString& path)
 		}
 	}
 	return base;
+}
+
+// The working copy File -> Edit file makes of a version:
+// "Name_<rev>.con" -> "Name-working.con".  "_<rev>" is only dropped when it
+// matches the design's Revision, so a write-protected file that is not named
+// after its version keeps its whole name ("Other.con" -> "Other-working.con").
+static CString WorkingCopyPath(const CString& path, const CString& sRevision)
+{
+	CString base = StripExtension(path);
+	const CString suffix = _T("_") + sRevision;
+	const int sep = max(base.ReverseFind(_T('\\')), base.ReverseFind(_T('/')));
+	if (!sRevision.IsEmpty() && EndsWithNoCase(base, suffix)
+		&& base.GetLength() - suffix.GetLength() > sep + 1)
+	{
+		base = base.Left(base.GetLength() - suffix.GetLength());
+	}
+	return base + _T("-working.con");
 }
 
 static CString FileNamePart(const CString& path)
@@ -1187,7 +1210,8 @@ void CConCadMultiDoc::OnUpdateFileCreateVersion(CCmdUI *pCmdUI)
 }
 
 //-------------------------------------------------------------------------
-// Copy this write-protected version to "Name_<version>_working.con" and
+// Copy this write-protected version "Name_<version>.con" to
+// "Name-working.con" and
 // continue editing that copy.
 void CConCadMultiDoc::OnFileEditFile()
 {
@@ -1196,7 +1220,8 @@ void CConCadMultiDoc::OnFileEditFile()
 		return;
 	}
 
-	const CString sTarget = StripExtension(GetPathName()) + _T("_working.con");
+	const CString sTarget = WorkingCopyPath(GetPathName(),
+		GetSheet(0)->GetDetails().GetRevision());
 	if (GetFileAttributes(sTarget) != INVALID_FILE_ATTRIBUTES)
 	{
 		CString msg;
